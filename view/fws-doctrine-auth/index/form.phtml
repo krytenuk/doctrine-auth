@@ -1,0 +1,15 @@
+<?php
+use Zend\Form\Element\Button;
+
+$this->form->prepare();
+echo $this->form()->openTag($this->form);
+?>
+<dl class="zend_form">
+    <?php foreach ($this->form as $element): ?>
+        <?php if ($element->getLabel() != null && !$element instanceof Button): ?>
+            <dt><?php echo $this->formLabel($element) ?></dt>
+        <?php endif; ?>
+        <dd><?php echo $this->formElement($element) . $this->formElementErrors($element) ?></dd>
+    <?php endforeach; ?>
+</dl>
+<?php echo $this->form()->closeTag(); ?>

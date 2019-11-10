@@ -1,0 +1,64 @@
+<?php
+
+use FwsDoctrineAuth\Entity\BaseUsers;
+use Zend\Session\Validator as SessionValidator;
+use Zend\Session\Storage\SessionArrayStorage;
+use FwsDoctrineAuth\Form;
+
+return [
+    /**
+     * Configure doctrine authentication
+     */
+    'doctrine' => [
+        'connection' => [
+            'orm_default' => [
+                'driverClass' => 'Doctrine\DBAL\Driver\PDOMySql\Driver',
+                'params' => [
+                    'host' => 'localhost',
+                    'port' => '3306',
+                    'dbname' => 'your_database',
+                    'user' => 'your_db_user',
+                    'password' => 'your_password',
+                ],
+            ],
+        ],
+        'authentication' => [
+            'orm_default' => [
+                'identity_class' => BaseUsers::class, // <- Doctrine entity to use, default \FwsDoctrineAuth\Entity\BaseUsers
+                'identity_property' => 'emailAddress', // <- email address, username etc.
+                'credential_property' => 'password',
+            ],
+        ],
+    ],
+    'doctrineAuth' => [
+        /**
+         * Forms
+         */
+        'registrationForm' => Form\RegisterForm::class,
+        'loginForm' => Form\LoginForm::class,
+        'formElements' => [
+                'identity_label' => 'Email Address', // <- Form label for identity_property
+                'credential_label' => 'Password', // <- Form label for credential_property
+        ],
+        'allowRegistration' => TRUE, // <- allow new users to register
+        'registrationCallback' => '', // <- class to use as callback in registration, must use __invoke() magic method
+        'autoRegistrationLogin' => FALSE, // <- Auto login after registration
+        'userActiveAfterRegistration' => 1, // <- user active after registration, 1 = active, 0 = inactive
+    ],
+    /**
+     * Configure zend session as per your requirements
+     */
+    'session_manager' => [
+        'validators' => [
+            SessionValidator\RemoteAddr::class,
+            SessionValidator\HttpUserAgent::class,
+        ],
+    ],
+    'session_storage' => [
+        'type' => SessionArrayStorage::class
+    ],
+    'session_config' => [
+        'cookie_lifetime' => 60 * 60 * 1,// <- Session cookie will expire in 1 hour.
+        'gc_maxlifetime' => 60 * 60 * 24 * 30,// <- Session data will be stored on server maximum for 30 days.
+    ],
+];

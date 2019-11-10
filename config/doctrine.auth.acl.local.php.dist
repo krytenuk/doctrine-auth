@@ -1,0 +1,109 @@
+<?php
+
+use Zend\Permissions\Acl\Acl as ZendAcl;
+use FwsDoctrineAuth\Controller as FwsDoctrineAuthController;
+
+return [
+    'doctrineAuthAcl' => [
+        'roles' => [
+            /**
+             * Do NOT delete this role
+             * This is the default role of someone not logged in
+             */
+            [
+                'id' => 'guest', // Guest user, do NOT change
+                'parents' => [],
+                'default' => TRUE,
+                // redirect not needed as no-one should ever be logged in as a guest!!!
+            ],
+            /**
+             * Add your roles here          [
+             */
+            [
+                'id' => 'user',
+                'parents' => ['guest'], // <- inherets from guests
+                'redirect' => [ // redirect to this route after sucessful login, overwritten by stored redirtect (see FwsDoctrineAuth\Listener\AuthListener::checkUser)
+                    'route' => 'user', // route to redirect to, see https://docs.zendframework.com/zend-mvc/routing/ for more info on routing
+                    'params' ['action' => 'index'], // route params
+                    'options' => [], // route options
+                ],
+            ],
+            [
+                'id' => 'admin',
+                'parents' => ['user'], // <- inherets from users & guests
+                'redirect' => [
+                    'route' => 'admin',
+                    'params' ['action' => 'index'],
+                    'options' => [],
+                ],
+            ],
+        ],
+        'defaultRegisterRole' => 'user', // <- default user role set in registration
+        'resources' => [
+            /**
+             * Do not delete this module resource, required to login
+             */
+            [
+                'module' => 'doctrine-auth',
+                'controllers' => [
+                    FwsDoctrineAuthController\IndexController::class,
+                ],
+            ],
+            /**
+             * Add your resources here
+             */
+            [
+                'module' => 'application', // <- name of module
+                'controllers' => [
+                    \Application\Controller\IndexController::class, // <- array of module controllers
+                    //\Application\Controller\OtherController::class,
+                ],
+            ],
+        ],
+        'permissions' => [
+            /**
+             * Do not delete the permissions below, required for login/logout
+             */
+            [
+                'type' => ZendAcl::TYPE_ALLOW,
+                'role' => 'guest',
+                'resource' => 'doctrine-auth', // allow guest access to login
+                'actions' => [],
+            ],
+            [
+                'type' => ZendAcl::TYPE_DENY,
+                'role' => 'guest',
+                'resource' => FwsDoctrineAuth\Controller\IndexController::class, // deny guest to logout (guests have not yet logged in)
+                'actions' => ['logout'],
+            ],
+            [
+                'type' => ZendAcl::TYPE_ALLOW,
+                'role' => 'user', // <- change if required
+                'resource' => FwsDoctrineAuth\Controller\IndexController::class, // allow users & admins to logout
+                'actions' => ['logout'],
+            ],
+            [
+                'type' => ZendAcl::TYPE_DENY,
+                'role' => 'user', // <- change if required
+                'resource' => FwsDoctrineAuth\Controller\IndexController::class, // deny users & admins to login or register as they already have
+                'actions' => ['login', 'register'],
+            ],
+            /**
+             * Add your permissions here
+             */
+            [
+                'type' => ZendAcl::TYPE_ALLOW, // <- permission type TYPE_ALLOW or TYPE_DENY
+                'role' => 'guest', // <- allow guests access
+                'resource' => 'application', // <- to application module and all child controllers under it (change if required)
+                'actions' => [], // -> all actions
+            ],
+//            [
+//                'type' => ZendAcl::TYPE_DENY,
+//                'role' => 'guest',
+//                'resource' => \Application\Controller\OtherController::class,
+//                'actions' => ['some-action', 'another-action'],
+//            ],
+        ],
+        'injectAclIntoNavigation' => TRUE, // Inject ACL into Zend navigation view helper plugin
+    ],
+];

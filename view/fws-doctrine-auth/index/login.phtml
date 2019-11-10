@@ -1,0 +1,5 @@
+<h2><?php echo $this->translate('Sign In'); ?></h2>
+<?php
+$this->form->setAttribute('action', $this->url('doctrine-auth/default', array('action' => 'login')));
+$this->formElementErrors()->setAttributes(array('class' => 'errors'));
+echo $this->partial('form.phtml', ['form' => $this->form]);
