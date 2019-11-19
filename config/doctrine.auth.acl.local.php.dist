@@ -24,7 +24,7 @@ return [
                 'parents' => ['guest'], // <- inherets from guests
                 'redirect' => [ // redirect to this route after sucessful login, overwritten by stored redirtect (see FwsDoctrineAuth\Listener\AuthListener::checkUser)
                     'route' => 'user', // route to redirect to, see https://docs.zendframework.com/zend-mvc/routing/ for more info on routing
-                    'params' ['action' => 'index'], // route params
+                    'params' => ['action' => 'index'], // route params
                     'options' => [], // route options
                 ],
             ],
@@ -33,7 +33,7 @@ return [
                 'parents' => ['user'], // <- inherets from users & guests
                 'redirect' => [
                     'route' => 'admin',
-                    'params' ['action' => 'index'],
+                    'params' => ['action' => 'index'],
                     'options' => [],
                 ],
             ],
