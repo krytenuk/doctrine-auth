@@ -23,13 +23,13 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
      *
      * @var array
      */
-    private $config;
+    protected $config;
 
     /**
      *
      * @var ObjectManager
      */
-    private $objectManager;
+    protected $objectManager;
 
     /**
      * 

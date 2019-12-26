@@ -52,7 +52,7 @@ class InitCommand extends Command
 Initialize the database with user roles from doctrine.auth.acl.local.php
 EOT
                 )
-                ->addOption('truncate', null, InputOption::VALUE_NONE, 'Truncate user roles table before adding roles from config');
+                ->addOption('truncate', 't', InputOption::VALUE_NONE, 'Truncate user roles table before adding roles from config');
     }
 
     /**
