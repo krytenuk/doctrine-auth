@@ -72,9 +72,9 @@ class LoginModel extends AbstractModel
 
     /**
      *
-     * @return LoginForm
+     * @return FormInterface
      */
-    function getForm()
+    function getForm(): FormInterface
     {
         return $this->form;
     }

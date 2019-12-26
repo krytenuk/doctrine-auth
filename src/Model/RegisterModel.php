@@ -88,9 +88,9 @@ class RegisterModel extends AbstractModel
 
     /**
      * Get the registration form
-     * @return RegisterForm
+     * @return FormInterface
      */
-    public function getForm(): RegisterForm
+    public function getForm(): FormInterface
     {
         return $this->form;
     }
