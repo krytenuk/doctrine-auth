@@ -17,7 +17,8 @@ class LoginFormFactory implements FactoryInterface
 
     public function __invoke(ContainerInterface $container, $requestedName, Array $options = null)
     {
-        return new LoginForm($container->get(EntityManager::class), $container->get('config'));
+        $config = $container->get('config');
+        return new $config['doctrineAuth']['loginForm']($container->get(EntityManager::class), $container->get('config'));
     }
 
 }

@@ -3,7 +3,7 @@
 namespace FwsDoctrineAuth\Model;
 
 use Doctrine\ORM\EntityManager;
-use FwsDoctrineAuth\Form\RegisterForm;
+use Zend\Form\FormInterface;
 use FwsDoctrineAuth\Entity\BaseUsers;
 use FwsDoctrineAuth\Entity\UserRoles;
 use Zend\Stdlib\Parameters;
@@ -64,7 +64,7 @@ class RegisterModel extends AbstractModel
     private $loginModel;
 
     public function __construct(
-            RegisterForm $form,
+            FormInterface $form,
             EntityManager $entityManager,
             Acl $acl,
             LoginModel $loginModel,

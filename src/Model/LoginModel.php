@@ -3,7 +3,7 @@
 namespace FwsDoctrineAuth\Model;
 
 use Doctrine\ORM\EntityManager;
-use FwsDoctrineAuth\Form\LoginForm;
+use Zend\Form\FormInterface;
 use DateTime;
 use Zend\Session\Container;
 use Zend\Session\SessionManager;
@@ -89,7 +89,7 @@ class LoginModel extends AbstractModel
     }
 
     public function __construct(
-            LoginForm $form,
+            FormInterface $form,
             AuthenticationService $authService,
             EntityManager $entityManager,
             DateTime $currentDateTime,
