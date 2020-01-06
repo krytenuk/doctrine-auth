@@ -2,9 +2,9 @@
 
 namespace FwsDoctrineAuth\Model;
 
-use Zend\Permissions\Acl\Acl as ZendAcl;
+use Laminas\Permissions\Acl\Acl as LaminasAcl;
 use FwsDoctrineAuth\Permissions\DoctrineAuthRole as Role;
-use Zend\Permissions\Acl\Resource\GenericResource as Rescource;
+use Laminas\Permissions\Acl\Resource\GenericResource as Rescource;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 
 /**
@@ -12,7 +12,7 @@ use FwsDoctrineAuth\Exception\DoctrineAuthException;
  *
  * @author Garry Childs <info@freedomwebservices.net>
  */
-class Acl extends ZendAcl
+class Acl extends LaminasAcl
 {
 
     /**

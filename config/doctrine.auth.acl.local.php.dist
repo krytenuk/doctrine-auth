@@ -1,6 +1,6 @@
 <?php
 
-use Zend\Permissions\Acl\Acl as ZendAcl;
+use Laminas\Permissions\Acl\Acl as LaminasAcl;
 use FwsDoctrineAuth\Controller as FwsDoctrineAuthController;
 
 return [
@@ -65,25 +65,25 @@ return [
              * Do not delete the permissions below, required for login/logout
              */
             [
-                'type' => ZendAcl::TYPE_ALLOW,
+                'type' => LaminasAcl::TYPE_ALLOW,
                 'role' => 'guest',
                 'resource' => 'doctrine-auth', // allow guest access to login
                 'actions' => [],
             ],
             [
-                'type' => ZendAcl::TYPE_DENY,
+                'type' => LaminasAcl::TYPE_DENY,
                 'role' => 'guest',
                 'resource' => FwsDoctrineAuth\Controller\IndexController::class, // deny guest to logout (guests have not yet logged in)
                 'actions' => ['logout'],
             ],
             [
-                'type' => ZendAcl::TYPE_ALLOW,
+                'type' => LaminasAcl::TYPE_ALLOW,
                 'role' => 'user', // <- change if required
                 'resource' => FwsDoctrineAuth\Controller\IndexController::class, // allow users & admins to logout
                 'actions' => ['logout'],
             ],
             [
-                'type' => ZendAcl::TYPE_DENY,
+                'type' => LaminasAcl::TYPE_DENY,
                 'role' => 'user', // <- change if required
                 'resource' => FwsDoctrineAuth\Controller\IndexController::class, // deny users & admins to login or register as they already have
                 'actions' => ['login', 'register'],
@@ -92,18 +92,18 @@ return [
              * Add your permissions here
              */
             [
-                'type' => ZendAcl::TYPE_ALLOW, // <- permission type TYPE_ALLOW or TYPE_DENY
+                'type' => LaminasAcl::TYPE_ALLOW, // <- permission type TYPE_ALLOW or TYPE_DENY
                 'role' => 'guest', // <- allow guests access
                 'resource' => 'application', // <- to application module and all child controllers under it (change if required)
                 'actions' => [], // -> all actions
             ],
 //            [
-//                'type' => ZendAcl::TYPE_DENY,
+//                'type' => LaminasAcl::TYPE_DENY,
 //                'role' => 'guest',
 //                'resource' => \Application\Controller\OtherController::class,
 //                'actions' => ['some-action', 'another-action'],
 //            ],
         ],
-        'injectAclIntoNavigation' => TRUE, // Inject ACL into Zend navigation view helper plugin
+        'injectAclIntoNavigation' => TRUE, // Inject ACL into Laminas navigation view helper plugin
     ],
 ];

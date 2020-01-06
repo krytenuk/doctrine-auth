@@ -2,7 +2,7 @@
 
 namespace FwsDoctrineAuth\Permissions;
 
-use Zend\Permissions\Acl\Role\GenericRole;
+use Laminas\Permissions\Acl\Role\GenericRole;
 
 /**
  * GenericRole

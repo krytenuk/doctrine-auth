@@ -2,8 +2,8 @@
 
 namespace FwsDoctrineAuth\Listener;
 
-use Zend\Mvc\MvcEvent;
-use Zend\Authentication\AuthenticationService;
+use Laminas\Mvc\MvcEvent;
+use Laminas\Authentication\AuthenticationService;
 
 /**
  * Description of NavigationListener
@@ -24,7 +24,7 @@ class NavigationListener
         $config = $serviceManager->get('config');
 
         if (isset($config['doctrineAuthAcl']['injectAclIntoNavigation']) && $config['doctrineAuthAcl']['injectAclIntoNavigation'] == TRUE) {
-            /* @var \Zend\View\Helper\Navigation $plugin */
+            /* @var \Laminas\View\Helper\Navigation $plugin */
             $plugin = $serviceManager->get('ViewHelperManager')->get('navigation');
 
             $acl = $serviceManager->get('acl');

@@ -2,7 +2,7 @@
 
 namespace FwsDoctrineAuth\Model;
 
-use Zend\Crypt\Password\Bcrypt;
+use Laminas\Crypt\Password\Bcrypt;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 
 class HashPassword

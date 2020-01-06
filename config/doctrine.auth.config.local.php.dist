@@ -1,8 +1,8 @@
 <?php
 
 use FwsDoctrineAuth\Entity\BaseUsers;
-use Zend\Session\Validator as SessionValidator;
-use Zend\Session\Storage\SessionArrayStorage;
+use Laminas\Session\Validator as SessionValidator;
+use Laminas\Session\Storage\SessionArrayStorage;
 use FwsDoctrineAuth\Form;
 
 return [

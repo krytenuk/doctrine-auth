@@ -2,10 +2,11 @@
 
 namespace FwsDoctrineAuth;
 
-use Zend\EventManager\EventInterface;
-use Zend\ModuleManager\Feature\BootstrapListenerInterface;
-use Zend\EventManager\LazyListenerAggregate;
-use Zend\ModuleManager\ModuleManagerInterface;
+use Laminas\EventManager\EventInterface;
+use Laminas\ModuleManager\Feature\BootstrapListenerInterface;
+use Laminas\EventManager\LazyListenerAggregate;
+use Laminas\ModuleManager\ModuleManagerInterface;
+use Laminas\Authentication\AuthenticationService;
 use FwsDoctrineAuth\Command\InitCommand;
 use Doctrine\ORM\Tools\Console\ConsoleRunner;
 use FwsDoctrineAuth\Model\HashPassword;
@@ -37,7 +38,7 @@ class Module implements BootstrapListenerInterface
     {
         return array(
             'factories' => array(
-                'Zend\Authentication\AuthenticationService' => function($serviceManager) {
+                AuthenticationService::class => function($serviceManager) {
                     return $serviceManager->get('doctrine.authenticationservice.orm_default');
                 },
             )

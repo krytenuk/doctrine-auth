@@ -2,9 +2,8 @@
 
 namespace FwsDoctrineAuth\Form\Service;
 
-use Zend\ServiceManager\Factory\FactoryInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
 use Interop\Container\ContainerInterface;
-use FwsDoctrineAuth\Form\LoginForm;
 use Doctrine\ORM\EntityManager;
 
 /**

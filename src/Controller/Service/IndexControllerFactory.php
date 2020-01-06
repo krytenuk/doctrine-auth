@@ -2,7 +2,7 @@
 
 namespace FwsDoctrineAuth\Controller\Service;
 
-use Zend\ServiceManager\Factory\FactoryInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
 use Interop\Container\ContainerInterface;
 use FwsDoctrineAuth\Controller\IndexController;
 use FwsDoctrineAuth\Model;

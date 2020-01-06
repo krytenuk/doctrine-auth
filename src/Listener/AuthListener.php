@@ -2,8 +2,8 @@
 
 namespace FwsDoctrineAuth\Listener;
 
-use Zend\EventManager\EventInterface;
-use Zend\Authentication\AuthenticationService;
+use Laminas\EventManager\EventInterface;
+use Laminas\Authentication\AuthenticationService;
 use FwsDoctrineAuth\Controller\IndexController;
 use FwsDoctrineAuth\Model\Acl;
 use Exception;

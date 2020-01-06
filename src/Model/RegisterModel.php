@@ -3,15 +3,15 @@
 namespace FwsDoctrineAuth\Model;
 
 use Doctrine\ORM\EntityManager;
-use Zend\Form\FormInterface;
+use Laminas\Form\FormInterface;
 use FwsDoctrineAuth\Entity\BaseUsers;
 use FwsDoctrineAuth\Entity\UserRoles;
-use Zend\Stdlib\Parameters;
+use Laminas\Stdlib\Parameters;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use FwsDoctrineAuth\Model\Acl;
 use FwsDoctrineAuth\Model\LoginModel;
 use DateTime;
-use Zend\Crypt\Password\Bcrypt;
+use Laminas\Crypt\Password\Bcrypt;
 
 /**
  * Description of RegisterModel

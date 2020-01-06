@@ -2,13 +2,13 @@
 
 namespace FwsDoctrineAuth\Model\Service;
 
-use Zend\ServiceManager\Factory\FactoryInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
 use Interop\Container\ContainerInterface;
 use FwsDoctrineAuth\Model\LoginModel;
 use FwsDoctrineAuth\Form\LoginForm;
-use Zend\Authentication\AuthenticationService;
+use Laminas\Authentication\AuthenticationService;
 use Doctrine\ORM\EntityManager;
-use Zend\Session\SessionManager;
+use Laminas\Session\SessionManager;
 use DateTime;
 use DateTimeZone;
 

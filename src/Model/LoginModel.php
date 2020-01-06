@@ -3,12 +3,12 @@
 namespace FwsDoctrineAuth\Model;
 
 use Doctrine\ORM\EntityManager;
-use Zend\Form\FormInterface;
+use Laminas\Form\FormInterface;
 use DateTime;
-use Zend\Session\Container;
-use Zend\Session\SessionManager;
-use Zend\Stdlib\Parameters;
-use Zend\Authentication\AuthenticationService;
+use Laminas\Session\Container;
+use Laminas\Session\SessionManager;
+use Laminas\Stdlib\Parameters;
+use Laminas\Authentication\AuthenticationService;
 use FwsDoctrineAuth\Model\Acl;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use FwsDoctrineAuth\Entity\BaseUsers;

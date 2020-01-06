@@ -2,11 +2,11 @@
 
 namespace FwsDoctrineAuth\Form;
 
-use Zend\Form\Form;
-use Zend\InputFilter\InputFilterProviderInterface;
-use Zend\Form\Element;
-use Zend\Form\Fieldset;
-use Zend\Validator;
+use Laminas\Form\Form;
+use Laminas\InputFilter\InputFilterProviderInterface;
+use Laminas\Form\Element;
+use Laminas\Form\Fieldset;
+use Laminas\Validator;
 use DoctrineModule\Validator as DoctrineModuleValidator;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use Doctrine\ORM\EntityManager;

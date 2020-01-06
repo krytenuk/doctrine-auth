@@ -6,17 +6,17 @@
 
 namespace FwsDoctrineAuth;
 
-use Zend\Mvc\MvcEvent;
-use Zend\ServiceManager\Factory\InvokableFactory;
+use Laminas\Mvc\MvcEvent;
+use Laminas\ServiceManager\Factory\InvokableFactory;
 use FwsDoctrineAuth\Listener\AuthListener;
 use FwsDoctrineAuth\Listener\NavigationListener;
 use FwsDoctrineAuth\Model;
 use FwsDoctrineAuth\Controller;
-use Zend\Router\Http\Segment;
-use Zend\Router\Http\Literal;
+use Laminas\Router\Http\Segment;
+use Laminas\Router\Http\Literal;
 use FwsDoctrineAuth\Service\AuthContainerFactory;
 use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
-use Zend\Authentication\AuthenticationService;
+use Laminas\Authentication\AuthenticationService;
 use FwsDoctrineAuth\Form;
 use Doctrine\ORM\EntityManager;
 

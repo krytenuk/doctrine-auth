@@ -2,6 +2,11 @@
 
 namespace FwsDoctrineAuth\Form;
 
+/**
+ * LoginForm
+ *
+ * @author Garry Childs <info@freedomwebservices.net>
+ */
 class LoginForm extends DefaultForm
 {
     

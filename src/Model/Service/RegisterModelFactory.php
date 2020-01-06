@@ -2,7 +2,7 @@
 
 namespace FwsDoctrineAuth\Model\Service;
 
-use Zend\ServiceManager\Factory\FactoryInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
 use Interop\Container\ContainerInterface;
 use FwsDoctrineAuth\Model\RegisterModel;
 use Doctrine\ORM\EntityManager;
