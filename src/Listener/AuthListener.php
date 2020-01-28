@@ -82,7 +82,7 @@ class AuthListener
              */
             $response = $event->getResponse();
             $response->getHeaders()->addHeaderLine('Location', $url);
-            $response->setStatusCode(302);
+            $response->setStatusCode(403);
             $response->sendHeaders();
             exit;
         }

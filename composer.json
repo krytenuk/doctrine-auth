@@ -1,6 +1,6 @@
 {
     "name": "krytenuk/doctrine-auth",
-    "description": "Zend Framework 3 module for authentication using Doctrine",
+    "description": "Zend Framework 3/Laminas module for authentication using Doctrine",
     "require": {
         "php": "^7.0",
         "symfony/console": "^4.3",
