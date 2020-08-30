@@ -75,6 +75,7 @@ EOT
             }
         }
         $this->addRoles($output);
+        return 1;
     }
 
     /**
