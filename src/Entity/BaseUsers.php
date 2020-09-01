@@ -9,9 +9,7 @@ use DateTime;
 /**
  * Users
  * @ORM\Entity
- * @ORM\Table(name="users", indexes={
- *   @ORM\Index(name="user_id", columns={"user_id"}),
- * })
+ * @ORM\Table(name="users")
  * @ORM\InheritanceType("SINGLE_TABLE")
  * @ORM\DiscriminatorColumn(name="type", type="string")
  * @author Garry Childs <info@freedomwebservices.net>
@@ -46,7 +44,7 @@ class BaseUsers implements EntityInterface
     /**
      * @var integer
      *
-     * @ORM\Column(name="user_active", type="integer", nullable=false)
+     * @ORM\Column(name="user_active", type="boolean", nullable=false, options={"default":0})
      */
     private $userActive;
 
@@ -215,7 +213,7 @@ class BaseUsers implements EntityInterface
      *
      * @return BaseUserRoles
      */
-    public function getUserRole() : UserRoles
+    public function getUserRole(): UserRoles
     {
         return $this->userRole;
     }

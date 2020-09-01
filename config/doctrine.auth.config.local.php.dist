@@ -40,6 +40,7 @@ return [
                 'identity_label' => 'Email Address', // <- Form label for identity_property
                 'credential_label' => 'Password', // <- Form label for credential_property
         ],
+        'loginCallback' => '', // <- class to use as callback during login, must use __invoke() magic method
         'allowRegistration' => TRUE, // <- allow new users to register
         'registrationCallback' => '', // <- class to use as callback in registration, must use __invoke() magic method
         'autoRegistrationLogin' => FALSE, // <- Auto login after registration

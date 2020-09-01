@@ -106,6 +106,10 @@ class LoginModel extends AbstractModel
         $this->sessionManager = $sessionManager;
         $this->acl = $acl;
         $this->config = $config;
+
+        if (isset($config['doctrineAuth']['loginCallback'])) {
+            $this->callback = $config['doctrineAuth']['loginCallback'];
+        }
     }
 
     public function processForm(Parameters $postData)
@@ -132,7 +136,12 @@ class LoginModel extends AbstractModel
 
         if ($authResult->isValid()) {
             $this->identity = $authResult->getIdentity();
+
             if ($this->identity->isUserActive()) {
+                if (class_exists($this->callback)) {
+                    $callback = new $this->callback();
+                    $callback($this->identity, $this->form, $data);
+                }
                 $this->authService->getStorage()->write($this->identity);
                 return TRUE;
             }
@@ -202,7 +211,7 @@ class LoginModel extends AbstractModel
         }
         throw new DoctrineAuthException('Unable to redirect, nowhere to go!');
     }
-    
+
     public function getFormIdentityElement()
     {
         return $this->form->get($this->config['doctrine']['authentication']['orm_default']['identity_property']);
