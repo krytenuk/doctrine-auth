@@ -154,7 +154,8 @@ class LoginModel extends AbstractModel
                     $callback($this->identity, $this->form, $data);
                 }
                 $this->authService->getStorage()->write($this->identity);
-                return TRUE;
+                $this->entityManager->persist($this->identity);
+                return $this->flushEntityManager($this->entityManager);
             }
         }
         return FALSE;
