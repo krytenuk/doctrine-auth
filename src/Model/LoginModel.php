@@ -44,6 +44,11 @@ class LoginModel extends AbstractModel
      * @var DateTime
      */
     private $currentDateTime;
+    
+    /**
+     *
+     * @var BaseUsers
+     */
     private $identity;
 
     /**
@@ -69,6 +74,12 @@ class LoginModel extends AbstractModel
      * @var Array
      */
     private $config;
+
+    /**
+     *
+     * @var string
+     */
+    private $callback;
 
     /**
      *
