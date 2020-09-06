@@ -38,7 +38,7 @@ class BaseUsers implements EntityInterface
      * credential_property in config
      * @var string
      *
-     * @ORM\Column(name="password", type="string", length=60, nullable=false)
+     * @ORM\Column(name="password", type="string", length=60, nullable=true)
      */
     private $password;
     /**
