@@ -44,7 +44,7 @@ class IndexController extends AbstractActionController
      * 
      * @return ViewModel
      */
-    public function indexAction(): ViewModel
+    public function indexAction()
     {
         return $this->redirect()->toRoute('doctrine-auth/default', array('action' => 'login'));
     }
@@ -54,7 +54,7 @@ class IndexController extends AbstractActionController
      * 
      * @return ViewModel
      */
-    public function loginAction(): ViewModel
+    public function loginAction()
     {
         $viewModel = new ViewModel();
         if ($this->getRequest()->isPost()) {
@@ -76,18 +76,13 @@ class IndexController extends AbstractActionController
         return $viewModel;
     }
 
-    public function logoutAction(): ViewModel
+    public function logoutAction()
     {
         $this->loginModel->logout();
-        $this->refreshRedirect('auth/default', array('action' => 'login'));
-        $view = new ViewModel();
-        $view->setTemplate('fws-doctrine-auth/index/login');
-        $view->form = $this->loginModel->getForm();
-        $view->logout = TRUE;
-        return $view;
+        return $this->redirect()->toRoute('doctrine-auth/default', array('action' => 'login'));
     }
 
-    public function registerAction(): ViewModel
+    public function registerAction()
     {
         if ($this->registerModel->allowRegistration()) {
             $viewModel = new ViewModel();
