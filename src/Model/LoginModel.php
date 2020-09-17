@@ -166,6 +166,17 @@ class LoginModel extends AbstractModel
         $this->authService->clearIdentity();
         $this->sessionManager->destroy();
     }
+    
+    /**
+     * 
+     * @param BaseUsers $identity
+     * @return $this
+     */
+    public function setIdentity(BaseUsers $identity)
+    {
+        $this->identity = $identity;
+        return $this;
+    }
 
     /**
      * Determine if redirect exists

@@ -7,6 +7,8 @@ use Laminas\Authentication\AuthenticationService;
 use FwsDoctrineAuth\Controller\IndexController;
 use FwsDoctrineAuth\Model\Acl;
 use Exception;
+use Laminas\Json\Json;
+use Laminas\Http\Response;
 
 /**
  * Description of AuthListener
@@ -50,44 +52,60 @@ class AuthListener
          * User NOT allowed to access resource
          */
         if (!$acl->isAllowed($role, $controller, $action)) {
+            $request = $event->getRequest();
+            $response = $event->getResponse();
             /**
-             * On login page?
+             * ajax request
              */
-            if ($controller == IndexController::class && $action == 'login') {
-                $url = $event->getRouter()->assemble(array('action' => 'logout'), array('name' => 'doctrine-auth/default')); // url to logout
+            if ($request->isXmlHttpRequest()) {
+                $event->stopPropagation(true);
+                $response->setContent(Json::encode(array('redirect' => $event->getRouter()->assemble(array(), array('name' => 'auth/login', 'force_canonical' => TRUE)))));
+                $response->setStatusCode(Response::STATUS_CODE_200);
+                $response->getHeaders()->addHeaderLine('Content-Type', 'application/json');
+                $response->send();
+                exit;
             } else {
-                $url = $event->getRouter()->assemble(array('action' => 'login'), array('name' => 'doctrine-auth/default')); // url to login
-                /**
-                 * User not logged in
-                 */
-                if ($role == $acl->getDefultRole()) {
+                if ($controller == IndexController::class && $action == 'login') {
+                    $url = $event->getRouter()->assemble(array('action' => 'logout'), array('name' => 'doctrine-auth/default')); // url to logout
+                } else {
                     /**
-                     * User trying to access restricted page?
+                     * On login page?
                      */
-                    if ($controller != 'FwsDoctrineAuth\Controller\IndexController') {
+                    $url = $event->getRouter()->assemble(array('action' => 'login'), array('name' => 'doctrine-auth/default')); // url to login
+                    /**
+                     * User not logged in
+                     */
+                    if ($role == $acl->getDefultRole()) {
                         /**
-                         * Page user is trying to access
+                         * User trying to access restricted page?
                          */
-                        $container = $serviceManager->get('authContainer');
-                        $container->redirect = array(
-                            'url' => $event->getRouter()->getRequestUri()->toString(),
-                            'controller' => $controller,
-                            'action' => $action,
-                        );
+                        if ($controller != 'FwsDoctrineAuth\Controller\IndexController') {
+                            /**
+                             * Page user is trying to access
+                             */
+                            $container = $serviceManager->get('authContainer');
+                            $container->redirect = array(
+                                'url' => $event->getRouter()->getRequestUri()->toString(),
+                                'controller' => $controller,
+                                'action' => $action,
+                            );
+                        }
                     }
                 }
+
+
+                /**
+                 * Redirect with 302 http status code
+                 */
+                $response = $event->getResponse();
+                $response->getHeaders()->addHeaderLine('Location', $url);
+                $response->setStatusCode(403);
+                $response->sendHeaders();
+                exit;
             }
-            /**
-             * Redirect with 302 http status code
-             */
-            $response = $event->getResponse();
-            $response->getHeaders()->addHeaderLine('Location', $url);
-            $response->setStatusCode(403);
-            $response->sendHeaders();
-            exit;
         }
     }
-    
+
     /**
      * 
      * @param string $controller

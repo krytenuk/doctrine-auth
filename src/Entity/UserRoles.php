@@ -6,7 +6,10 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * UserRoles
  * @ORM\Entity(repositoryClass="FwsDoctrineAuth\Entity\Repository\UserRolesRepository")
- * @ORM\Table(name="user_roles", uniqueConstraints={@ORM\UniqueConstraint(name="role_idx", columns={"role"})})
+ * @ORM\Table(name="user_roles", 
+ * options={"collate"="latin1_swedish_ci", "charset"="latin1", "engine"="InnoDB"}, 
+ * uniqueConstraints={@ORM\UniqueConstraint(name="role_idx", columns={"role"})}
+ * )
  * @author Garry Childs <info@freedomwebservices.net>
  */
 class UserRoles implements EntityInterface

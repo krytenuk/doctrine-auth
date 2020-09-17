@@ -9,7 +9,7 @@ use DateTime;
 /**
  * Users
  * @ORM\Entity
- * @ORM\Table(name="users")
+ * @ORM\Table(name="users", options={"collate"="latin1_swedish_ci", "charset"="latin1", "engine"="InnoDB"})
  * @ORM\InheritanceType("SINGLE_TABLE")
  * @ORM\DiscriminatorColumn(name="type", type="string")
  * @author Garry Childs <info@freedomwebservices.net>
