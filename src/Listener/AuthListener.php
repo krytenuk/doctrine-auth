@@ -59,7 +59,7 @@ class AuthListener
              */
             if ($request->isXmlHttpRequest()) {
                 $event->stopPropagation(true);
-                $response->setContent(Json::encode(array('redirect' => $event->getRouter()->assemble(array(), array('name' => 'auth/login', 'force_canonical' => TRUE)))));
+                $response->setContent(Json::encode(array('redirect' => $event->getRouter()->assemble(array('action' => 'login'), array('name' => 'doctrine-auth/default', 'force_canonical' => TRUE)))));
                 $response->setStatusCode(Response::STATUS_CODE_200);
                 $response->getHeaders()->addHeaderLine('Content-Type', 'application/json');
                 $response->send();
