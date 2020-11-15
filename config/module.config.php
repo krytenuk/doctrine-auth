@@ -52,6 +52,20 @@ return [
                         ],
                         'may_terminate' => TRUE,
                     ],
+                    'passwordReset' => [
+                        'type' => Segment::class,
+                        'options' => [
+                            'route' => '/password-reset[/:code]',
+                            'constraints' => [
+                                'code' => '[a-zA-Z0-9]*',
+                            ],
+                            'defaults' => [
+                                'controller' => Controller\IndexController::class,
+                                'action' => 'password-reset',
+                            ],
+                        ],
+                        'may_terminate' => TRUE,
+                    ],
                 ],
                 'may_terminate' => TRUE,
             ],
@@ -72,6 +86,7 @@ return [
             Model\InitModel::class => Model\Service\InitModelFactory::class,
             Model\LoginModel::class => Model\Service\LoginModelFactory::class,
             Model\RegisterModel::class => Model\Service\RegisterModelFactory::class,
+            Model\ForgotPasswordModel::class => Model\Service\ForgotPasswordModelFactory::class,
         ],
         'aliases' => [
             'acl' => Model\Acl::class,
@@ -117,6 +132,8 @@ return [
         'factories' => [
             Form\LoginForm::class => Form\Service\LoginFormFactory::class,
             Form\RegisterForm::class => Form\Service\RegisterFormFactory::class,
+            Form\ResetPasswordForm::class => Form\Service\ResetPasswordFormFactory::class,
+            Form\EmailForm::class => Form\Service\EmailFormFactory::class,
         ],
     ],
 ];

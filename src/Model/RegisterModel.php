@@ -199,5 +199,14 @@ class RegisterModel extends AbstractModel
         }
         throw new DoctrineAuthException('Unable to get identity and/or credential value(s)');
     }
+    
+    /**
+     * 
+     * @return array
+     */
+    public function getConfig()
+    {
+        return $this->config;
+    }
 
 }

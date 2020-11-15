@@ -239,5 +239,19 @@ class LoginModel extends AbstractModel
     {
         return $this->form->get($this->config['doctrine']['authentication']['orm_default']['identity_property']);
     }
+    
+    public function useForgotPassword()
+    {
+        return isset($this->config['doctrineAuth']['allowPasswordReset']) && $this->config['doctrineAuth']['allowPasswordReset'] == TRUE;
+    }
+    
+    /**
+     * 
+     * @return array
+     */
+    public function getConfig()
+    {
+        return $this->config;
+    }
 
 }

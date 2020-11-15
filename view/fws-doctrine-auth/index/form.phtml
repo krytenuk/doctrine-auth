@@ -1,6 +1,12 @@
 <?php
-use Zend\Form\Element\Button;
 
+use Laminas\Form\Element\Button;
+use Laminas\Form\Element\Password;
+
+if ($this->form->getName() == 'reset-password') {
+    $this->headScript()
+            ->prependFile('https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js');
+}
 $this->form->prepare();
 echo $this->form()->openTag($this->form);
 ?>
@@ -8,8 +14,39 @@ echo $this->form()->openTag($this->form);
     <?php foreach ($this->form as $element): ?>
         <?php if ($element->getLabel() != null && !$element instanceof Button): ?>
             <dt><?php echo $this->formLabel($element) ?></dt>
-        <?php endif; ?>
-        <dd><?php echo $this->formElement($element) . $this->formElementErrors($element) ?></dd>
-    <?php endforeach; ?>
+            <?php endif; ?>
+        <dd>
+            <?php
+            echo $this->formElement($element);
+            if ($this->form->getName() == 'reset-password' && $element instanceof Password) {
+                echo '&nbsp;<button class="show-hide-password" value="show">Show</button>';
+            }
+            echo $this->formElementErrors($element);
+            ?>
+        </dd>
+<?php endforeach; ?>
 </dl>
 <?php echo $this->form()->closeTag(); ?>
+<?php if ($this->form->getName() == 'reset-password'): ?>
+    <script type="text/javascript">
+        $('button.show-hide-password').on('click', function (event) {
+            event.preventDefault();
+            var element = $(this).prev();
+            var type;
+            if (element.prop('type') === 'password') {
+                type = 'text';
+                $(this).empty().text('Hide');
+            } else {
+                type = 'password';
+                $(this).empty().text('Show');
+            }
+            var attributes = element.prop('attributes');
+            var passwordElement = $('<input>');
+            $.each(attributes, function () {
+                passwordElement.prop(this.name, this.value);
+            });
+            passwordElement.prop('type', type).val(element.val());
+            $(element).replaceWith(passwordElement);
+        });
+    </script>
+<?php endif; ?>

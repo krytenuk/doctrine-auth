@@ -6,6 +6,7 @@ use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\View\Model\ViewModel;
 use FwsDoctrineAuth\Model;
 use Laminas\Mvc\I18n\Translator;
+use FwsDoctrineAuth\Model\ForgotPasswordModel;
 
 /**
  * IndexController
@@ -25,18 +26,30 @@ class IndexController extends AbstractActionController
      * @var Model\RegisterModel
      */
     protected $registerModel;
-    
+
+    /**
+     *
+     * @var ForgotPasswordModel
+     */
+    protected $forgotPasswordModel;
+
     /**
      *
      * @var Translator 
      */
     protected $translator;
 
-    public function __construct(Model\LoginModel $loginModel, Model\RegisterModel $registerModel, Translator $translator)
+    public function __construct(
+            Model\LoginModel $loginModel,
+            Model\RegisterModel $registerModel,
+            Model\ForgotPasswordModel $forgotPasswordModel,
+            Translator $translator
+    )
     {
         $this->loginModel = $loginModel;
         $this->registerModel = $registerModel;
         $this->translator = $translator;
+        $this->forgotPasswordModel = $forgotPasswordModel;
     }
 
     /**
@@ -57,6 +70,7 @@ class IndexController extends AbstractActionController
     public function loginAction()
     {
         $viewModel = new ViewModel();
+        $viewModel->config = $this->loginModel->getConfig();
         if ($this->getRequest()->isPost()) {
             if ($this->loginModel->processForm($this->getRequest()->getPost())) {
                 if ($this->loginModel->login()) {
@@ -65,7 +79,7 @@ class IndexController extends AbstractActionController
                     } else {
                         $redirect = $this->loginModel->getDefaultRedirect();
                         return $this->redirect()->toRoute($redirect['route'], $redirect['params'], $redirect['options']);
-                    }                    
+                    }
                 } else {
                     $this->loginModel->getFormIdentityElement()->setMessages([$this->translator->translate('User not found')]);
                 }
@@ -73,6 +87,7 @@ class IndexController extends AbstractActionController
         }
 
         $viewModel->form = $this->loginModel->getForm();
+        $viewModel->useForgotPassword = $this->loginModel->useForgotPassword();
         return $viewModel;
     }
 
@@ -85,7 +100,9 @@ class IndexController extends AbstractActionController
     public function registerAction()
     {
         if ($this->registerModel->allowRegistration()) {
+        $viewModel->config = $this->registerModel->getConfig();
             $viewModel = new ViewModel();
+        $viewModel->config = $this->forgotPasswordModel->getConfig();
             if ($this->getRequest()->isPost()) {
                 if ($this->registerModel->processForm($this->getRequest()->getPost())) {
                     if ($this->registerModel->autoLogin()) {
@@ -107,6 +124,51 @@ class IndexController extends AbstractActionController
             return $viewModel;
         }
         return $this->redirect()->toRoute('doctrine-auth/default', array('action' => 'login'));
+    }
+
+    public function passwordResetAction()
+    {
+        $viewModel = new ViewModel();
+        $viewModel->config = $this->forgotPasswordModel->getConfig();
+        $request = $this->getRequest();
+        if ($code = $this->params()->fromRoute('code', FALSE)) {
+            $viewModel->code = $code;
+            if ($request->isPost()) {
+                $postData = $request->getPost();
+                if ($this->forgotPasswordModel->findUser($code)) {
+                    if ($this->forgotPasswordModel->processResetForm($postData)) {
+                        $viewModel->passwordReset = TRUE;
+                    } else {
+                        $viewModel->passwordReset = FALSE;
+                    }
+                } else {
+                    $viewModel->invalidLink = TRUE;
+                }
+            } else {
+                if ($this->forgotPasswordModel->findUser($code)) {
+                    $viewModel->resetForm = $this->forgotPasswordModel->getResetPasswordForm();
+                } else {
+                    $viewModel->invalidLink = TRUE;
+                }
+            }
+            return $viewModel;
+        } else {
+            if ($request->isPost()) {
+                $postData = $request->getPost();
+                if ($this->forgotPasswordModel->processEmailForm($postData)) {
+                    if ($this->forgotPasswordModel->sendEmail()) {
+                        $viewModel->emailSent = TRUE;
+                        return $viewModel;
+                    }
+                } else {
+                    if ($this->forgotPasswordModel->isFormValid()) {
+                        $viewModel->emailSent = FALSE;
+                    }
+                }
+            }
+            $viewModel->emailForm = $this->forgotPasswordModel->getEmailForm();
+        }
+        return $viewModel;
     }
 
 }

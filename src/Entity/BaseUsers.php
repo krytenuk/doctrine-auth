@@ -71,6 +71,14 @@ class BaseUsers implements EntityInterface
      * })
      */
     private $userRole;
+
+    /**
+     * @var PasswordReminder
+     *
+     * @ORM\OneToOne(targetEntity="FwsDoctrineAuth\Entity\PasswordReminder", cascade={"persist", "persist"}, mappedBy="user", orphanRemoval=true, cascade={"persist"})
+     * })
+     */
+    private $passwordReminder;
     
     public function __construct()
     {
@@ -217,5 +225,31 @@ class BaseUsers implements EntityInterface
     {
         return $this->userRole;
     }
+    
+    public function hasPaswordReminder()
+    {
+        return (bool) $this->getPasswordReminder();
+    }
+
+        /**
+     * 
+     * @return \FwsDoctrineAuth\Entity\PasswordReminder|NULL
+     */
+    public function getPasswordReminder()
+    {
+        return $this->passwordReminder;
+    }
+
+    /**
+     * 
+     * @param \FwsDoctrineAuth\Entity\PasswordReminder $passwordReminder
+     * @return $this
+     */
+    public function setPasswordReminder(PasswordReminder $passwordReminder = NULL)
+    {
+        $this->passwordReminder = $passwordReminder;
+        return $this;
+    }
+
 
 }
