@@ -10,7 +10,7 @@ namespace FwsDoctrineAuth\Form;
 class LoginForm extends DefaultForm
 {
     
-    public function init()
+    public function init(): void
     {
         parent::init();
         $this->get('submit')->setValue('Login');

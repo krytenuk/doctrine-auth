@@ -22,8 +22,15 @@ class ResetPasswordFormFactory implements FactoryInterface
      * @return RegisterForm
      */
     public function __invoke(ContainerInterface $container, $requestedName, Array $options = null)
-    {       
-        return new ResetPasswordForm($container->get('config'));
+    {   
+        $config = $container->get('config');
+        if (!isset($config['doctrineAuth']['newPasswordForm'])) {
+            throw new DoctrineAuthException('"newPasswordForm" not found in config');
+        }
+        if (!class_exists($config['doctrineAuth']['newPasswordForm'])) {
+            throw new DoctrineAuthException(sprintf('New password form "%s" not found', $config['doctrineAuth']['newPasswordForm']));
+        }  
+        return new $config['doctrineAuth']['newPasswordForm']($container->get('config'));
     }
 
 }

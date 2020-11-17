@@ -25,7 +25,12 @@ class RegisterFormFactory implements FactoryInterface
     public function __invoke(ContainerInterface $container, $requestedName, Array $options = null)
     {
         $config = $container->get('config');
-        
+        if (!isset($config['doctrineAuth']['registrationForm'])) {
+            throw new DoctrineAuthException('"registrationForm" not found in config');
+        }
+        if (!class_exists($config['doctrineAuth']['registrationForm'])) {
+            throw new DoctrineAuthException(sprintf('Registration form "%s" not found', $config['doctrineAuth']['registrationForm']));
+        }
         $form = new $config['doctrineAuth']['registrationForm'](
                 $container->get(EntityManager::class),
                 $config);

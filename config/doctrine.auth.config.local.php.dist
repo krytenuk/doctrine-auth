@@ -46,6 +46,11 @@ return [
          */
         'loginForm' => Form\LoginForm::class,
         'loginCallback' => NULL, // <- class to use as callback during login, must use __invoke() magic method
+        /**
+         * Password reset forms
+         */
+        'emailResetLinkForm' => Form\EmailForm::class,
+        'newPasswordForm' => Form\ResetPasswordForm::class,
         'allowPasswordReset' => TRUE, // Show reset password link on login form and allow password reset
         'passwordLinkActiveFor' => 24, // Password reset link active for hours
         'fromEmail' => 'no-reply@example.com', // Email address for password reset link email, set reply to and from email

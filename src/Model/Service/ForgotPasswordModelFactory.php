@@ -6,10 +6,7 @@ use Laminas\ServiceManager\Factory\FactoryInterface;
 use Interop\Container\ContainerInterface;
 use FwsDoctrineAuth\Model\ForgotPasswordModel;
 use Doctrine\ORM\EntityManager;
-use FwsDoctrineAuth\Form\ResetPasswordForm;
-use FwsDoctrineAuth\Form\EmailForm;
 use Laminas\View\Renderer\PhpRenderer;
-use Laminas\View\Model\ViewModel;
 
 /**
  * ForgotPasswordModelFactory
@@ -21,10 +18,24 @@ class ForgotPasswordModelFactory implements FactoryInterface
 
     public function __invoke(ContainerInterface $container, $requestedName, Array $options = null)
     {
+        $config = $container->get('config');
+        if (!isset($config['doctrineAuth']['emailResetLinkForm'])) {
+            throw new DoctrineAuthException('"emailResetLinkForm" not found in config');
+        }
+        if (!class_exists($config['doctrineAuth']['emailResetLinkForm'])) {
+            throw new DoctrineAuthException(sprintf('Email reset link form "%s" not found', $config['doctrineAuth']['emailResetLinkForm']));
+        }
+        if (!isset($config['doctrineAuth']['newPasswordForm'])) {
+            throw new DoctrineAuthException('"newPasswordForm" not found in config');
+        }
+        if (!class_exists($config['doctrineAuth']['newPasswordForm'])) {
+            throw new DoctrineAuthException(sprintf('New password form "%s" not found', $config['doctrineAuth']['newPasswordForm']));
+        }
+        
         return new ForgotPasswordModel(
                 $container->get(EntityManager::class),
-                $container->get('FormElementManager')->get(ResetPasswordForm::class),
-                $container->get('FormElementManager')->get(EmailForm::class),
+                $container->get('FormElementManager')->get($config['doctrineAuth']['newPasswordForm']),
+                $container->get('FormElementManager')->get($config['doctrineAuth']['emailResetLinkForm']),
                 $container->get(PhpRenderer::class),
                 $container->get('config')
         );

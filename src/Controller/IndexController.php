@@ -100,9 +100,9 @@ class IndexController extends AbstractActionController
     public function registerAction()
     {
         if ($this->registerModel->allowRegistration()) {
-        $viewModel->config = $this->registerModel->getConfig();
             $viewModel = new ViewModel();
-        $viewModel->config = $this->forgotPasswordModel->getConfig();
+            $viewModel->config = $this->registerModel->getConfig();
+            $viewModel->config = $this->forgotPasswordModel->getConfig();
             if ($this->getRequest()->isPost()) {
                 if ($this->registerModel->processForm($this->getRequest()->getPost())) {
                     if ($this->registerModel->autoLogin()) {

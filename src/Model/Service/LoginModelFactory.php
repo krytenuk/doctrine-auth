@@ -35,9 +35,16 @@ class LoginModelFactory implements FactoryInterface
         if (array_key_exists('timezone', $config)) {
             $datetime->setTimezone(new DateTimeZone($config['timezone']));
         }
+        
+        if (!isset($config['doctrineAuth']['loginForm'])) {
+            throw new DoctrineAuthException('"loginForm" not found in config');
+        }
+        if (!class_exists($config['doctrineAuth']['loginForm'])) {
+            throw new DoctrineAuthException(sprintf('Login form "%s" not found', $config['doctrineAuth']['loginForm']));
+        }
 
         return new LoginModel(
-                $container->get('FormElementManager')->get(LoginForm::class),
+                $container->get('FormElementManager')->get($config['doctrineAuth']['loginForm']),
                 $container->get(AuthenticationService::class),
                 $container->get(EntityManager::class),
                 $datetime,

@@ -4,7 +4,6 @@ namespace FwsDoctrineAuth\Form\Service;
 
 use Laminas\ServiceManager\Factory\FactoryInterface;
 use Interop\Container\ContainerInterface;
-use FwsDoctrineAuth\Form\EmailForm;
 use Doctrine\ORM\EntityManager;
 
 /**
@@ -23,8 +22,15 @@ class EmailFormFactory implements FactoryInterface
      * @return RegisterForm
      */
     public function __invoke(ContainerInterface $container, $requestedName, Array $options = null)
-    {       
-        return new EmailForm($container->get(EntityManager::class), $container->get('config'));
+    {   
+        $config = $container->get('config');
+        if (!isset($config['doctrineAuth']['emailResetLinkForm'])) {
+            throw new DoctrineAuthException('"emailResetLinkForm" not found in config');
+        }
+        if (!class_exists($config['doctrineAuth']['emailResetLinkForm'])) {
+            throw new DoctrineAuthException(sprintf('Email reset link form "%s" not found', $config['doctrineAuth']['emailResetLinkForm']));
+        }
+        return new $config['doctrineAuth']['emailResetLinkForm']($container->get(EntityManager::class), $container->get('config'));
     }
 
 }
