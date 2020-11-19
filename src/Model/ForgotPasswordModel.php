@@ -156,9 +156,10 @@ class ForgotPasswordModel extends AbstractModel
         $body->setParts(array($html));
 
         $message = new Message();
+        $message->setEncoding('utf-8');
         $message->setBody($body);
         $message->setFrom($this->config['doctrineAuth']['fromEmail'], $this->config['doctrineAuth']['siteName']);
-        $message->addTo($this->userEntity->getEmailAddress(), $this->userEntity->getEmailAddress());
+        $message->addTo($this->userEntity->getEmailAddress());
         $message->setSubject(sprintf('%s password reset request', $this->config['doctrineAuth']['siteName']));
 
         return $this->sendMail($message);
