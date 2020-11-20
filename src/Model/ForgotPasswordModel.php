@@ -110,6 +110,9 @@ class ForgotPasswordModel extends AbstractModel
             if ($date > $today) {
                 $this->userEntity = $this->reminderEntity->getUser();
                 return TRUE;
+            } else {
+                $this->entityManager->remove($this->reminderEntity);
+                $this->flushEntityManager($this->entityManager);
             }
         }
         return FALSE;
