@@ -226,7 +226,7 @@ class BaseUsers implements EntityInterface
         return $this->userRole;
     }
     
-    public function hasPaswordReminder()
+    public function hasPasswordReminder()
     {
         return (bool) $this->getPasswordReminder();
     }
