@@ -3,10 +3,6 @@
 use Laminas\Form\Element\Button;
 use Laminas\Form\Element\Password;
 
-if ($this->form->getName() == 'reset-password') {
-    $this->headScript()
-            ->prependFile('https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js');
-}
 $this->form->prepare();
 echo $this->form()->openTag($this->form);
 ?>
@@ -14,7 +10,7 @@ echo $this->form()->openTag($this->form);
     <?php foreach ($this->form as $element): ?>
         <?php if ($element->getLabel() != null && !$element instanceof Button): ?>
             <dt><?php echo $this->formLabel($element) ?></dt>
-            <?php endif; ?>
+        <?php endif; ?>
         <dd>
             <?php
             echo $this->formElement($element);
@@ -24,29 +20,33 @@ echo $this->form()->openTag($this->form);
             echo $this->formElementErrors($element);
             ?>
         </dd>
-<?php endforeach; ?>
+    <?php endforeach; ?>
 </dl>
 <?php echo $this->form()->closeTag(); ?>
 <?php if ($this->form->getName() == 'reset-password'): ?>
     <script type="text/javascript">
-        $('button.show-hide-password').on('click', function (event) {
-            event.preventDefault();
-            var element = $(this).prev();
-            var type;
-            if (element.prop('type') === 'password') {
-                type = 'text';
-                $(this).empty().text('Hide');
-            } else {
-                type = 'password';
-                $(this).empty().text('Show');
+        window.onload = function () {
+            var buttons = document.getElementsByClassName('show-hide-password')
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].onclick = function showHidePassword(event) {
+                    event.preventDefault();
+                    var element = this.previousElementSibling;
+                    var type;
+
+                    if (element.getAttribute('type') === 'password') {
+                        type = 'text';
+                        this.innerHTML = 'Hide';
+                    } else {
+                        type = 'password';
+                        this.innerHTML = 'Show';
+                    }
+                    var attributes = element.attributes;
+                    for (var i = 0; i < attributes.length; i++) {
+                        element.setAttribute(attributes[i].name, attributes[i].value);
+                    }
+                    element.setAttribute('type', type);
+                }
             }
-            var attributes = element.prop('attributes');
-            var passwordElement = $('<input>');
-            $.each(attributes, function () {
-                passwordElement.prop(this.name, this.value);
-            });
-            passwordElement.prop('type', type).val(element.val());
-            $(element).replaceWith(passwordElement);
-        });
+        }
     </script>
 <?php endif; ?>

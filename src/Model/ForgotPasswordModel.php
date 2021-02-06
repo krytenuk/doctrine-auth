@@ -124,7 +124,7 @@ class ForgotPasswordModel extends AbstractModel
         if ($this->userEntity instanceof BaseUsers) {
             $this->emailForm->setData($postData);
             if ($this->emailForm->isValid()) {
-                if ($this->userEntity->hasPaswordReminder()) {
+                if ($this->userEntity->hasPasswordReminder()) {
                     $this->reminderEntity = $this->userEntity->getPasswordReminder();
                 } else {
                     $this->reminderEntity = new PasswordReminder();

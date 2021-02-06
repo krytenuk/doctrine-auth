@@ -42,8 +42,8 @@ class EmailForm extends Form implements InputFilterProviderInterface
 
     public function init(): void
     {
-        if (!isset($this->config['doctrine']['authentication']['orm_default']['identity_property']) || !isset($this->config['doctrine']['authentication']['orm_default']['credential_property'])) {
-            throw new DoctrineAuthException('identity_property and/or credential_property not found in config');
+        if (!isset($this->config['doctrine']['authentication']['orm_default']['identity_property'])) {
+            throw new DoctrineAuthException('identity_property not found in config');
         }
 
         $this->add([
@@ -94,7 +94,7 @@ class EmailForm extends Form implements InputFilterProviderInterface
                         'options' => [
                             'target_class' => $this->config['doctrine']['authentication']['orm_default']['identity_class'],
                             'object_repository' => $this->entityManager->getRepository($this->config['doctrine']['authentication']['orm_default']['identity_class']),
-                            'fields' => [$this->config['doctrine']['authentication']['orm_default']['identity_property']],
+                            'fields' => [$this->getIdentityName()],
                         ],
                     ],
                 ]
