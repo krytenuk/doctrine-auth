@@ -147,7 +147,7 @@ class ForgotPasswordModel extends AbstractModel
     public function sendEmail()
     {
         $viewModel = new ViewModel();
-        $viewModel->setTemplate('fws-doctrine-auth/emails/password-reset.phtml');
+        $viewModel->setTemplate('fws-doctrine-auth/emails/password-reset');
         $viewModel->siteName = $this->config['doctrineAuth']['siteName'];
         $viewModel->code = $this->reminderEntity->getCode();
         $emailHtmlBody = $this->phpRenderer->render($viewModel);
