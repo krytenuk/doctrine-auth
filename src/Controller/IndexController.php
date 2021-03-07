@@ -163,6 +163,7 @@ class IndexController extends AbstractActionController
                 } else {
                     if ($this->forgotPasswordModel->isFormValid()) {
                         $viewModel->emailSent = FALSE;
+                        return $viewModel;
                     }
                 }
             }

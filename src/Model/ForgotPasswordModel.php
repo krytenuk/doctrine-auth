@@ -120,10 +120,10 @@ class ForgotPasswordModel extends AbstractModel
 
     public function processEmailForm(Parameters $postData)
     {
-        $this->userEntity = $this->entityManager->getRepository(BaseUsers::class)->findOneBy(['emailAddress' => $postData[$this->emailForm->getIdentityName()]]);
-        if ($this->userEntity instanceof BaseUsers) {
-            $this->emailForm->setData($postData);
-            if ($this->emailForm->isValid()) {
+        $this->emailForm->setData($postData);
+        if ($this->emailForm->isValid()) {
+            $this->userEntity = $this->entityManager->getRepository($this->config['doctrine']['authentication']['orm_default']['identity_class'])->findOneBy([$this->config['doctrine']['authentication']['orm_default']['identity_property'] => $this->emailForm->getData()[$this->emailForm->getIdentityName()]]);
+            if ($this->userEntity instanceof BaseUsers) {
                 if ($this->userEntity->hasPasswordReminder()) {
                     $this->reminderEntity = $this->userEntity->getPasswordReminder();
                 } else {

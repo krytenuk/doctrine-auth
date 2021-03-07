@@ -30,7 +30,7 @@ class BaseUsers implements EntityInterface
      * identity_property in config
      * @var string
      *
-     * @ORM\Column(name="email_address", type="string", length=60, nullable=true)
+     * @ORM\Column(name="email_address", type="string", length=254, nullable=true)
      */
     private $emailAddress;
 
@@ -38,7 +38,7 @@ class BaseUsers implements EntityInterface
      * credential_property in config
      * @var string
      *
-     * @ORM\Column(name="password", type="string", length=60, nullable=true)
+     * @ORM\Column(name="password", type="string", length=256, nullable=true)
      */
     private $password;
     /**
@@ -178,7 +178,7 @@ class BaseUsers implements EntityInterface
      * 
      * @return DateTime
      */
-    public function getDateCreated(): DateTime
+    public function getDateCreated()
     {
         return $this->dateCreated;
     }
@@ -198,7 +198,7 @@ class BaseUsers implements EntityInterface
      * 
      * @return DateTime
      */
-    public function getDateModified(): DateTime
+    public function getDateModified()
     {
         return $this->dateModified;
     }
@@ -221,7 +221,7 @@ class BaseUsers implements EntityInterface
      *
      * @return BaseUserRoles
      */
-    public function getUserRole(): UserRoles
+    public function getUserRole()
     {
         return $this->userRole;
     }

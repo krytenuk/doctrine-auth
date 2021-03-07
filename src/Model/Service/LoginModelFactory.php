@@ -5,7 +5,6 @@ namespace FwsDoctrineAuth\Model\Service;
 use Laminas\ServiceManager\Factory\FactoryInterface;
 use Interop\Container\ContainerInterface;
 use FwsDoctrineAuth\Model\LoginModel;
-use FwsDoctrineAuth\Form\LoginForm;
 use Laminas\Authentication\AuthenticationService;
 use Doctrine\ORM\EntityManager;
 use Laminas\Session\SessionManager;

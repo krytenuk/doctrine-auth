@@ -28,7 +28,7 @@ echo $this->form()->openTag($this->form);
         window.onload = function () {
             var buttons = document.getElementsByClassName('show-hide-password')
             for (var i = 0; i < buttons.length; i++) {
-                buttons[i].onclick = function showHidePassword(event) {
+                buttons[i].onclick = function (event) {
                     event.preventDefault();
                     var element = this.previousElementSibling;
                     var type;
