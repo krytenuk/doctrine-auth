@@ -36,11 +36,9 @@ class NavigationListener
             if ($auth->hasIdentity()) {
                 $user = $auth->getIdentity();
                 if ($user instanceof BaseUsers) {
-\FwsLogger\InfoLogger::vardump($user->getUserRole()->getRole());
                     $role = $user->getUserRole()->getRole();
                 }
             }
-            \FwsLogger\InfoLogger::vardump($role);
             $plugin->setAcl($acl);
             $plugin->setRole($role);
         }
