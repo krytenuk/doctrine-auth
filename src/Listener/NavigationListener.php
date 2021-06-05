@@ -4,9 +4,10 @@ namespace FwsDoctrineAuth\Listener;
 
 use Laminas\Mvc\MvcEvent;
 use Laminas\Authentication\AuthenticationService;
+use FwsDoctrineAuth\Entity\BaseUsers;
 
 /**
- * Description of NavigationListener
+ * NavigationListener
  *
  * @author Garry Childs <info@freedomwebservices.net>
  */
@@ -23,7 +24,7 @@ class NavigationListener
 
         $config = $serviceManager->get('config');
 
-        if (isset($config['doctrineAuthAcl']['injectAclIntoNavigation']) && $config['doctrineAuthAcl']['injectAclIntoNavigation'] == TRUE) {
+        if (isset($config['doctrineAuthAcl']['injectAclIntoNavigation']) && $config['doctrineAuthAcl']['injectAclIntoNavigation'] === TRUE) {
             /* @var \Laminas\View\Helper\Navigation $plugin */
             $plugin = $serviceManager->get('ViewHelperManager')->get('navigation');
 
@@ -31,12 +32,15 @@ class NavigationListener
 
             $auth = $serviceManager->get(AuthenticationService::class);
 
-            $role = $acl->getDefultRole();
-
+            $role = $acl->getDefultRole();;
             if ($auth->hasIdentity()) {
                 $user = $auth->getIdentity();
-                $role = $user->getUserRole()->getRole();
+                if ($user instanceof BaseUsers) {
+\FwsLogger\InfoLogger::vardump($user->getUserRole()->getRole());
+                    $role = $user->getUserRole()->getRole();
+                }
             }
+            \FwsLogger\InfoLogger::vardump($role);
             $plugin->setAcl($acl);
             $plugin->setRole($role);
         }

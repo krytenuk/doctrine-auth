@@ -9,6 +9,7 @@ use FwsDoctrineAuth\Model\Acl;
 use Exception;
 use Laminas\Json\Json;
 use Laminas\Http\Response;
+use FwsDoctrineAuth\Entity\BaseUsers;
 
 /**
  * Description of AuthListener
@@ -34,7 +35,9 @@ class AuthListener
         $role = $acl->getDefultRole();
         if ($auth->hasIdentity()) {
             $user = $auth->getIdentity();
-            $role = $user->getUserRole()->getRole();
+            if ($user instanceof BaseUsers) {
+                $role = $user->getUserRole()->getRole();
+            }
         }
 
         $controller = $routeMatch->getParam('controller');

@@ -9,7 +9,12 @@ use DateTime;
 /**
  * PasswordReminder
  * @ORM\Entity
- * @ORM\Table(name="password_reminder", options={"collate"="latin1_swedish_ci", "charset"="latin1", "engine"="InnoDB"})
+ * @ORM\Table(name="password_reminder", options={"collate"="latin1_swedish_ci", "charset"="latin1", "engine"="InnoDB"},
+ *    uniqueConstraints={
+ *        @ORM\UniqueConstraint(name="code", columns={"code"}),
+ *        @ORM\UniqueConstraint(name="user_id", columns={"user_id"}),
+ *    },
+ * )
  * @author Garry Childs <info@freedomwebservices.net>
  */
 class PasswordReminder implements EntityInterface
@@ -35,7 +40,7 @@ class PasswordReminder implements EntityInterface
      *
      * @ORM\OneToOne(targetEntity="FwsDoctrineAuth\Entity\BaseUsers", inversedBy="passwordReminder")
      * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="user_id", referencedColumnName="user_id")
+     *   @ORM\JoinColumn(name="user_id", referencedColumnName="user_id", onDelete="cascade")
      * })
      */
     private $user;

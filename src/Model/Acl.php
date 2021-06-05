@@ -72,7 +72,7 @@ class Acl extends LaminasAcl
                     }
                 }
                 $this->addRole(new Role($role['id'], $redirect), $role['parents']);
-                if (array_key_exists('default', $role) && $role['default'] == TRUE) {
+                if (array_key_exists('default', $role) && $role['default'] === TRUE) {
                     $this->defaultRole = $role['id'];
                 }
             }
@@ -82,7 +82,7 @@ class Acl extends LaminasAcl
         } else {
             throw new DoctrineAuthException('No roles found in config');
         }
-        if (isset($config['doctrineAuth']['allowRegistration']) && $config['doctrineAuth']['allowRegistration'] == TRUE) {
+        if (isset($config['doctrineAuth']['allowRegistration']) && $config['doctrineAuth']['allowRegistration'] === TRUE) {
             if (array_key_exists('defaultRegisterRole', $config['doctrineAuthAcl'])) {
                 if ($this->hasRole($config['doctrineAuthAcl']['defaultRegisterRole'])) {
                     $this->defaultRegistrationRole = $this->getRole($config['doctrineAuthAcl']['defaultRegisterRole']);
