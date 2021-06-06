@@ -9,3 +9,6 @@ Added index annotations on entities
 Added use statement for DoctrineAuthException in ForgotPasswordModelFactory
 Set strict comparisons in ACL and Navigation Listener
 Added use statement for FwsDoctrineAuth\Entity\BaseUsers to AuthListener and NavigationListener
+
+0.1.15
+Fixed issue where Auth listener was causing phpunit to fail silently

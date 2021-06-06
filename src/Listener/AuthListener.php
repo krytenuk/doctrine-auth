@@ -2,14 +2,14 @@
 
 namespace FwsDoctrineAuth\Listener;
 
-use Laminas\EventManager\EventInterface;
 use Laminas\Authentication\AuthenticationService;
 use FwsDoctrineAuth\Controller\IndexController;
 use FwsDoctrineAuth\Model\Acl;
 use Exception;
-use Laminas\Json\Json;
 use Laminas\Http\Response;
 use FwsDoctrineAuth\Entity\BaseUsers;
+use Laminas\Mvc\MvcEvent;
+use Laminas\View\Model\JsonModel;
 
 /**
  * Description of AuthListener
@@ -19,7 +19,7 @@ use FwsDoctrineAuth\Entity\BaseUsers;
 class AuthListener
 {
 
-    public function checkUser(EventInterface $event)
+    public function checkUser(MvcEvent $event)
     {
         $application = $event->getApplication();
         $routeMatch = $event->getRouteMatch();
@@ -39,7 +39,6 @@ class AuthListener
                 $role = $user->getUserRole()->getRole();
             }
         }
-
         $controller = $routeMatch->getParam('controller');
         $action = $routeMatch->getParam('action');
         if (!$acl->hasResource($controller)) {
@@ -47,7 +46,7 @@ class AuthListener
             if (isset($config['controllers']['aliases'])) {
                 $controller = $this->getControllerAlias($controller, $acl, $config['controllers']['aliases']);
             } else {
-                throw new Exception('ACL Resource "' . $controller . '" not defined');
+                throw new Exception(sprintf('ACL Resource "%s" not defined', $controller));
             }
         }
 
@@ -61,12 +60,11 @@ class AuthListener
              * ajax request
              */
             if ($request->isXmlHttpRequest()) {
-                $event->stopPropagation(true);
-                $response->setContent(Json::encode(array('redirect' => $event->getRouter()->assemble(array('action' => 'login'), array('name' => 'doctrine-auth/default', 'force_canonical' => TRUE)))));
                 $response->setStatusCode(Response::STATUS_CODE_200);
-                $response->getHeaders()->addHeaderLine('Content-Type', 'application/json');
-                $response->send();
-                exit;
+                $viewModel = new JsonModel(['redirect' => $event->getRouter()->assemble(['action' => 'login'], ['name' => 'doctrine-auth/default', 'force_canonical' => TRUE])]);
+                $event->setViewModel($viewModel);
+                $event->stopPropagation(true);
+                return $viewModel;
             } else {
                 if ($controller == IndexController::class && $action == 'login') {
                     $url = $event->getRouter()->assemble(array('action' => 'logout'), array('name' => 'doctrine-auth/default')); // url to logout
@@ -100,11 +98,11 @@ class AuthListener
                 /**
                  * Redirect with 302 http status code
                  */
-                $response = $event->getResponse();
                 $response->getHeaders()->addHeaderLine('Location', $url);
-                $response->setStatusCode(403);
+                $response->setStatusCode(Response::STATUS_CODE_302);
                 $response->sendHeaders();
-                exit;
+                $event->stopPropagation(true);
+                return $response;
             }
         }
     }

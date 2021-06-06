@@ -117,8 +117,8 @@ return [
             [
                 'listener' => AuthListener::class,
                 'method' => 'checkUser',
-                'event' => MvcEvent::EVENT_ROUTE,
-                'priority' => -100,
+                'event' => MvcEvent::EVENT_DISPATCH,
+                'priority' => 1000,
             ],
             [
                 'listener' => NavigationListener::class,
