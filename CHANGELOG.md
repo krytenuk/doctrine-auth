@@ -12,3 +12,7 @@ Added use statement for FwsDoctrineAuth\Entity\BaseUsers to AuthListener and Nav
 
 0.1.15
 Fixed issue where Auth listener was causing phpunit to fail silently
+
+0.1.16
+Various updates
+Now using doctrine/doctrine-orm-module v4

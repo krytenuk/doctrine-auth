@@ -75,7 +75,7 @@ return [
         'template_path_stack' => array(
             'fws-doctrine-auth' => __DIR__ . '/../view'
         ),
-        'display_exceptions' => true,
+        'display_exceptions' => false,
     ),
     'service_manager' => [
         'factories' => [

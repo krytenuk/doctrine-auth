@@ -61,7 +61,7 @@ return [
         ],
     ],
     /**
-     * Configure laminas session as per your requirements
+     * Configure laminas-session as per your requirements
      */
     'session_manager' => [
         'validators' => [
