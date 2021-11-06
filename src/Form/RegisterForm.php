@@ -10,6 +10,10 @@ namespace FwsDoctrineAuth\Form;
 class RegisterForm extends DefaultForm
 {
     
+    /**
+     * Create form elemets
+     * @return void
+     */
     public function init(): void
     {
         parent::init();

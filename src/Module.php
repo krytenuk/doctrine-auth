@@ -14,6 +14,10 @@ use FwsDoctrineAuth\Model\HashPassword;
 class Module implements BootstrapListenerInterface
 {
 
+    /**
+     * 
+     * @param EventInterface $event
+     */
     public function onBootstrap(EventInterface $event)
     {
         $eventManager = $event->getApplication()->getEventManager();
@@ -21,6 +25,7 @@ class Module implements BootstrapListenerInterface
 
         $config = $serviceManager->get('config');
 
+        /** Add lazy listeners from config */
         $aggregate = new LazyListenerAggregate(
                 $config['event_manager']['lazy_listeners'], $serviceManager
         );
@@ -29,25 +34,37 @@ class Module implements BootstrapListenerInterface
         HashPassword::setConfig($config);
     }
 
+    /**
+     * 
+     * @return array
+     */
     public function getConfig()
     {
         return include __DIR__ . '/../config/module.config.php';
     }
 
+    /**
+     * 
+     * @return array
+     */
     public function getServiceConfig()
     {
-        return array(
-            'factories' => array(
+        return [
+            'factories' => [
                 AuthenticationService::class => function($serviceManager) {
                     return $serviceManager->get('doctrine.authenticationservice.orm_default');
                 },
-            )
-        );
+            ]
+        ];
     }
 
-    public function init(ModuleManagerInterface $e)
+    /**
+     * Add doctrine cli command
+     * @param ModuleManagerInterface $moduleManager
+     */
+    public function init(ModuleManagerInterface $moduleManager)
     {
-        $events = $e->getEventManager()->getSharedManager();
+        $events = $moduleManager->getEventManager()->getSharedManager();
         // Attach to helper set event and load the entity manager helper.
         $events->attach('doctrine', 'loadCli.post', function (EventInterface $event) {
             /* @var $cli \Symfony\Component\Console\Application */

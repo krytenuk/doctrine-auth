@@ -16,3 +16,9 @@ Fixed issue where Auth listener was causing phpunit to fail silently
 0.1.16
 Various updates
 Now using doctrine/doctrine-orm-module v4
+
+0.1.17
+Changed requirement to PHP 7.1 or greater
+Added PHP 7 type hinting to doctrine entities
+Fixed auto-login after registration bug
+Refactored code to improve readability and performance

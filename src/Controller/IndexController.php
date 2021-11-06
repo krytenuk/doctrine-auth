@@ -7,6 +7,8 @@ use Laminas\View\Model\ViewModel;
 use FwsDoctrineAuth\Model;
 use Laminas\Mvc\I18n\Translator;
 use FwsDoctrineAuth\Model\ForgotPasswordModel;
+use Laminas\Http\Response;
+use Laminas\Stdlib\Parameters;
 
 /**
  * IndexController
@@ -35,10 +37,17 @@ class IndexController extends AbstractActionController
 
     /**
      *
-     * @var Translator 
+     * @var Translator
      */
     protected $translator;
 
+    /**
+     * 
+     * @param Model\LoginModel $loginModel
+     * @param Model\RegisterModel $registerModel
+     * @param Model\ForgotPasswordModel $forgotPasswordModel
+     * @param Translator $translator
+     */
     public function __construct(
             Model\LoginModel $loginModel,
             Model\RegisterModel $registerModel,
@@ -54,8 +63,8 @@ class IndexController extends AbstractActionController
 
     /**
      * Redirect to login
-     * 
-     * @return ViewModel
+     *
+     * @return Response
      */
     public function indexAction()
     {
@@ -65,109 +74,177 @@ class IndexController extends AbstractActionController
     /**
      * Login user
      * 
-     * @return ViewModel
+     * @return ViewModel|Response
      */
     public function loginAction()
     {
+        /* Create view model */
         $viewModel = new ViewModel();
         $viewModel->config = $this->loginModel->getConfig();
-        if ($this->getRequest()->isPost()) {
-            if ($this->loginModel->processForm($this->getRequest()->getPost())) {
-                if ($this->loginModel->login()) {
-                    if ($this->loginModel->hasRedirect() && $this->loginModel->canRedirect()) {
-                        return $this->redirect()->toUrl($this->loginModel->getRedirectUrl());
-                    } else {
-                        $redirect = $this->loginModel->getDefaultRedirect();
-                        return $this->redirect()->toRoute($redirect['route'], $redirect['params'], $redirect['options']);
-                    }
-                } else {
-                    $this->loginModel->getFormIdentityElement()->setMessages([$this->translator->translate('User not found')]);
-                }
-            }
-        }
-
         $viewModel->form = $this->loginModel->getForm();
         $viewModel->useForgotPassword = $this->loginModel->useForgotPassword();
-        return $viewModel;
+
+        /* Form NOT submitted */
+        if ($this->getRequest()->isPost() === false) {
+            return $viewModel;
+        }
+
+        /* Login form validation failed */
+        if ($this->loginModel->processForm($this->getRequest()->getPost()) === false) {
+            return $viewModel;
+        }
+
+        /* Authentication failed */
+        if ($this->loginModel->login(null) === false) {
+            $this->loginModel->getFormIdentityElement()->setMessages([$this->translator->translate('User not found')]);
+            return $viewModel;
+        }
+        /* HTTP 302 redirect */
+        if ($this->loginModel->hasRedirect() && $this->loginModel->canRedirect()) {
+            /* Redirect to requested page */
+            return $this->redirect()->toUrl($this->loginModel->getRedirectUrl());
+        } else {
+            /* Redirect to default page */
+            $redirect = $this->loginModel->getDefaultRedirect(null);
+            return $this->redirect()->toRoute($redirect['route'], $redirect['params'], $redirect['options']);
+        }
     }
 
+    /**
+     * Logout
+     * @return Response
+     */
     public function logoutAction()
     {
         $this->loginModel->logout();
         return $this->redirect()->toRoute('doctrine-auth/default', array('action' => 'login'));
     }
 
+    /**
+     * Register new user
+     * 
+     * @return ViewModel|Response
+     */
     public function registerAction()
     {
-        if ($this->registerModel->allowRegistration()) {
-            $viewModel = new ViewModel();
-            $viewModel->config = $this->registerModel->getConfig();
-            $viewModel->config = $this->forgotPasswordModel->getConfig();
-            if ($this->getRequest()->isPost()) {
-                if ($this->registerModel->processForm($this->getRequest()->getPost())) {
-                    if ($this->registerModel->autoLogin()) {
-                        if ($this->registerModel->login()) {
-                            $redirect = $this->registerModel->getDefaultRedirect();
-                            return $this->redirect()->toRoute($redirect['route'], $redirect['params'], $redirect['options']);
-                        }
-                    }
-                    return $this->redirect()->toRoute('doctrine-auth/default', array('action' => 'login'));
-                } else {
-                    if ($this->registerModel->getForm()->isValid()) {
-                        $viewModel->errorMessage = 'Unable to register you at this time, please try again later.';
-                    } else {
-                        $viewModel->errorMessage = 'There is a problem with the form you submitted, please correct errors highlighted.';
-                    }
-                }
-            }
-            $viewModel->form = $this->registerModel->getForm();
+        /* Registration NOT allowed tn config */
+        if ($this->registerModel->allowRegistration() === false) {
+            return $this->redirect()->toRoute('doctrine-auth/default', array('action' => 'login'));
+        }
+
+        /* Create viewmodel */
+        $viewModel = new ViewModel();
+        $viewModel->config = $this->registerModel->getConfig();
+        $viewModel->config = $this->forgotPasswordModel->getConfig();
+        $viewModel->form = $this->registerModel->getForm();
+
+        /* Form NOT submitted */
+        if ($this->getRequest()->isPost() === false) {
             return $viewModel;
+        }
+
+        /* registration failed */
+        if ($this->registerModel->processForm($this->getRequest()->getPost()) === false) {
+            if ($this->registerModel->getForm()->isValid()) {
+                $viewModel->errorMessage = 'Unable to register you at this time, please try again later.';
+            } else {
+                $viewModel->errorMessage = 'There is a problem with the form you submitted, please correct errors highlighted.';
+            }
+            return $viewModel;
+        }
+
+        /* Auto login set in config */
+        if ($this->registerModel->autoLogin()) {
+            if ($this->registerModel->login()) {
+                $redirect = $this->registerModel->getDefaultRedirect();
+                return $this->redirect()->toRoute($redirect['route'], $redirect['params'], $redirect['options']);
+            }
         }
         return $this->redirect()->toRoute('doctrine-auth/default', array('action' => 'login'));
     }
 
+    /**
+     * Reset password
+     * 
+     * @return ViewModel
+     */
     public function passwordResetAction()
     {
+        /* Setup view model */
         $viewModel = new ViewModel();
         $viewModel->config = $this->forgotPasswordModel->getConfig();
+
         $request = $this->getRequest();
-        if ($code = $this->params()->fromRoute('code', FALSE)) {
-            $viewModel->code = $code;
-            if ($request->isPost()) {
-                $postData = $request->getPost();
-                if ($this->forgotPasswordModel->findUser($code)) {
-                    if ($this->forgotPasswordModel->processResetForm($postData)) {
-                        $viewModel->passwordReset = TRUE;
-                    } else {
-                        $viewModel->passwordReset = FALSE;
-                    }
-                } else {
-                    $viewModel->invalidLink = TRUE;
-                }
+        /* Get code from url */
+        $code = $this->params()->fromRoute('code', false);
+        /* No code sent */
+        if ($code === false) {
+            /* Form not submitted, pass email address form to view */
+            if ($request->isPost() === false) {
+                $viewModel->emailForm = $this->forgotPasswordModel->getEmailForm();
+                return $viewModel;
+            }
+            /* Form submitted, process email form */
+            return $this->processEmailForm($viewModel, $request->getPost());
+        }
+
+        /* Code sent */
+        $viewModel->code = $code;
+        /* New password form not submitted */
+        if ($request->isPost() === false) {
+            if ($this->forgotPasswordModel->findUser($code) === true) {
+                $viewModel->resetForm = $this->forgotPasswordModel->getResetPasswordForm();
             } else {
-                if ($this->forgotPasswordModel->findUser($code)) {
-                    $viewModel->resetForm = $this->forgotPasswordModel->getResetPasswordForm();
-                } else {
-                    $viewModel->invalidLink = TRUE;
-                }
+                $viewModel->invalidLink = true;
             }
             return $viewModel;
+        }
+
+        $postData = $request->getPost();
+        if ($this->forgotPasswordModel->findUser($code)) {
+            return $this->processPasswordResetForm($viewModel, $postData);
         } else {
-            if ($request->isPost()) {
-                $postData = $request->getPost();
-                if ($this->forgotPasswordModel->processEmailForm($postData)) {
-                    if ($this->forgotPasswordModel->sendEmail()) {
-                        $viewModel->emailSent = TRUE;
-                        return $viewModel;
-                    }
-                } else {
-                    if ($this->forgotPasswordModel->isFormValid()) {
-                        $viewModel->emailSent = FALSE;
-                        return $viewModel;
-                    }
-                }
+            $viewModel->invalidLink = true;
+        }
+        return $viewModel;
+    }
+
+    /**
+     * Process forgot password email form
+     * @param ViewModel $viewModel
+     * @param Parameters $postData
+     * @return ViewModel
+     */
+    private function processEmailForm(ViewModel $viewModel, Parameters $postData): ViewModel
+    {
+        $viewModel->emailSent = false;
+        if ($this->forgotPasswordModel->processEmailForm($postData)) {
+            if ($this->forgotPasswordModel->sendEmail()) {
+                $viewModel->emailSent = true;
             }
-            $viewModel->emailForm = $this->forgotPasswordModel->getEmailForm();
+        } else {
+            if ($this->forgotPasswordModel->isFormValid() === false) {
+                $viewModel->emailForm = $this->forgotPasswordModel->getEmailForm();
+            }
+        }
+        return $viewModel;
+    }
+
+    /**
+     * Process new password form
+     * @param ViewModel $viewModel
+     * @param Parameters $postData
+     * @return ViewModel
+     */
+    private function processPasswordResetForm(ViewModel $viewModel, Parameters $postData): ViewModel
+    {
+        $viewModel->passwordReset = false;
+        if ($this->forgotPasswordModel->processResetForm($postData)) {
+            $viewModel->passwordReset = true;
+        } else {
+            if ($this->forgotPasswordModel->isFormValid() === false) {
+                $viewModel->resetForm = $this->forgotPasswordModel->getResetPasswordForm();
+            }
         }
         return $viewModel;
     }

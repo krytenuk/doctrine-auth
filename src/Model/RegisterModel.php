@@ -63,6 +63,15 @@ class RegisterModel extends AbstractModel
      */
     private $loginModel;
 
+    /**
+     * 
+     * @param FormInterface $form
+     * @param EntityManager $entityManager
+     * @param Acl $acl
+     * @param LoginModel $loginModel
+     * @param array $config
+     * @throws DoctrineAuthException
+     */
     public function __construct(
             FormInterface $form,
             EntityManager $entityManager,
@@ -79,7 +88,7 @@ class RegisterModel extends AbstractModel
             $this->callback = $config['doctrineAuth']['registrationCallback'];
         }
 
-        if (!isset($config['doctrine']['authentication']['orm_default']['identity_class'])) {
+        if (isset($config['doctrine']['authentication']['orm_default']['identity_class']) === false) {
             throw new DoctrineAuthException('identity_class not found in config');
         }
         $this->userEntity = new $config['doctrine']['authentication']['orm_default']['identity_class']();
@@ -103,58 +112,82 @@ class RegisterModel extends AbstractModel
      */
     public function processForm(Parameters $postData)
     {
-        if (!$this->allowRegistration()) {
-            return FALSE;
+        /* Registration allowed in config */
+        if ($this->allowRegistration() === false) {
+            return false;
         }
 
         $this->form->setData($postData);
-        if ($this->form->isValid()) {
-            if (!isset($this->config['doctrineAuth']['userActiveAfterRegistration'])) {
-                throw new DoctrineAuthException('"userActiveAfterRegistration" key not found in config');
-            }
-            $this->userEntity->setUserActive((int) $this->config['doctrineAuth']['userActiveAfterRegistration']);
-            $this->userEntity->setDateCreated(new DateTime());
-            $this->userEntity->setDateModified(new DateTime());
 
-            /*
-             * Encrypt credential property prior to writing to database
-             */
-            if (!isset($this->config['doctrine']['authentication']['orm_default']['credential_property'])) {
-                throw new DoctrineAuthException('credential_property not found in config');
-            }
-            $bcrypt = new Bcrypt();
-            $credentialSetter = 'set' . ucfirst($this->config['doctrine']['authentication']['orm_default']['credential_property']);
-            if (!is_callable([$this->userEntity, $credentialSetter])) {
-                throw new DoctrineAuthException(sprintf('Method "%s" not found in "%s"', $credentialSetter, get_class($this->userEntity)));
-            }
-            $this->userEntity->$credentialSetter($bcrypt->create($this->form->get($this->config['doctrine']['authentication']['orm_default']['credential_property'])->getValue()));
-
-            if (!isset($this->config['doctrineAuthAcl']['defaultRegisterRole'])) {
-                throw new DoctrineAuthException('defaultRegisterRole not found in config');
-            }
-            if ($roleId = $this->acl->getDefaultRegistrationRole()->getRoleId()) {
-                $role = $this->entityManager->getRepository(UserRoles::class)->findOneByRole($roleId);
-                if ($role instanceof UserRoles) {
-                    $this->userEntity->setUserRole($role);
-                } else {
-                    throw new DoctrineAuthException(sprintf('Role "%s" not found on database. Have you run "$ vendor\bin\doctrine-module doctrine-auth:init"?', $this->config['doctrineAuthAcl']['defaultRegisterRole']));
-                }
-            }
-
-            if (class_exists($this->callback)) {
-                $callback = new $this->callback();
-                $callback($this->userEntity, $this->form, $postData);
-            }
-
-            $this->entityManager->persist($this->userEntity);
-            return $this->flushEntityManager($this->entityManager);
+        /* Register form invalid */
+        if ($this->form->isValid() === false) {
+            return false;
         }
-        return FALSE;
+
+        /* userActiveAfterRegistration key not set in config */
+        if (isset($this->config['doctrineAuth']['userActiveAfterRegistration']) === false) {
+            throw new DoctrineAuthException('"userActiveAfterRegistration" key not found in config');
+        }
+
+        /* Set user fields not defined in form */
+        $this->userEntity->setUserActive((int) $this->config['doctrineAuth']['userActiveAfterRegistration']);
+        $this->userEntity->setDateCreated(new DateTime());
+        $this->userEntity->setDateModified(new DateTime());
+
+        /* credential_property not set in config */
+        if (!isset($this->config['doctrine']['authentication']['orm_default']['credential_property'])) {
+            throw new DoctrineAuthException('credential_property not found in config');
+        }
+
+        /* Get credential setter */
+        $credentialSetter = 'set' . ucfirst($this->config['doctrine']['authentication']['orm_default']['credential_property']);
+        /* Credential setter does not exist in user entity */
+        if (is_callable([$this->userEntity, $credentialSetter]) === false) {
+            throw new DoctrineAuthException(sprintf('Method "%s" not found in "%s"', $credentialSetter, get_class($this->userEntity)));
+        }
+        /* Encrypt user credential property */
+        $bcrypt = new Bcrypt();
+        $this->userEntity->$credentialSetter($bcrypt->create($this->form->get($this->config['doctrine']['authentication']['orm_default']['credential_property'])->getValue()));
+
+        /* Default register role not set in config */
+        if (isset($this->config['doctrineAuthAcl']['defaultRegisterRole']) === false) {
+            throw new DoctrineAuthException('defaultRegisterRole not found in config');
+        }
+
+        /**
+         * Get default registration role id from ACL
+         * @var string $roleId
+         */
+        $roleId = $this->acl->getDefaultRegistrationRole()->getRoleId();
+        /* Role id set */
+        if ($roleId) {
+            /** 
+             * Get user role from database 
+             * @var UserRoles $role 
+             */
+            $role = $this->entityManager->getRepository(UserRoles::class)->findOneByRole($roleId);
+            if ($role instanceof UserRoles) {
+                /* Set user role */
+                $this->userEntity->setUserRole($role);
+            } else {
+                throw new DoctrineAuthException(sprintf('Role "%s" not found on database. Have you run "$ vendor\bin\doctrine-module doctrine-auth:init"?', $this->config['doctrineAuthAcl']['defaultRegisterRole']));
+            }
+        }
+
+        /* Run custom callback if set */
+        if (class_exists($this->callback)) {
+            $callback = new $this->callback();
+            $callback($this->userEntity, $this->form, $postData);
+        }
+
+        /* Persist user entity and update database */
+        $this->entityManager->persist($this->userEntity);
+        return $this->flushEntityManager($this->entityManager);
     }
 
     /**
      * Allow new users to register?
-     * 
+     *
      * @return boolean
      */
     public function allowRegistration()
@@ -164,7 +197,7 @@ class RegisterModel extends AbstractModel
 
     /**
      * Auto login after successful registration?
-     * 
+     *
      * @return boolesn
      */
     public function autoLogin()
@@ -174,7 +207,7 @@ class RegisterModel extends AbstractModel
 
     /**
      * Where to go if session container does not have redirect stored
-     * 
+     *
      * @return array
      */
     public function getDefaultRedirect(): Array
@@ -183,7 +216,7 @@ class RegisterModel extends AbstractModel
     }
 
     /**
-     * 
+     *
      * @return boolean
      * @throws DoctrineAuthException
      */
@@ -191,7 +224,7 @@ class RegisterModel extends AbstractModel
     {
         $identitypropertyGetter = 'get' . ucfirst($this->config['doctrine']['authentication']['orm_default']['identity_property']);
         $credentialPropertyGetter = 'get' . ucfirst($this->config['doctrine']['authentication']['orm_default']['credential_property']);
-        if (is_callable([$this->form->getData(), $identitypropertyGetter]) && is_callable([$this->form->getData(), $credentialPropertyGetter])) {
+        if (is_callable([$this->form->getData(), $identitypropertyGetter]) === true && is_callable([$this->form->getData(), $credentialPropertyGetter]) === true) {
             return $this->loginModel->login([
                         $this->config['doctrine']['authentication']['orm_default']['identity_property'] => $this->form->getData()->$identitypropertyGetter(),
                         $this->config['doctrine']['authentication']['orm_default']['credential_property'] => $this->form->getData()->$credentialPropertyGetter(),
@@ -199,9 +232,9 @@ class RegisterModel extends AbstractModel
         }
         throw new DoctrineAuthException('Unable to get identity and/or credential value(s)');
     }
-    
+
     /**
-     * 
+     * Return Laminas config
      * @return array
      */
     public function getConfig()

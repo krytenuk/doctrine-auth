@@ -13,7 +13,7 @@ return [
             [
                 'id' => 'guest', // Guest user, do NOT change
                 'parents' => [],
-                'default' => TRUE,
+                'default' => true,
                 // redirect not needed as no-one should ever be logged in as a guest!!!
             ],
             /**
@@ -62,7 +62,7 @@ return [
         ],
         'permissions' => [
             /**
-             * Do not delete the permissions below, required for login/logout
+             * Do not delete the permissions below, required for login/logout and register
              */
             [
                 'type' => LaminasAcl::TYPE_ALLOW,
@@ -73,19 +73,19 @@ return [
             [
                 'type' => LaminasAcl::TYPE_DENY,
                 'role' => 'guest',
-                'resource' => FwsDoctrineAuth\Controller\IndexController::class, // deny guest to logout (guests have not yet logged in)
+                'resource' => FwsDoctrineAuth\Controller\IndexController::class, // deny guest to logout (guests have not yet logged in!)
                 'actions' => ['logout'],
             ],
             [
                 'type' => LaminasAcl::TYPE_ALLOW,
                 'role' => 'user', // <- change if required
-                'resource' => FwsDoctrineAuth\Controller\IndexController::class, // allow users & admins to logout
+                'resource' => FwsDoctrineAuth\Controller\IndexController::class, // allow users & admins etc to logout
                 'actions' => ['logout'],
             ],
             [
                 'type' => LaminasAcl::TYPE_DENY,
                 'role' => 'user', // <- change if required
-                'resource' => FwsDoctrineAuth\Controller\IndexController::class, // deny users & admins to login or register as they already have
+                'resource' => FwsDoctrineAuth\Controller\IndexController::class, // deny users & admins etc to login or register as they already have
                 'actions' => ['login', 'register'],
             ],
             /**
@@ -104,6 +104,6 @@ return [
 //                'actions' => ['some-action', 'another-action'],
 //            ],
         ],
-        'injectAclIntoNavigation' => TRUE, // Inject ACL into Laminas navigation view helper plugin
+        'injectAclIntoNavigation' => true, // Inject ACL into Laminas navigation view helper plugin
     ],
 ];

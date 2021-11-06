@@ -24,24 +24,30 @@ class NavigationListener
 
         $config = $serviceManager->get('config');
 
-        if (isset($config['doctrineAuthAcl']['injectAclIntoNavigation']) && $config['doctrineAuthAcl']['injectAclIntoNavigation'] === TRUE) {
-            /* @var \Laminas\View\Helper\Navigation $plugin */
-            $plugin = $serviceManager->get('ViewHelperManager')->get('navigation');
-
-            $acl = $serviceManager->get('acl');
-
-            $auth = $serviceManager->get(AuthenticationService::class);
-
-            $role = $acl->getDefultRole();;
-            if ($auth->hasIdentity()) {
-                $user = $auth->getIdentity();
-                if ($user instanceof BaseUsers) {
-                    $role = $user->getUserRole()->getRole();
-                }
-            }
-            $plugin->setAcl($acl);
-            $plugin->setRole($role);
+        /* Don't inject ACL into navigation view helper (set in config) */
+        if (isset($config['doctrineAuthAcl']['injectAclIntoNavigation']) === false || $config['doctrineAuthAcl']['injectAclIntoNavigation'] === false) {
+            return;
         }
+
+        /* @var \Laminas\View\Helper\Navigation $plugin */
+        $plugin = $serviceManager->get('ViewHelperManager')->get('navigation');
+
+        /* @var $acl \FwsDoctrineAuth\Model\Acl */
+        $acl = $serviceManager->get('acl');
+
+        /* @var $auth AuthenticationService */
+        $auth = $serviceManager->get(AuthenticationService::class);
+
+        $role = $acl->getDefultRole();
+
+        if ($auth->hasIdentity() === true) {
+            $user = $auth->getIdentity();
+            if ($user instanceof BaseUsers === true) {
+                $role = $user->getUserRole()->getRole();
+            }
+        }
+        $plugin->setAcl($acl);
+        $plugin->setRole($role);
     }
 
 }

@@ -24,9 +24,9 @@ abstract class AbstractModel
             $entityManager->flush();
         } catch (Exception $exception) {
             $this->clearEntityManager($entityManager);
-            return FALSE;
+            return false;
         }
-        return TRUE;
+        return true;
     }
 
     /**

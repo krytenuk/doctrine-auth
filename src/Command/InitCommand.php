@@ -42,6 +42,9 @@ class InitCommand extends Command
         parent::__construct();
     }
 
+    /**
+     * Setup CLI command
+     */
     protected function configure()
     {
         parent::configure();
@@ -56,13 +59,15 @@ EOT
     }
 
     /**
-     * 
+     * Add user roles to database
      * @param InputInterface $input
      * @param OutputInterface $output
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        if ($this->hasRoles()) {
+        /* Roles already on database */
+        if ($this->hasRoles() === true) {
+            /* Truncate user roles table */
             if ($input->getOption('truncate')) {
                 $connection = $this->entityManager->getConnection();
                 $connection->executeQuery('SET FOREIGN_KEY_CHECKS = 0;');
@@ -79,7 +84,7 @@ EOT
     }
 
     /**
-     * 
+     * User roles already on database
      * @return boolean
      */
     protected function hasRoles()
@@ -88,31 +93,35 @@ EOT
     }
 
     /**
-     * 
+     * Add user roles to database
      * @param OutputInterface $output
      * @return boolean
      */
     protected function addRoles(OutputInterface $output)
     {
-        if (isset($this->config['doctrineAuthAcl']['roles']) && is_array($this->config['doctrineAuthAcl']['roles']) && !empty($this->config['doctrineAuthAcl']['roles'])) {
-            foreach ($this->config['doctrineAuthAcl']['roles'] as $role) {
-                if (!$this->entityManager->getRepository(UserRoles::class)->hasRole($role['id'])) {
-                    $userRoleEntity = new UserRoles();
-                    $userRoleEntity->setRole($role['id']);
-                    $this->entityManager->persist($userRoleEntity);
-                    $output->writeln(sprintf('<info>Added user role %s.</info>', $role['id']));
-                } else {
-                    $output->writeln(sprintf('<error>User role %s already exists, skipping.</error>', $role['id']));
-                }
-            }
-            try {
-                $this->entityManager->flush();
-                $output->writeln('<info>Finished processing user roles from config</info>');
-            } catch (Exception $exception) {
-                $output->writeln('<error>Error writing to database.</error>');
-            }
-        } else {
+        /* No user roles in config */
+        if (isset($this->config['doctrineAuthAcl']['roles']) === false || is_array($this->config['doctrineAuthAcl']['roles']) === false || empty($this->config['doctrineAuthAcl']['roles']) === true) {
             $output->writeln('<error>No user roles found in config</error>');
+            return;
+        }
+
+        /* Process user roles from config */
+        foreach ($this->config['doctrineAuthAcl']['roles'] as $role) {
+            if ($this->entityManager->getRepository(UserRoles::class)->hasRole($role['id']) === true) {
+                $output->writeln(sprintf('<comment>User role %s already exists, skipping.</comment>', $role['id']));
+                continue;
+            }
+            $userRoleEntity = new UserRoles();
+            $userRoleEntity->setRole($role['id']);
+            $this->entityManager->persist($userRoleEntity);
+            $output->writeln(sprintf('<info>Added user role %s.</info>', $role['id']));
+        }
+        
+        try {
+            $this->entityManager->flush();
+            $output->writeln('<info>Finished processing user roles from config.</info>');
+        } catch (Exception $exception) {
+            $output->writeln('<error>Error writing to database.</error>');
         }
     }
 

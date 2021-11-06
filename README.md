@@ -1,7 +1,7 @@
 FwsDoctrineAuth
 ===============
 
-Docs available [online](https://www.freedomwebservices.net/zend-framework/fws-doctrine-auth).
+Docs available [online](https://www.freedomwebservices.net/laminas/fws-doctrine-auth).
 
 Laminas Doctrine Authentication Module
 

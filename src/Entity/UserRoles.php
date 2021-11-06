@@ -42,9 +42,9 @@ class UserRoles implements EntityInterface
     /**
      * Get userRoleId
      *
-     * @return integer
+     * @return int|null
      */
-    public function getUserRoleId()
+    public function getUserRoleId(): ?int
     {
         return $this->userRoleId;
     }
@@ -53,21 +53,20 @@ class UserRoles implements EntityInterface
      * Set role
      *
      * @param string $role
-     * @return \Application\Entity\UserRoles
+     * @return $this
      */
-    public function setRole($role)
+    public function setRole(string $role)
     {
         $this->role = $role;
-
         return $this;
     }
 
     /**
      * Get role
      *
-     * @return string
+     * @return string|null
      */
-    public function getRole()
+    public function getRole(): ?string
     {
         return $this->role;
     }

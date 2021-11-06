@@ -33,6 +33,7 @@ class EmailForm extends Form implements InputFilterProviderInterface
 
     /**
      * 
+     * @param EntityManager $entityManager
      * @param array $config
      */
     public function __construct(EntityManager $entityManager, Array $config)
@@ -42,11 +43,21 @@ class EmailForm extends Form implements InputFilterProviderInterface
         $this->entityManager = $entityManager;
     }
 
+    /**
+     * Create elements
+     * @return void
+     * @throws DoctrineAuthException
+     */
     public function init(): void
     {
+        /* Identity property not found in config */
         if (!isset($this->config['doctrine']['authentication']['orm_default']['identity_property'])) {
             throw new DoctrineAuthException('identity_property not found in config');
         }
+        
+        /*
+         * Add form elements
+         */
 
         $this->add([
             'name' => $this->getIdentityName(),
@@ -80,6 +91,10 @@ class EmailForm extends Form implements InputFilterProviderInterface
         ]);
     }
 
+    /**
+     * Set form filters and validators
+     * @return array
+     */
     public function getInputFilterSpecification(): array
     {
         $filter = new StringToLower();
@@ -117,7 +132,11 @@ class EmailForm extends Form implements InputFilterProviderInterface
         ];
     }
 
-    public function getIdentityName()
+    /**
+     * 
+     * @return string
+     */
+    public function getIdentityName(): string
     {
         return $this->config['doctrine']['authentication']['orm_default']['identity_property'];
     }

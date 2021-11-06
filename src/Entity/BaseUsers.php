@@ -4,6 +4,7 @@ namespace FwsDoctrineAuth\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 use FwsDoctrineAuth\Entity\UserRoles;
+use FwsDoctrineAuth\Entity\PasswordReminder;
 use DateTime;
 
 /**
@@ -45,6 +46,7 @@ class BaseUsers implements EntityInterface
      * @ORM\Column(name="password", type="string", length=256, nullable=true)
      */
     private $password;
+
     /**
      * @var integer
      *
@@ -67,7 +69,7 @@ class BaseUsers implements EntityInterface
     private $dateModified;
 
     /**
-     * @var BaseUserRoles
+     * @var UserRoles
      *
      * @ORM\ManyToOne(targetEntity="FwsDoctrineAuth\Entity\UserRoles")
      * @ORM\JoinColumns({
@@ -83,7 +85,7 @@ class BaseUsers implements EntityInterface
      * })
      */
     private $passwordReminder;
-    
+
     public function __construct()
     {
         $this->dateCreated = new DateTime();
@@ -91,12 +93,12 @@ class BaseUsers implements EntityInterface
         $this->userRole = new UserRoles();
     }
 
-        /**
+    /**
      * Get userId
      *
-     * @return integer
+     * @return int|null
      */
-    public function getUserId()
+    public function getUserId(): ?int
     {
         return $this->userId;
     }
@@ -104,10 +106,10 @@ class BaseUsers implements EntityInterface
     /**
      * Set emailAddress
      *
-     * @param string $emailAddress
+     * @param string|null $emailAddress
      * @return Users
      */
-    public function setEmailAddress($emailAddress)
+    public function setEmailAddress(?string $emailAddress)
     {
         $this->emailAddress = $emailAddress;
 
@@ -117,9 +119,9 @@ class BaseUsers implements EntityInterface
     /**
      * Get emailAddress
      *
-     * @return string
+     * @return string|null
      */
-    public function getEmailAddress()
+    public function getEmailAddress(): ?string
     {
         return $this->emailAddress;
     }
@@ -130,29 +132,29 @@ class BaseUsers implements EntityInterface
      * @param string $password
      * @return Users
      */
-    public function setPassword($password)
+    public function setPassword(string $password)
     {
         $this->password = $password;
 
         return $this;
     }
 
-        /**
+    /**
      * Get password
      *
      * @return string
      */
-    public function getPassword()
+    public function getPassword(): ?string
     {
         return $this->password;
     }
-    
+
     /**
-     * 
+     * Set user active
      * @param integer $userActive
      * @return $this
      */
-    public function setUserActive($userActive)
+    public function setUserActive(int $userActive)
     {
         $this->userActive = $userActive;
         return $this;
@@ -160,9 +162,9 @@ class BaseUsers implements EntityInterface
 
     /**
      * 
-     * @return boolean
+     * @return bool
      */
-    public function isUserActive()
+    public function isUserActive(): bool
     {
         return (bool) $this->userActive;
     }
@@ -177,12 +179,12 @@ class BaseUsers implements EntityInterface
         $this->dateCreated = $dateCreated;
         return $this;
     }
-    
+
     /**
      * 
-     * @return DateTime
+     * @return DateTime|null
      */
-    public function getDateCreated()
+    public function getDateCreated(): ?DateTime
     {
         return $this->dateCreated;
     }
@@ -200,9 +202,9 @@ class BaseUsers implements EntityInterface
 
     /**
      * 
-     * @return DateTime
+     * @return DateTime|null
      */
-    public function getDateModified()
+    public function getDateModified(): ?DateTime
     {
         return $this->dateModified;
     }
@@ -210,10 +212,10 @@ class BaseUsers implements EntityInterface
     /**
      * Set userRole
      *
-     * @param BaseUserRoles $userRole
+     * @param UserRoles $userRole
      * @return Users
      */
-    public function setUserRole(UserRoles $userRole = NULL)
+    public function setUserRole(?UserRoles $userRole)
     {
         $this->userRole = $userRole;
 
@@ -223,37 +225,40 @@ class BaseUsers implements EntityInterface
     /**
      * Get userRole
      *
-     * @return BaseUserRoles
+     * @return UserRoles
      */
-    public function getUserRole()
+    public function getUserRole(): ?UserRoles
     {
         return $this->userRole;
     }
-    
-    public function hasPasswordReminder()
+
+    /**
+     * 
+     * @return bool
+     */
+    public function hasPasswordReminder(): bool
     {
         return (bool) $this->getPasswordReminder();
     }
 
-        /**
+    /**
      * 
-     * @return \FwsDoctrineAuth\Entity\PasswordReminder|NULL
+     * @return PasswordReminder|null
      */
-    public function getPasswordReminder()
+    public function getPasswordReminder(): ?PasswordReminder
     {
         return $this->passwordReminder;
     }
 
     /**
      * 
-     * @param \FwsDoctrineAuth\Entity\PasswordReminder $passwordReminder
+     * @param PasswordReminder|null $passwordReminder
      * @return $this
      */
-    public function setPasswordReminder(PasswordReminder $passwordReminder = NULL)
+    public function setPasswordReminder(?PasswordReminder $passwordReminder)
     {
         $this->passwordReminder = $passwordReminder;
         return $this;
     }
-
 
 }

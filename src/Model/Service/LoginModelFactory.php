@@ -10,6 +10,7 @@ use Doctrine\ORM\EntityManager;
 use Laminas\Session\SessionManager;
 use DateTime;
 use DateTimeZone;
+use FwsDoctrineAuth\Model\Acl;
 
 /**
  * Description of LoginModelFactory
@@ -20,7 +21,7 @@ class LoginModelFactory implements FactoryInterface
 {
 
     /**
-     * 
+     * Create login model class
      * @param ContainerInterface $container
      * @param string $requestedName
      * @param array $options
@@ -31,14 +32,14 @@ class LoginModelFactory implements FactoryInterface
         $datetime = new DateTime();
         $config = $container->get('config');
 
-        if (array_key_exists('timezone', $config)) {
+        if (array_key_exists('timezone', $config) === true) {
             $datetime->setTimezone(new DateTimeZone($config['timezone']));
         }
         
-        if (!isset($config['doctrineAuth']['loginForm'])) {
+        if (isset($config['doctrineAuth']['loginForm']) === false) {
             throw new DoctrineAuthException('"loginForm" not found in config');
         }
-        if (!class_exists($config['doctrineAuth']['loginForm'])) {
+        if (class_exists($config['doctrineAuth']['loginForm']) === false) {
             throw new DoctrineAuthException(sprintf('Login form "%s" not found', $config['doctrineAuth']['loginForm']));
         }
 
@@ -49,7 +50,7 @@ class LoginModelFactory implements FactoryInterface
                 $datetime,
                 $container->get('authContainer'),
                 $container->get(SessionManager::class),
-                $container->get('acl'),
+                $container->get(Acl::class),
                 $config);
     }
 

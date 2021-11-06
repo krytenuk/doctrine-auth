@@ -12,7 +12,12 @@ use FwsDoctrineAuth\Entity\UserRoles;
  */
 class UserRolesRepository extends EntityRepository
 {
-    public function countRoles()
+
+    /**
+     * Count user roles
+     * @return integer
+     */
+    public function countRoles(): int
     {
         $builder = $this->getEntityManager()->createQueryBuilder();
         $builder->select('COUNT(r)')
@@ -20,8 +25,13 @@ class UserRolesRepository extends EntityRepository
 
         return $builder->getQuery()->getSingleScalarResult();
     }
-    
-    public function hasRole($role)
+
+    /**
+     * 
+     * @param string $role
+     * @return bool
+     */
+    public function hasRole($role): bool
     {
         $builder = $this->getEntityManager()->createQueryBuilder();
         $builder->select('COUNT(r)')
@@ -31,4 +41,5 @@ class UserRolesRepository extends EntityRepository
 
         return (bool) $builder->getQuery()->getSingleScalarResult();
     }
+
 }

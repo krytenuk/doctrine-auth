@@ -32,11 +32,21 @@ class ResetPasswordForm extends Form implements InputFilterProviderInterface
         $this->config = $config;
     }
 
+    /**
+     * Create form elements
+     * @return void
+     * @throws DoctrineAuthException
+     */
     public function init(): void
     {
-        if (!isset($this->config['doctrineAuth']['formElements']['identity_label']) || !isset($this->config['doctrineAuth']['formElements']['credential_label'])) {
+        /* Identity and/or credential label not set in config */
+        if (isset($this->config['doctrineAuth']['formElements']['identity_label']) === false || isset($this->config['doctrineAuth']['formElements']['credential_label']) === false) {
             throw new DoctrineAuthException('identity_label and/or credential_label not found in config');
         }
+        
+        /*
+         * Create form elements
+         */
 
         $this->add([
             'name' => $this->getCredentialName(),
@@ -82,14 +92,18 @@ class ResetPasswordForm extends Form implements InputFilterProviderInterface
             ],
         ]);
 
-        $this->setValidationGroup(array(
-            $this->config['doctrine']['authentication']['orm_default']['credential_property'],
-            sprintf('retype', ucfirst($this->config['doctrine']['authentication']['orm_default']['credential_property'])),
+        $this->setValidationGroup([
+            $this->getCredentialName(),
+            $this->getRetypeCredentialName(),
             'csrf',
-        ));
+        ]);
     }
 
-    public function getInputFilterSpecification()
+    /**
+     * Create form element filters and validators
+     * @return array
+     */
+    public function getInputFilterSpecification(): array
     {
         return [
             $this->getCredentialName() => [
@@ -104,7 +118,7 @@ class ResetPasswordForm extends Form implements InputFilterProviderInterface
                         'break_chain_on_failure' => TRUE,
                         'options' => [
                             'messages' => [
-                                Validator\NotEmpty::IS_EMPTY => _("You must specify your password"),
+                                Validator\NotEmpty::IS_EMPTY => _("You must specify your new password"),
                             ],
                         ],
                     ],
@@ -135,7 +149,7 @@ class ResetPasswordForm extends Form implements InputFilterProviderInterface
                         'break_chain_on_failure' => TRUE,
                         'options' => [
                             'messages' => [
-                                Validator\NotEmpty::IS_EMPTY => _("You must specify your password"),
+                                Validator\NotEmpty::IS_EMPTY => _("You must specify your new password"),
                             ],
                         ],
                     ],
@@ -167,14 +181,22 @@ class ResetPasswordForm extends Form implements InputFilterProviderInterface
         ];
     }
 
+    /**
+     * Get credential name from config
+     * @return string
+     */
     public function getCredentialName()
     {
         return $this->config['doctrine']['authentication']['orm_default']['credential_property'];
     }
 
+    /**
+     * Get retype credential name from config
+     * @return string
+     */
     public function getRetypeCredentialName()
     {
-        return sprintf('retype', ucfirst($this->config['doctrine']['authentication']['orm_default']['credential_property']));
+        return sprintf('retype%s', ucfirst($this->config['doctrine']['authentication']['orm_default']['credential_property']));
     }
 
 }

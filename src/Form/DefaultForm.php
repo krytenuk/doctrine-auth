@@ -33,6 +33,7 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
 
     /**
      * 
+     * @param EntityManager $objectManager
      * @param array $config
      */
     public function __construct(EntityManager $objectManager, Array $config)
@@ -42,15 +43,26 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
         $this->config = $config;
     }
 
-    public function init()
+    /**
+     * Create form elements
+     * @return void
+     * @throws DoctrineAuthException
+     */
+    public function init(): void
     {
-        if (!isset($this->config['doctrine']['authentication']['orm_default']['identity_property']) || !isset($this->config['doctrine']['authentication']['orm_default']['credential_property'])) {
+        /* Identity property not found in config */
+        if (isset($this->config['doctrine']['authentication']['orm_default']['identity_property']) === false || isset($this->config['doctrine']['authentication']['orm_default']['credential_property']) === false) {
             throw new DoctrineAuthException('identity_property and/or credential_property not found in config');
         }
 
-        if (!isset($this->config['doctrineAuth']['formElements']['identity_label']) || !isset($this->config['doctrineAuth']['formElements']['credential_label'])) {
+        /* Credential property not found in config */
+        if (isset($this->config['doctrineAuth']['formElements']['identity_label']) === false || isset($this->config['doctrineAuth']['formElements']['credential_label']) === false) {
             throw new DoctrineAuthException('identity_label and/or credential_label not found in config');
         }
+
+        /*
+         * Add form elements
+         */
 
         $this->add([
             'name' => $this->config['doctrine']['authentication']['orm_default']['identity_property'],
@@ -78,6 +90,7 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
             ],
         ]);
 
+        /* Add custom user elements */
         if (method_exists($this, 'addElements')) {
             $this->addElements();
         }
@@ -101,20 +114,26 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
                 'label' => _('Submit'),
             ],
         ]);
-        
+
+        /* Set validation group */
         $validationGroup = [];
         foreach ($this as $element) {
             if ($element instanceof Fieldset) {
                 $validationGroup[$element->getName()] = $this->addFieldsetToValidationGroup($element);
             } else {
-               $validationGroup[] = $element->getName(); 
+                $validationGroup[] = $element->getName();
             }
         }
-        
+
         $this->setValidationGroup($validationGroup);
     }
-    
-    private function addFieldsetToValidationGroup(Fieldset $fieldset)
+
+    /**
+     * Get fieldset element names
+     * @param Fieldset $fieldset
+     * @return array
+     */
+    private function addFieldsetToValidationGroup(Fieldset $fieldset): array
     {
         $array = [];
         foreach ($fieldset as $element) {
@@ -123,22 +142,18 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
         return $array;
     }
 
-
-//    public function setValidationGroup(Array $validationGroup = NULL)
-//    {
-//        $validationGroup[] = $this->config['doctrine']['authentication']['orm_default']['identity_property'];
-//        $validationGroup[] = $this->config['doctrine']['authentication']['orm_default']['credential_property'];
-//        $validationGroup[] = 'csrf';
-//        
-//        parent::setValidationGroup($validationGroup);
-//    }
-
-    public function getInputFilterSpecification()
+    /**
+     * Set form filters and validators
+     * @return array
+     * @throws DoctrineAuthException
+     */
+    public function getInputFilterSpecification(): array
     {
+        /* Default identity validators */
         $validators = [
             [
                 'name' => Validator\NotEmpty::class,
-                'break_chain_on_failure' => TRUE,
+                'break_chain_on_failure' => true,
                 'options' => [
                     'messages' => [
                         Validator\NotEmpty::IS_EMPTY => _("You must specify your email address"),
@@ -147,7 +162,7 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
             ],
             [
                 'name' => Validator\StringLength::class,
-                'break_chain_on_failure' => TRUE,
+                'break_chain_on_failure' => true,
                 'options' => [
                     'encoding' => 'UTF-8',
                     'min' => 2,
@@ -162,9 +177,9 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
             [
                 'name' => Validator\EmailAddress::class,
                 'options' => [
-                    'deep' => TRUE,
-                    'allow' => TRUE,
-                    'mx' => TRUE,
+                    'deep' => true,
+                    'allow' => true,
+                    'mx' => true,
                     'messages' => [
                         Validator\EmailAddress::INVALID => _("Your email address is invalid"),
                         Validator\EmailAddress::INVALID_FORMAT => _("Your email address is invalid"),
@@ -179,13 +194,16 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
             ],
         ];
 
-        if ($this instanceof RegisterForm) {
-            if (!isset($this->config['doctrine']['authentication']['orm_default']['identity_class'])) {
+        /* Register form */
+        if ($this instanceof RegisterForm === true) {
+            /* Identity class not found in config */
+            if (isset($this->config['doctrine']['authentication']['orm_default']['identity_class']) === false) {
                 throw new DoctrineAuthException('identity_class not found in config');
             }
+            /* Add no object exists validator to identity validators */
             $validators[] = [
                 'name' => DoctrineModuleValidator\NoObjectExists::class,
-                'break_chain_on_failure' => TRUE,
+                'break_chain_on_failure' => true,
                 'options' => [
                     'target_class' => $this->config['doctrine']['authentication']['orm_default']['identity_class'],
                     'object_repository' => $this->objectManager->getRepository($this->config['doctrine']['authentication']['orm_default']['identity_class']),
@@ -196,16 +214,18 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
                 ],
             ];
         }
-        
+
         $filter = [];
-        
-        if (method_exists($this, 'addInputFilterSpecification')) {
+
+        /* Add custom user filters and validators if exists */
+        if (method_exists($this, 'addInputFilterSpecification') === true) {
             $filter = $this->addInputFilterSpecification();
         }
 
+        /* Return input filters and validators */
         return array_merge($filter, [
             $this->config['doctrine']['authentication']['orm_default']['identity_property'] => [
-                'required' => TRUE,
+                'required' => true,
                 'filters' => [
                     ['name' => 'StripTags'],
                     ['name' => 'StringTrim'],
@@ -213,7 +233,7 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
                 'validators' => $validators
             ],
             $this->config['doctrine']['authentication']['orm_default']['credential_property'] => [
-                'required' => TRUE,
+                'required' => true,
                 'filters' => [
                     ['name' => 'StripTags'],
                     ['name' => 'StringTrim'],
@@ -221,7 +241,7 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
                 'validators' => [
                     [
                         'name' => Validator\NotEmpty::class,
-                        'break_chain_on_failure' => TRUE,
+                        'break_chain_on_failure' => true,
                         'options' => [
                             'messages' => [
                                 Validator\NotEmpty::IS_EMPTY => _("You must specify your password"),

@@ -21,7 +21,7 @@ class PasswordReminder implements EntityInterface
 {
 
     /**
-     * @var string
+     * @var int
      * @ORM\Column(name="password_reminder_id", type="integer", length=13, nullable=false)
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
@@ -54,36 +54,36 @@ class PasswordReminder implements EntityInterface
     
     /**
      * 
-     * @return string
+     * @return int|null
      */
-    public function getPasswordReminderId()
+    public function getPasswordReminderId(): ?int
     {
         return $this->passwordReminderId;
     }
     
     /**
      * 
-     * @return string
+     * @return string|null
      */
-    public function getCode()
+    public function getCode(): ?string
     {
         return $this->code;
     }
     
     /**
      * 
-     * @return Users
+     * @return Users|null
      */
-    public function getUser(): Users
+    public function getUser(): ?Users
     {
         return $this->user;
     }
 
     /**
      * 
-     * @return DateTime
+     * @return DateTime|null
      */
-    public function getDateCreated(): DateTime
+    public function getDateCreated(): ?DateTime
     {
         return $this->dateCreated;
     }
@@ -93,7 +93,7 @@ class PasswordReminder implements EntityInterface
      * @param string $code
      * @return $this
      */
-    public function setCode($code)
+    public function setCode(string $code)
     {
         $this->code = $code;
         return $this;

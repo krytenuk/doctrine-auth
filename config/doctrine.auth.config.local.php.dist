@@ -6,10 +6,10 @@ use Laminas\Session\Storage\SessionArrayStorage;
 use FwsDoctrineAuth\Form;
 
 return [
-    /**
-     * Configure doctrine authentication
-     */
     'doctrine' => [
+        /**
+         * Configure doctrine connection, you may have this defined elsewhere
+         */
         'connection' => [
             'orm_default' => [
                 'driverClass' => 'Doctrine\DBAL\Driver\PDOMySql\Driver',
@@ -22,6 +22,9 @@ return [
                 ],
             ],
         ],
+        /**
+         * Configure doctrine authentication
+         */
         'authentication' => [
             'orm_default' => [
                 'identity_class' => BaseUsers::class, // <- Doctrine entity to use, default \FwsDoctrineAuth\Entity\BaseUsers
@@ -37,21 +40,21 @@ return [
          * Registration Form
          */
         'registrationForm' => Form\RegisterForm::class,
-        'allowRegistration' => TRUE, // <- allow new users to register
+        'allowRegistration' => true, // <- allow new users to register
         'registrationCallback' => '', // <- class to use as callback in registration, must use __invoke() magic method
-        'autoRegistrationLogin' => FALSE, // <- Auto login after registration
+        'autoRegistrationLogin' => false, // <- Auto login after registration
         'userActiveAfterRegistration' => 1, // <- user active after registration, 1 = active, 0 = inactive
         /**
          * Login Form & password reset
          */
         'loginForm' => Form\LoginForm::class,
-        'loginCallback' => NULL, // <- class to use as callback during login, must use __invoke() magic method
+        'loginCallback' => null, // <- class to use as callback during login, must use __invoke() magic method
         /**
          * Password reset forms
          */
         'emailResetLinkForm' => Form\EmailForm::class,
         'newPasswordForm' => Form\ResetPasswordForm::class,
-        'allowPasswordReset' => TRUE, // Show reset password link on login form and allow password reset
+        'allowPasswordReset' => true, // Show reset password link on login form and allow password reset
         'passwordLinkActiveFor' => 24, // Password reset link active for hours
         'fromEmail' => 'no-reply@example.com', // Email address for password reset link email, set reply to and from email
         
