@@ -43,7 +43,7 @@
             "FwsDoctrineAuth\\": "src/"
         }
     },
-    "license": "Donationware",
+    "license": "MIT",
     "type": "module",
     "homepage": "https://github.com/krytenuk/fws-doctrine-auth",
     "extra": {
