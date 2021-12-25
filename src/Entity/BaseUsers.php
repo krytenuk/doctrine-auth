@@ -35,7 +35,7 @@ class BaseUsers implements EntityInterface
      * identity_property in config
      * @var string
      *
-     * @ORM\Column(name="email_address", type="string", length=254, nullable=true)
+     * @ORM\Column(name="email_address", type="string", length=254, nullable=false)
      */
     private $emailAddress;
 
@@ -43,7 +43,7 @@ class BaseUsers implements EntityInterface
      * credential_property in config
      * @var string
      *
-     * @ORM\Column(name="password", type="string", length=256, nullable=true)
+     * @ORM\Column(name="password", type="string", length=256, nullable=false)
      */
     private $password;
 

@@ -2,7 +2,7 @@
     "name": "krytenuk/doctrine-auth",
     "description": "Zend Framework 3/Laminas module for authentication using Doctrine",
     "require": {
-        "php": "^7.1",
+        "php": "^7.1 || ^8.0",
         "symfony/console": "^5.0",
         "doctrine/doctrine-orm-module": "^4.0",
         "container-interop/container-interop": "^1.2",
@@ -43,7 +43,7 @@
             "FwsDoctrineAuth\\": "src/"
         }
     },
-    "license": "BSD-3-Clause",
+    "license": "Donationware",
     "type": "module",
     "homepage": "https://github.com/krytenuk/fws-doctrine-auth",
     "extra": {

@@ -22,3 +22,7 @@ Changed requirement to PHP 7.1 or greater
 Added PHP 7 type hinting to doctrine entities
 Fixed auto-login after registration bug
 Refactored code to improve readability and performance
+
+0.2.0
+Changed BaseUsers entity nullable annotation to false in emailAddress and password fields
+Now compatable with PHP 8.0+

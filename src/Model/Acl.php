@@ -28,16 +28,6 @@ class Acl extends LaminasAcl
     private $defaultRegistrationRole;
 
     /**
-     * Get the default role
-     * This is the role of a user not logged in
-     * @return string
-     */
-    public function getDefultRole(): string
-    {
-        return $this->defaultRole;
-    }
-
-    /**
      * Setup access control list
      * @param array $config
      * @throws DoctrineAuthException
@@ -172,6 +162,16 @@ class Acl extends LaminasAcl
         foreach ($config['doctrineAuthAcl']['permissions'] as $permission) {
             $this->setRule(self::OP_ADD, $permission['type'], $permission['role'], $permission['resource'], $permission['actions']);
         }
+    }
+
+    /**
+     * Get the default role
+     * This is the role of a user not logged in
+     * @return string
+     */
+    public function getDefultRole(): string
+    {
+        return $this->defaultRole;
     }
 
     /**
