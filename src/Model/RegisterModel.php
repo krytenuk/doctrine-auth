@@ -130,7 +130,7 @@ class RegisterModel extends AbstractModel
         }
 
         /* Set user fields not defined in form */
-        $this->userEntity->setUserActive((int) $this->config['doctrineAuth']['userActiveAfterRegistration']);
+        $this->userEntity->setUserActive((bool) $this->config['doctrineAuth']['userActiveAfterRegistration']);
         $this->userEntity->setDateCreated(new DateTime());
         $this->userEntity->setDateModified(new DateTime());
 

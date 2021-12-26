@@ -151,12 +151,12 @@ class BaseUsers implements EntityInterface
 
     /**
      * Set user active
-     * @param integer $userActive
+     * @param bool|int $userActive
      * @return $this
      */
-    public function setUserActive(int $userActive)
+    public function setUserActive($userActive)
     {
-        $this->userActive = $userActive;
+        $this->userActive = (bool) $userActive;
         return $this;
     }
 
