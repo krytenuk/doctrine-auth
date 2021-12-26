@@ -3,7 +3,7 @@
 namespace FwsDoctrineAuth\Model\Service;
 
 use Laminas\ServiceManager\Factory\FactoryInterface;
-use Interop\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use FwsDoctrineAuth\Model\ForgotPasswordModel;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use Doctrine\ORM\EntityManager;

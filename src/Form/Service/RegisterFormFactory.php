@@ -3,7 +3,7 @@
 namespace FwsDoctrineAuth\Form\Service;
 
 use Laminas\ServiceManager\Factory\FactoryInterface;
-use Interop\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use Doctrine\ORM\EntityManager;
 use Doctrine\Laminas\Hydrator\DoctrineObject;
 

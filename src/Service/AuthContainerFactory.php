@@ -3,7 +3,7 @@
 namespace FwsDoctrineAuth\Service;
 
 use Laminas\ServiceManager\Factory\FactoryInterface;
-use Interop\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use Laminas\Session\Container;
 
 class AuthContainerFactory implements FactoryInterface

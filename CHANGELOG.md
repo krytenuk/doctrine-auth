@@ -25,4 +25,5 @@ Refactored code to improve readability and performance
 
 0.2.0
 Changed BaseUsers entity nullable annotation to false in emailAddress and password fields
-Now compatable with PHP 8.0+
+Now compatable with PHP 8.0 & 8.1
+Changed abandoned Container Interop package for PSR Container

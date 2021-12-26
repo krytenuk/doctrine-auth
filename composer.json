@@ -50,5 +50,11 @@
         "zf": {
             "module": "FwsDoctrineAuth"
         }
-    }
+    },
+    "funding": [
+        {
+            "type": "other",
+            "url": "https://www.freedomwebservices.net/laminas/fws-doctrine-auth#donate"
+        }
+    ]
 }

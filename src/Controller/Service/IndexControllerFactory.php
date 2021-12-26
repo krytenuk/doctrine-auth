@@ -3,7 +3,7 @@
 namespace FwsDoctrineAuth\Controller\Service;
 
 use Laminas\ServiceManager\Factory\FactoryInterface;
-use Interop\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use FwsDoctrineAuth\Controller\IndexController;
 use FwsDoctrineAuth\Model;
 

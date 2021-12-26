@@ -3,8 +3,7 @@
 namespace FwsDoctrineAuth\Form\Service;
 
 use Laminas\ServiceManager\Factory\FactoryInterface;
-use Interop\Container\ContainerInterface;
-use FwsDoctrineAuth\Form\ResetPasswordForm;
+use Psr\Container\ContainerInterface;
 
 /**
  * ForgotPasswordFormFactory
