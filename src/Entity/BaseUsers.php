@@ -48,7 +48,7 @@ class BaseUsers implements EntityInterface
     private $password;
 
     /**
-     * @var integer
+     * @var bool
      *
      * @ORM\Column(name="user_active", type="boolean", nullable=false, options={"default":0})
      */
@@ -168,7 +168,17 @@ class BaseUsers implements EntityInterface
     {
         return (bool) $this->userActive;
     }
+    
+    /**
+     * 
+     * @return bool
+     */
+    public function getUserActive(): bool
+    {
+        return (bool) $this->userActive;
+    }
 
+    
     /**
      * 
      * @param DateTime $dateCreated
