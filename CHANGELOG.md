@@ -31,3 +31,6 @@ Changed abandoned Container Interop package for PSR Container
 0.2.1
 Changed user active to accept boolean or integer value
 Added user active getter so Doctrine object and Laminas class methods hydration work correctly
+
+0.2.2
+Allow passwords to be null

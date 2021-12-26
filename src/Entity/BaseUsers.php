@@ -43,7 +43,7 @@ class BaseUsers implements EntityInterface
      * credential_property in config
      * @var string
      *
-     * @ORM\Column(name="password", type="string", length=256, nullable=false)
+     * @ORM\Column(name="password", type="string", length=256, nullable=true)
      */
     private $password;
 
@@ -129,10 +129,10 @@ class BaseUsers implements EntityInterface
     /**
      * Set password
      *
-     * @param string $password
+     * @param string|null $password
      * @return Users
      */
-    public function setPassword(string $password)
+    public function setPassword(?string $password)
     {
         $this->password = $password;
 
@@ -142,7 +142,7 @@ class BaseUsers implements EntityInterface
     /**
      * Get password
      *
-     * @return string
+     * @return string|null
      */
     public function getPassword(): ?string
     {
