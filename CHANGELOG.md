@@ -34,3 +34,6 @@ Added user active getter so Doctrine object and Laminas class methods hydration 
 
 0.2.2
 Allow passwords to be null
+
+0.2.3
+Updated dependancy versions
