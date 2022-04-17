@@ -27,7 +27,7 @@ class IndexControllerFactory implements FactoryInterface
                 $container->get(Model\LoginModel::class), 
                 $container->get(Model\RegisterModel::class),
                 $container->get(Model\ForgotPasswordModel::class),
-                $container->get('MvcTranslator')
+                $container->get(Model\Select2faModel::class)
         );
     }
 

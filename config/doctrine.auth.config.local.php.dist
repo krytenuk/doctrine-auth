@@ -4,6 +4,8 @@ use FwsDoctrineAuth\Entity\BaseUsers;
 use Laminas\Session\Validator as SessionValidator;
 use Laminas\Session\Storage\SessionArrayStorage;
 use FwsDoctrineAuth\Form;
+use FwsDoctrineAuth\Model\TwoFactorAuthModel;
+use Laminas\I18n\Translator\TranslatorServiceFactory;
 
 return [
     'doctrine' => [
@@ -34,10 +36,21 @@ return [
         ],
     ],
     'doctrineAuth' => [
-        'siteName' => 'Example Site', // the name of your website
         /**
-         * Forms
-         * Registration Form
+         * Misc settings
+         */
+        'siteName' => 'Example Site', // the name of your website
+        'siteCoutryCode' => 'GB', // 2 character ISO 3166 Country Code
+        'sendEmails' => true, // <- Send emails if true or create email file if false. Handy if development server is not setup to send emails. Remember to set true on production server
+        'emailsFolder' => 'emails', // <- Location to store email files relative to your application root, only used if the above is set to false, remember to create folder(s)
+        /**
+         * Encryption
+         */
+        'rsaPrivateKeyFile' => 'rsa/id_rsa.pem', // <- path and filename of your rsa private key @see https://docs.rightscale.com/faq/How_Do_I_Generate_My_Own_SSH_Key_Pair.html
+        'rsaPublicKeyFile' => 'rsa/id_rsa.pub', // <- path and filename of your rsa public key
+        'rsaKeyPassphrase' => 'passphrase', // passphrase used when creating the above keys
+        /**
+         * Registration
          */
         'registrationForm' => Form\RegisterForm::class,
         'allowRegistration' => true, // <- allow new users to register
@@ -45,23 +58,39 @@ return [
         'autoRegistrationLogin' => false, // <- Auto login after registration
         'userActiveAfterRegistration' => 1, // <- user active after registration, 1 = active, 0 = inactive
         /**
-         * Login Form & password reset
+         * Login
          */
         'loginForm' => Form\LoginForm::class,
         'loginCallback' => null, // <- class to use as callback during login, must use __invoke() magic method
+        'maxLoginAttempts' => 3, // <- Max login attempts allowed
+        'maxLoginAttemptsTime' => 5, // <- Number of minuets user can make the above login attempts, by default a user can make 3 wrong attempts within a 5 minute period before becomming blocked
+        'loginReleaseTime' => 0, // <- Number of minutes user remains blocked for, 0 = don't unblock. If used should be greater than the above maxLoginAttemptsTime
         /**
-         * Password reset forms
+         * Password reset
          */
         'emailResetLinkForm' => Form\EmailForm::class,
         'newPasswordForm' => Form\ResetPasswordForm::class,
-        'allowPasswordReset' => true, // Show reset password link on login form and allow password reset
-        'passwordLinkActiveFor' => 24, // Password reset link active for hours
-        'fromEmail' => 'no-reply@example.com', // Email address for password reset link email, set reply to and from email
-        
+        'allowPasswordReset' => true, // <- Show reset password link on login form and allow password reset
+        'passwordLinkActiveFor' => 24, // <- Password reset link active for hours
+        'fromEmail' => 'no-reply@example.com', // <- Email address for password reset link email, set reply to and from email
+        /**
+         * Form labels
+         */
         'formElements' => [
                 'identity_label' => 'Email Address', // <- Form label for identity_property
                 'credential_label' => 'Password', // <- Form label for credential_property
         ],
+        /**
+         * Two factor authentication
+         */
+        'selectTwoFactorAuthMethodForm' => Form\SelectTwoFactorAuthMethodForm::class, // <- Select authentication method during login form
+        'twoFactorAuthCodeForm' => Form\TwoFactorAuthCodeForm::class, // <- Enter authentication code form
+        'useTwoFactorAuthentication' => false, // <- Use two factor authentication
+        'allowedTwoFactorAuthenticationMethods' => [TwoFactorAuthModel::EMAIL], // <- Array of 2FA methods to use, @see TwoFactorAuthModel
+        'twoFactorCodeActiveFor' => 10, // <- 2fa auth code active time in minuets after generation
+        'bulkSmsUsername' => 'yourUsername', // <- Your BulkSMS username
+        'bulkSmsApiTokenId' => 'yourApiToken', // <- Your BulkSMS API token id
+        'bulkSmsApiTokenSecret' => 'yourApiTokenSecret', // <- Your BulkSMS API token secret
     ],
     /**
      * Configure laminas-session as per your requirements
@@ -78,5 +107,19 @@ return [
     'session_config' => [
         'cookie_lifetime' => 60 * 60 * 1,// <- Session cookie will expire in 1 hour.
         'gc_maxlifetime' => 60 * 60 * 24 * 30,// <- Session data will be stored on server maximum for 30 days.
+    ],
+    /**
+     * Configure laminas translator as per your requirements
+     * Remove if set elsewhere
+     */
+    'translator' => [
+        'locale' => 'en_GB',
+        'translation_file_patterns' => [
+            [
+                'type' => 'gettext',
+                'base_dir' => getcwd() .  '/data/language',
+                'pattern' => '%s.mo',
+            ],
+        ],
     ],
 ];

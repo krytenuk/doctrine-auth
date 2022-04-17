@@ -8,8 +8,8 @@ echo $this->form()->openTag($this->form);
 ?>
 <dl class="zend_form">
     <?php foreach ($this->form as $element): ?>
-        <?php if ($element->getLabel() != null && !$element instanceof Button): ?>
-            <dt><?php echo $this->formLabel($element) ?></dt>
+        <?php if ($element->getLabel() !== null && $element instanceof Button === false): ?>
+            <dt><?= $this->formLabel($element) ?></dt>
         <?php endif; ?>
         <dd>
             <?php
@@ -22,7 +22,7 @@ echo $this->form()->openTag($this->form);
         </dd>
     <?php endforeach; ?>
 </dl>
-<?php echo $this->form()->closeTag(); ?>
+<?= $this->form()->closeTag(); ?>
 <?php if ($this->form->getName() == 'reset-password'): ?>
     <script type="text/javascript">
         window.onload = function () {
@@ -45,8 +45,8 @@ echo $this->form()->openTag($this->form);
                         element.setAttribute(attributes[i].name, attributes[i].value);
                     }
                     element.setAttribute('type', type);
-                }
+                };
             }
-        }
+        };
     </script>
 <?php endif; ?>

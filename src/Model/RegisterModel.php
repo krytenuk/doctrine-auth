@@ -12,6 +12,7 @@ use FwsDoctrineAuth\Model\Acl;
 use FwsDoctrineAuth\Model\LoginModel;
 use DateTime;
 use Laminas\Crypt\Password\Bcrypt;
+use FwsDoctrineAuth\Model\Crypt;
 
 /**
  * Description of RegisterModel
@@ -128,12 +129,17 @@ class RegisterModel extends AbstractModel
         if (isset($this->config['doctrineAuth']['userActiveAfterRegistration']) === false) {
             throw new DoctrineAuthException('"userActiveAfterRegistration" key not found in config');
         }
-
+        
+        /* useTwoFactorAuthentication key not set in config */
+        if (isset($this->config['doctrineAuth']['useTwoFactorAuthentication']) === false) {
+            throw new DoctrineAuthException('useTwoFactorAuthentication key not found in config');
+        }
+        
         /* Set user fields not defined in form */
         $this->userEntity->setUserActive((bool) $this->config['doctrineAuth']['userActiveAfterRegistration']);
         $this->userEntity->setDateCreated(new DateTime());
         $this->userEntity->setDateModified(new DateTime());
-
+        
         /* credential_property not set in config */
         if (!isset($this->config['doctrine']['authentication']['orm_default']['credential_property'])) {
             throw new DoctrineAuthException('credential_property not found in config');
@@ -146,8 +152,7 @@ class RegisterModel extends AbstractModel
             throw new DoctrineAuthException(sprintf('Method "%s" not found in "%s"', $credentialSetter, get_class($this->userEntity)));
         }
         /* Encrypt user credential property */
-        $bcrypt = new Bcrypt();
-        $this->userEntity->$credentialSetter($bcrypt->create($this->form->get($this->config['doctrine']['authentication']['orm_default']['credential_property'])->getValue()));
+        $this->userEntity->$credentialSetter(Crypt::bcrypytCreate($this->form->get($this->config['doctrine']['authentication']['orm_default']['credential_property'])->getValue()));
 
         /* Default register role not set in config */
         if (isset($this->config['doctrineAuthAcl']['defaultRegisterRole']) === false) {

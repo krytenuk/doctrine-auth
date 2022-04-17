@@ -1,9 +1,9 @@
-<h2><?php echo $this->translate('Sign In'); ?></h2>
+<h2><?= $this->translate('Sign In'); ?></h2>
 <?php
-$this->form->setAttribute('action', $this->url('doctrine-auth/default', array('action' => 'login')));
-$this->formElementErrors()->setAttributes(array('class' => 'errors'));
+$this->form->setAttribute('action', $this->url('doctrine-auth/default', ['action' => 'login']));
+$this->formElementErrors()->setAttributes(['class' => 'errors']);
 echo $this->partial('form.phtml', ['form' => $this->form]);
-if ($this->useForgotPassword):
+if ($this->useForgotPassword === true):
     ?>
     <a href="<?= $this->url('doctrine-auth/passwordReset'); ?>"><?= $this->translate('Forgot Password?'); ?></a>
 <?php endif; ?>

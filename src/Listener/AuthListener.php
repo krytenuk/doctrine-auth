@@ -33,7 +33,7 @@ class AuthListener
         /* Get user role */
         $role = $acl->getDefultRole();
         if ($auth->hasIdentity() === true) {
-            /* @var $user \Application\Entity\Users */
+            /* @var $user BaseUsers */
             $user = $auth->getIdentity();
             if ($user instanceof BaseUsers === true) {
                 $role = $user->getUserRole()->getRole();
@@ -62,7 +62,6 @@ class AuthListener
         /*
          * User NOT allowed to access resource
          */
-
         $request = $event->getRequest();
         $response = $event->getResponse();
         /* ajax request */
@@ -76,21 +75,21 @@ class AuthListener
             /* On login page */
             if ($controller == IndexController::class && $action == 'login') {
                 /* Redirect to logout */
-                return $this->redirect($event, $response, $event->getRouter()->assemble(array('action' => 'logout'), array('name' => 'doctrine-auth/default')));
+                return $this->redirect($event, $response, $event->getRouter()->assemble(['action' => 'logout'], ['name' => 'doctrine-auth/default']));
             }
 
             /* User trying to access restricted page */
             if ($controller !== IndexController::class) {
                 /* Store page user is trying to access */
                 $container = $serviceManager->get('authContainer');
-                $container->redirect = array(
+                $container->redirect = [
                     'url' => $event->getRouter()->getRequestUri()->toString(),
                     'controller' => $controller,
                     'action' => $action,
-                );
+                ];
             }
             /* Redirect to login */
-            return $this->redirect($event, $response, $event->getRouter()->assemble(array('action' => 'login'), array('name' => 'doctrine-auth/default')));
+            return $this->redirect($event, $response, $event->getRouter()->assemble(['action' => 'login'], ['name' => 'doctrine-auth/default']));
         }
     }
 
@@ -117,7 +116,7 @@ class AuthListener
      * @return boolean|string
      * @throws \Exception
      */
-    public function getControllerAlias($controller, Acl $acl, Array $aliases)
+    public function getControllerAlias($controller, Acl $acl, array $aliases)
     {
         if (in_array($controller, $aliases)) {
             if ($acl->hasResource($aliases[$controller])) {

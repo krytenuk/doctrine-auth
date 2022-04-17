@@ -24,7 +24,10 @@
         "laminas/laminas-navigation": "^2.13",
         "laminas/laminas-router": "^3.5",
         "laminas/laminas-mail": "^2.15",
-        "laminas/laminas-math": "^3.4"
+        "laminas/laminas-math": "^3.4",
+        "laminas/laminas-serializer": "^2.12",
+        "endroid/qr-code": "^4.4",
+        "pragmarx/google2fa": "^8.0"
     },
     "authors": [{
             "name": "Garry Childs",

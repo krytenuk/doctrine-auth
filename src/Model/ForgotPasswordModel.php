@@ -17,7 +17,6 @@ use Laminas\View\Model\ViewModel;
 use Laminas\Mail\Message;
 use Laminas\Mime\Part as MimePart;
 use Laminas\Mime\Message as MimeMessage;
-use Laminas\Mail\Transport\Sendmail;
 
 /**
  * ForgotPassword
@@ -26,6 +25,8 @@ use Laminas\Mail\Transport\Sendmail;
  */
 class ForgotPasswordModel extends AbstractModel
 {
+    
+    use SendMailTrait;
 
     /**
      *
@@ -200,22 +201,6 @@ class ForgotPasswordModel extends AbstractModel
         $message->setSubject(sprintf('%s password reset request', $this->config['doctrineAuth']['siteName']));
 
         return $this->sendMail($message);
-    }
-
-    /**
-     * Send email
-     * @param Message $message
-     * @return boolean
-     */
-    protected function sendMail(Message $message)
-    {
-        $transport = new Sendmail();
-        try {
-            $transport->send($message);
-            return true;
-        } catch (Exception $exception) {
-            return false;
-        }
     }
 
     /**

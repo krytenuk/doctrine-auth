@@ -12,6 +12,7 @@ use FwsDoctrineAuth\Listener\AuthListener;
 use FwsDoctrineAuth\Listener\NavigationListener;
 use FwsDoctrineAuth\Model;
 use FwsDoctrineAuth\Controller;
+use FwsDoctrineAuth\View\Helper as ViewHelper;
 use Laminas\Router\Http\Segment;
 use Laminas\Router\Http\Literal;
 use FwsDoctrineAuth\Service\AuthContainerFactory;
@@ -71,12 +72,12 @@ return [
             ],
         ],
     ],
-    'view_manager' => array(
-        'template_path_stack' => array(
+    'view_manager' => [
+        'template_path_stack' => [
             'fws-doctrine-auth' => __DIR__ . '/../view'
-        ),
+        ],
         'display_exceptions' => false,
-    ),
+    ],
     'service_manager' => [
         'factories' => [
             AuthListener::class => InvokableFactory::class,
@@ -85,6 +86,8 @@ return [
             'authContainer' => AuthContainerFactory::class,
             Model\InitModel::class => Model\Service\InitModelFactory::class,
             Model\LoginModel::class => Model\Service\LoginModelFactory::class,
+            Model\TwoFactorAuthModel::class => Model\Service\TwoFactorAuthModelFactory::class,
+            Model\Select2faModel::class => Model\Service\Select2faModelFactory::class,
             Model\RegisterModel::class => Model\Service\RegisterModelFactory::class,
             Model\ForgotPasswordModel::class => Model\Service\ForgotPasswordModelFactory::class,
         ],
@@ -97,7 +100,7 @@ return [
         'driver' => [
             __NAMESPACE__ . '_driver' => [
                 'class' => AnnotationDriver::class,
-                'paths' => array(__DIR__ . '/../src/Entity')
+                'paths' => [__DIR__ . '/../src/Entity']
             ],
             'orm_default' => [
                 'drivers' => [
@@ -134,6 +137,18 @@ return [
             Form\RegisterForm::class => Form\Service\RegisterFormFactory::class,
             Form\ResetPasswordForm::class => Form\Service\ResetPasswordFormFactory::class,
             Form\EmailForm::class => Form\Service\EmailFormFactory::class,
+            Form\TwoFactorAuthCodeForm::class => InvokableFactory::class,
+            Form\SelectTwoFactorAuthMethodForm::class => Form\Service\SelectTwoFactorAuthMethodFormFactory::class,
+        ],
+    ],
+    'view_helpers' => [
+        'factories' => [
+            ViewHelper\ObfuscateEmail::class => InvokableFactory::class,
+            ViewHelper\ObfuscatePhoneNumber::class => InvokableFactory::class,
+        ],
+        'aliases' => [
+            'obfuscateEmail' => ViewHelper\ObfuscateEmail::class,
+            'obfuscatePhoneNumber' => ViewHelper\ObfuscatePhoneNumber::class,
         ],
     ],
 ];

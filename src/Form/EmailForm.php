@@ -5,11 +5,11 @@ namespace FwsDoctrineAuth\Form;
 use Laminas\Form\Form;
 use Laminas\InputFilter\InputFilterProviderInterface;
 use Laminas\Form\Element;
+use Laminas\Filter;
 use Laminas\Validator;
 use DoctrineModule\Validator as DoctrineModuleValidator;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use Doctrine\ORM\EntityManager;
-use Laminas\Filter\StringToLower;
 
 /**
  * EmailForm
@@ -41,6 +41,7 @@ class EmailForm extends Form implements InputFilterProviderInterface
         parent::__construct('reset-password');
         $this->config = $config;
         $this->entityManager = $entityManager;
+        $this->setAttribute('method', 'post');
     }
 
     /**
@@ -54,7 +55,7 @@ class EmailForm extends Form implements InputFilterProviderInterface
         if (!isset($this->config['doctrine']['authentication']['orm_default']['identity_property'])) {
             throw new DoctrineAuthException('identity_property not found in config');
         }
-        
+
         /*
          * Add form elements
          */
@@ -97,13 +98,13 @@ class EmailForm extends Form implements InputFilterProviderInterface
      */
     public function getInputFilterSpecification(): array
     {
-        $filter = new StringToLower();
+        $filter = new Filter\StringToLower();
         return [
             $this->getIdentityName() => [
                 'required' => TRUE,
                 'filters' => [
-                    ['name' => 'StripTags'],
-                    ['name' => 'StringTrim'],
+                    ['name' => Filter\StripTags::class],
+                    ['name' => Filter\StringTrim::class],
                 ],
                 'validators' => [
                     [
