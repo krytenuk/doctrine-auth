@@ -8,6 +8,8 @@ use Laminas\EventManager\LazyListenerAggregate;
 use Laminas\ModuleManager\ModuleManagerInterface;
 use Laminas\Authentication\AuthenticationService;
 use FwsDoctrineAuth\Command\InitCommand;
+use FwsDoctrineAuth\Command\EncryptUsersCommand;
+use FwsDoctrineAuth\Command\DecryptUsersCommand;
 use Doctrine\ORM\Tools\Console\ConsoleRunner;
 use FwsDoctrineAuth\Model\HashPassword;
 
@@ -30,7 +32,7 @@ class Module implements BootstrapListenerInterface
                 $config['event_manager']['lazy_listeners'], $serviceManager
         );
         $aggregate->attach($eventManager);
-        
+
         HashPassword::setConfig($config);
     }
 
@@ -72,11 +74,12 @@ class Module implements BootstrapListenerInterface
             /* @var $entityManager \Doctrine\ORM\EntityManagerInterface */
             $entityManager = $cli->getHelperSet()->get('em')->getEntityManager();
             $config = $event->getParam('ServiceManager')->get('config');
-            $initCommand = new InitCommand($entityManager, $config);
             ConsoleRunner::addCommands($cli);
-            $cli->addCommands(array(
-                $initCommand
-            ));
+            $cli->addCommands([
+                new InitCommand($entityManager, $config),
+                new EncryptUsersCommand($entityManager, $config),
+                new DecryptUsersCommand($entityManager, $config),
+            ]);
         });
     }
 

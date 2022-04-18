@@ -11,7 +11,7 @@ use DateTime;
 use DateInterval;
 use Laminas\Stdlib\Parameters;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
-use Laminas\Crypt\Password\Bcrypt;
+use FwsDoctrineAuth\Model\Crypt;
 use Laminas\View\Renderer\PhpRenderer;
 use Laminas\View\Model\ViewModel;
 use Laminas\Mail\Message;
@@ -240,8 +240,8 @@ class ForgotPasswordModel extends AbstractModel
         }
         
         /* Encrypt credential */
-        $bcrypt = new Bcrypt();
-        $this->userEntity->$credentialSetter($bcrypt->create($this->resetPasswordForm->getData()[$this->resetPasswordForm->getCredentialName()]));
+        $crypt = new Crypt();
+        $this->userEntity->$credentialSetter($crypt->bcrypytCreate($this->resetPasswordForm->getData()[$this->resetPasswordForm->getCredentialName()]));
         /* Persist user entity */
         $this->entityManager->persist($this->userEntity);
         /* Remove password reset entity */
