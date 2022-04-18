@@ -15,12 +15,12 @@ class UserRolesRepository extends EntityRepository
 
     /**
      * Count user roles
-     * @return integer
+     * @return int
      */
     public function countRoles(): int
     {
         $builder = $this->getEntityManager()->createQueryBuilder();
-        $builder->select('COUNT(r)')
+        $builder->select($builder->expr()->count('r'))
                 ->from(UserRoles::class, 'r');
 
         return $builder->getQuery()->getSingleScalarResult();
@@ -34,7 +34,7 @@ class UserRolesRepository extends EntityRepository
     public function hasRole($role): bool
     {
         $builder = $this->getEntityManager()->createQueryBuilder();
-        $builder->select('COUNT(r)')
+        $builder->select($builder->expr()->count('r'))
                 ->from(UserRoles::class, 'r')
                 ->where($builder->expr()->eq('r.role', ':role'))
                 ->setParameter('role', $role);

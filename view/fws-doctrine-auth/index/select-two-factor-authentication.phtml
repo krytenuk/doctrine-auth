@@ -1,0 +1,69 @@
+<?php
+
+use Laminas\Filter\StringToLower;
+use FwsDoctrineAuth\Model\TwoFactorAuthModel;
+
+$stringToLower = new StringToLower();
+?>
+<h2>Select two factor authentication method</h2>
+<?php if ($this->methodAdded): ?>
+    <p class="message"><?= sprintf($this->translate('Autentication method %s added'), $this->methodAdded); ?></p>
+<?php elseif ($this->methodRemoved): ?>
+    <p class="message"><?= sprintf($this->translate('Autentication method %s removed'), $this->methodRemoved); ?></p>
+    <?php
+endif;
+if (is_array($this->authMethods) === false):
+    ?>
+    <p><?= $this->translate('No 2FA methods found!'); ?></p>
+<?php else: ?>
+    <dl class="auth-methods">
+        <?php
+        foreach ($this->authMethods as $key => $method):
+            if (in_array($key, $this->allowedMethods)):
+                $found = false;
+                ?>
+                <dt><?= $method; ?></dt>
+                <dd>
+                    <?php
+                    foreach ($this->user->getAuthMethods() as $userMethod):
+                        if ($userMethod->getMethod() === $key):
+                            if ($key === TwoFactorAuthModel::SMS && $this->user->getMobileNumber() === null):
+                                ?>
+                                <p><?= sprintf($this->translate('Unable to use %s authentication method, your mobile number is not set'), $stringToLower->filter($method)); ?></p>
+                            <?php else: ?>
+                                <a href="<?= $this->url('doctrine-auth/default', ['action' => 'select-two-factor-authentication'], ['query' => ['method' => $key]]); ?>">
+                                    <?= sprintf($this->translate('Remove %s authentication method'), $stringToLower->filter($method)); ?>
+                                </a>
+                            <?php
+                            endif;
+                            $found = true;
+                            break;
+                        endif;
+                    endforeach;
+                    if ($found === false):
+                        if ($key === TwoFactorAuthModel::SMS && $this->user->getMobileNumber() === null):
+                            ?>
+                            <p><?= sprintf($this->translate('Unable to use %s authentication method, your mobile number is not set'), $stringToLower->filter($method)); ?></p>
+                            <?php
+                        else:
+                            if ($key === TwoFactorAuthModel::GOOGLEAUTHENTICATOR) {
+                                $url = $this->url('doctrine-auth/default', ['action' => 'set-google-authentication']);
+                            } else {
+                                $url = $this->url('doctrine-auth/default', ['action' => 'select-two-factor-authentication'], ['query' => ['method' => $key]]);
+                            }
+                            ?>
+                            <a href="<?= $url; ?>">
+                                <?= sprintf($this->translate('Use %s authentication method'), $stringToLower->filter($method)); ?>
+                            </a>
+                        <?php
+                        endif;
+                        ?>
+                        </a>
+                    <?php endif; ?>
+                </dd>         
+                <?php
+            endif;
+        endforeach;
+        ?>
+    </dl>
+<?php endif; ?>

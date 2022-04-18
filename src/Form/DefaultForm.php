@@ -6,6 +6,8 @@ use Laminas\Form\Form;
 use Laminas\InputFilter\InputFilterProviderInterface;
 use Laminas\Form\Element;
 use Laminas\Form\Fieldset;
+use Laminas\Form\FieldsetInterface;
+use Laminas\Filter;
 use Laminas\Validator;
 use DoctrineModule\Validator as DoctrineModuleValidator;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
@@ -36,11 +38,12 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
      * @param EntityManager $objectManager
      * @param array $config
      */
-    public function __construct(EntityManager $objectManager, Array $config)
+    public function __construct(EntityManager $objectManager, array $config)
     {
         parent::__construct('auth');
         $this->objectManager = $objectManager;
         $this->config = $config;
+        $this->setAttribute('method', 'post');
     }
 
     /**
@@ -59,11 +62,10 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
         if (isset($this->config['doctrineAuth']['formElements']['identity_label']) === false || isset($this->config['doctrineAuth']['formElements']['credential_label']) === false) {
             throw new DoctrineAuthException('identity_label and/or credential_label not found in config');
         }
-
+                
         /*
          * Add form elements
          */
-
         $this->add([
             'name' => $this->config['doctrine']['authentication']['orm_default']['identity_property'],
             'type' => Element\Text::class,
@@ -115,31 +117,25 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
             ],
         ]);
 
-        /* Set validation group */
+        $this->setValidationGroup($this->generateValidationGroup($this));
+    }
+
+    /**
+     * Get form or fieldset element names as an array for use in @see Form::setValidationGroup()
+     * @param FieldsetInterface $formOrFieldset
+     * @return array
+     */
+    private function generateValidationGroup(FieldsetInterface $formOrFieldset): array
+    {
         $validationGroup = [];
-        foreach ($this as $element) {
+        foreach ($formOrFieldset as $element) {
             if ($element instanceof Fieldset) {
-                $validationGroup[$element->getName()] = $this->addFieldsetToValidationGroup($element);
+                $validationGroup[$element->getName()] = $this->getValidationGroup($element);
             } else {
                 $validationGroup[] = $element->getName();
             }
         }
-
-        $this->setValidationGroup($validationGroup);
-    }
-
-    /**
-     * Get fieldset element names
-     * @param Fieldset $fieldset
-     * @return array
-     */
-    private function addFieldsetToValidationGroup(Fieldset $fieldset): array
-    {
-        $array = [];
-        foreach ($fieldset as $element) {
-            $array[] = $element->getName();
-        }
-        return $array;
+        return $validationGroup;
     }
 
     /**
@@ -227,16 +223,16 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
             $this->config['doctrine']['authentication']['orm_default']['identity_property'] => [
                 'required' => true,
                 'filters' => [
-                    ['name' => 'StripTags'],
-                    ['name' => 'StringTrim'],
+                    ['name' => Filter\StripTags::class],
+                    ['name' => Filter\StringTrim::class],
                 ],
                 'validators' => $validators
             ],
             $this->config['doctrine']['authentication']['orm_default']['credential_property'] => [
                 'required' => true,
                 'filters' => [
-                    ['name' => 'StripTags'],
-                    ['name' => 'StringTrim'],
+                    ['name' => Filter\StripTags::class],
+                    ['name' => Filter\StringTrim::class],
                 ],
                 'validators' => [
                     [

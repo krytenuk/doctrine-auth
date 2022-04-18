@@ -11,11 +11,7 @@ use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use FwsDoctrineAuth\Model\Acl;
 use FwsDoctrineAuth\Model\LoginModel;
 use DateTime;
-<<<<<<< Updated upstream
-use Laminas\Crypt\Password\Bcrypt;
-=======
 use FwsDoctrineAuth\Model\Crypt;
->>>>>>> Stashed changes
 
 /**
  * Description of RegisterModel
@@ -133,19 +129,16 @@ class RegisterModel extends AbstractModel
             throw new DoctrineAuthException('"userActiveAfterRegistration" key not found in config');
         }
 
-<<<<<<< Updated upstream
-=======
         /* useTwoFactorAuthentication key not set in config */
         if (isset($this->config['doctrineAuth']['useTwoFactorAuthentication']) === false) {
             throw new DoctrineAuthException('useTwoFactorAuthentication key not found in config');
         }
 
->>>>>>> Stashed changes
         /* Set user fields not defined in form */
         $this->userEntity->setUserActive((bool) $this->config['doctrineAuth']['userActiveAfterRegistration']);
         $this->userEntity->setDateCreated(new DateTime());
         $this->userEntity->setDateModified(new DateTime());
-
+        
         /* credential_property not set in config */
         if (!isset($this->config['doctrine']['authentication']['orm_default']['credential_property'])) {
             throw new DoctrineAuthException('credential_property not found in config');
@@ -162,10 +155,9 @@ class RegisterModel extends AbstractModel
             throw new DoctrineAuthException(sprintf('Method "%s" not found in "%s"', $credentialGetter, get_class($this->userEntity)));
         }
         /* Encrypt user credential property */
-<<<<<<< Updated upstream
         $bcrypt = new Bcrypt();
         $this->userEntity->$credentialSetter($bcrypt->create($this->form->get($this->config['doctrine']['authentication']['orm_default']['credential_property'])->getValue()));
-=======
+
         $crypt = new Crypt($this->config);
         $this->userEntity->$credentialSetter($crypt->bcrypytCreate($this->userEntity->$credentialGetter()));
         
@@ -179,8 +171,6 @@ class RegisterModel extends AbstractModel
                 $this->userEntity->setMobileNumber($crypt->rsaEncrypt($this->userEntity->getMobileNumber()));
             }
         }
-
->>>>>>> Stashed changes
 
         /* Default register role not set in config */
         if (isset($this->config['doctrineAuthAcl']['defaultRegisterRole']) === false) {

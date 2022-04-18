@@ -37,3 +37,9 @@ Allow passwords to be null
 
 0.2.3
 Updated dependancy versions
+
+0.3.0
+Added two factor authentication
+Added max login attempts and user block entity
+Added login log entity
+Added translation config entry

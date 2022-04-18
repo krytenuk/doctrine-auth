@@ -77,6 +77,18 @@ return [
                 'actions' => ['logout'],
             ],
             [
+                'type' => LaminasAcl::TYPE_DENY,
+                'role' => 'guest',
+                'resource' => FwsDoctrineAuth\Controller\IndexController::class, // deny gest access to select two factor authentication
+                'actions' => ['select-two-factor-authentication', 'set-google-authentication'],
+            ],
+            [
+                'type' => LaminasAcl::TYPE_ALLOW,
+                'role' => 'user', // <- change if required
+                'resource' => FwsDoctrineAuth\Controller\IndexController::class, // allow users & admins etc to select two factor authentication
+                'actions' => ['select-two-factor-authentication', 'set-google-authentication'],
+            ],
+            [
                 'type' => LaminasAcl::TYPE_ALLOW,
                 'role' => 'user', // <- change if required
                 'resource' => FwsDoctrineAuth\Controller\IndexController::class, // allow users & admins etc to logout

@@ -1,0 +1,181 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Doctrine Auth\n"
+"POT-Creation-Date: 2022-04-16 15:39+0100\n"
+"PO-Revision-Date: 2022-04-16 15:44+0100\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.3\n"
+"X-Poedit-Basepath: ../src\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-KeywordsList: _;translate;protected $messageTemplates = array\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-SearchPath-0: .\n"
+
+#: Controller/IndexController.php:109 Controller/IndexController.php:171
+msgid "Sorry your IP address is blocked"
+msgstr "Tuff, your IP address is blocked"
+
+#: Controller/IndexController.php:120
+msgid "User not found"
+msgstr ""
+
+#: Controller/IndexController.php:147
+msgid "You must select your authentication method"
+msgstr ""
+
+#: Controller/IndexController.php:152
+msgid "Authentication method not found"
+msgstr ""
+
+#: Controller/IndexController.php:185 Controller/IndexController.php:349
+msgid "There is a problem with the code you entered"
+msgstr ""
+
+#: Controller/IndexController.php:194 Controller/IndexController.php:354
+msgid "Incorrect code entered"
+msgstr ""
+
+#: Form/DefaultForm.php:114 Form/DefaultForm.php:116
+#: Form/TwoFactorAuthCodeForm.php:54 Form/TwoFactorAuthCodeForm.php:56
+msgid "Submit"
+msgstr ""
+
+#: Form/DefaultForm.php:155
+msgid "You must specify your email address"
+msgstr ""
+
+#: Form/DefaultForm.php:167
+msgid "Your email address must contain between %min% and %max% characters"
+msgstr ""
+
+#: Form/DefaultForm.php:168
+msgid "Your email address must not contain more than %max% characters"
+msgstr ""
+
+#: Form/DefaultForm.php:169
+msgid "Your email address must contain more than %min% characters"
+msgstr ""
+
+#: Form/DefaultForm.php:180 Form/DefaultForm.php:181 Form/DefaultForm.php:182
+#: Form/DefaultForm.php:183 Form/DefaultForm.php:184 Form/DefaultForm.php:185
+#: Form/DefaultForm.php:186 Form/DefaultForm.php:187
+msgid "Your email address is invalid"
+msgstr ""
+
+#: Form/DefaultForm.php:208
+msgid "This email address is already registered"
+msgstr ""
+
+#: Form/DefaultForm.php:243
+msgid "You must specify your password"
+msgstr ""
+
+#: Form/DefaultForm.php:254 Form/ResetPasswordForm.php:134
+#: Form/ResetPasswordForm.php:165
+msgid "Your password must contain between %min% and %max% characters"
+msgstr ""
+
+#: Form/DefaultForm.php:255 Form/ResetPasswordForm.php:135
+#: Form/ResetPasswordForm.php:166
+msgid "Your password must not contain more than %max% characters"
+msgstr ""
+
+#: Form/DefaultForm.php:256 Form/ResetPasswordForm.php:136
+#: Form/ResetPasswordForm.php:167
+msgid "Your password must contain more than %min% characters"
+msgstr ""
+
+#: Form/EmailForm.php:90
+msgid "Reset Password"
+msgstr ""
+
+#: Form/EmailForm.php:115
+#, php-format
+msgid "You must specify your %s"
+msgstr ""
+
+#: Form/EmailForm.php:127
+#, php-format
+msgid "This %s is not registered"
+msgstr ""
+
+#: Form/RegisterForm.php:34
+msgid "Mobile Number"
+msgstr ""
+
+#: Form/RegisterForm.php:71
+msgid "The mobile number must contain between %min% and %max% digits"
+msgstr ""
+
+#: Form/RegisterForm.php:72
+msgid "The mobile number must not contain more than %max% digits"
+msgstr ""
+
+#: Form/RegisterForm.php:73
+msgid "The mobile number must contain %min% or more digits"
+msgstr ""
+
+#: Form/RegisterForm.php:85 Form/RegisterForm.php:86 Form/RegisterForm.php:87
+msgid "The mobile number must only contain digits"
+msgstr ""
+
+#: Form/RegisterForm.php:97 Form/RegisterForm.php:98 Form/RegisterForm.php:99
+msgid "This is not a valid mobile number"
+msgstr ""
+
+#: Form/ResetPasswordForm.php:61
+#, php-format
+msgid "New %s"
+msgstr ""
+
+#: Form/ResetPasswordForm.php:74
+#, php-format
+msgid "Retype %s"
+msgstr ""
+
+#: Form/ResetPasswordForm.php:93
+msgid "Set Password"
+msgstr ""
+
+#: Form/ResetPasswordForm.php:123 Form/ResetPasswordForm.php:154
+msgid "You must specify your new password"
+msgstr ""
+
+#: Form/ResetPasswordForm.php:176 Form/ResetPasswordForm.php:177
+msgid "The passwords don't match"
+msgstr ""
+
+#: Form/SelectTwoFactorAuthMethodForm.php:41
+msgid "Select authentiction method"
+msgstr ""
+
+#: Form/SelectTwoFactorAuthMethodForm.php:62
+#: Form/SelectTwoFactorAuthMethodForm.php:64
+msgid "Select"
+msgstr ""
+
+#: Form/TwoFactorAuthCodeForm.php:35
+msgid "Code"
+msgstr ""
+
+#: Form/TwoFactorAuthCodeForm.php:75
+msgid "You must enter the security code"
+msgstr ""
+
+#: Form/TwoFactorAuthCodeForm.php:87 Form/TwoFactorAuthCodeForm.php:88
+msgid "The security code must contain %max% digits"
+msgstr ""
+
+#: Form/TwoFactorAuthCodeForm.php:89
+msgid "The security code must contain %min% digits"
+msgstr ""
+
+#: Form/TwoFactorAuthCodeForm.php:100 Form/TwoFactorAuthCodeForm.php:101
+#: Form/TwoFactorAuthCodeForm.php:102
+msgid "The security code must only contain digits"
+msgstr ""

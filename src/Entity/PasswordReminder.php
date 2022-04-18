@@ -3,8 +3,9 @@
 namespace FwsDoctrineAuth\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Application\Entity\Users;
-use DateTime;
+use FwsDoctrineAuth\Entity\BaseUsers;
+use DateTimeInterface;
+use DateTimeImmutable;
 
 /**
  * PasswordReminder
@@ -21,36 +22,42 @@ class PasswordReminder implements EntityInterface
 {
 
     /**
-     * @var int
-     * @ORM\Column(name="password_reminder_id", type="integer", length=13, nullable=false)
+     * @var int|null
+     * @ORM\Column(name="password_reminder_id", type="integer", nullable=false)
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
-    private $passwordReminderId;
+    private ?int $passwordReminderId = null;
     
     /**
      *
      * @var string
      * @ORM\Column(name="code", type="string", length=13, nullable=false, unique=true)
      */
-    private $code;
+    private string $code;
     
     /**
-     * @var Users
+     * @var BaseUsers
      *
      * @ORM\OneToOne(targetEntity="FwsDoctrineAuth\Entity\BaseUsers", inversedBy="passwordReminder")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="user_id", referencedColumnName="user_id", onDelete="cascade")
      * })
      */
-    private $user;
+    private BaseUsers $user;
 
     /**
-     * @var DateTime
+     * @var DateTimeInterface
      *
      * @ORM\Column(name="date_created", type="datetime", nullable=false)
      */
-    private $dateCreated;
+    private DateTimeInterface $dateCreated;
+    
+    public function __construct()
+    {
+        $this->dateCreated = new DateTimeImmutable();
+    }
+
     
     /**
      * 
@@ -72,18 +79,18 @@ class PasswordReminder implements EntityInterface
     
     /**
      * 
-     * @return Users|null
+     * @return BaseUsers|null
      */
-    public function getUser(): ?Users
+    public function getUser(): ?BaseUsers
     {
         return $this->user;
     }
 
     /**
      * 
-     * @return DateTime|null
+     * @return DateTimeInterface
      */
-    public function getDateCreated(): ?DateTime
+    public function getDateCreated(): DateTimeInterface
     {
         return $this->dateCreated;
     }
@@ -101,10 +108,10 @@ class PasswordReminder implements EntityInterface
 
     /**
      * 
-     * @param Users $user
+     * @param BaseUsers $user
      * @return $this
      */
-    public function setUser(Users $user)
+    public function setUser(BaseUsers $user)
     {
         $this->user = $user;
         return $this;
@@ -112,10 +119,10 @@ class PasswordReminder implements EntityInterface
 
     /**
      * 
-     * @param DateTime $dateCreated
+     * @param DateTimeImmutable $dateCreated
      * @return $this
      */
-    public function setDateCreated(DateTime $dateCreated)
+    public function setDateCreated(DateTimeImmutable $dateCreated)
     {
         $this->dateCreated = $dateCreated;
         return $this;

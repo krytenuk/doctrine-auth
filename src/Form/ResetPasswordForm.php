@@ -5,6 +5,7 @@ namespace FwsDoctrineAuth\Form;
 use Laminas\Form\Form;
 use Laminas\InputFilter\InputFilterProviderInterface;
 use Laminas\Form\Element;
+use Laminas\Filter;
 use Laminas\Validator;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 
@@ -30,6 +31,7 @@ class ResetPasswordForm extends Form implements InputFilterProviderInterface
     {
         parent::__construct('reset-password');
         $this->config = $config;
+        $this->setAttribute('method', 'post');
     }
 
     /**
@@ -107,15 +109,15 @@ class ResetPasswordForm extends Form implements InputFilterProviderInterface
     {
         return [
             $this->getCredentialName() => [
-                'required' => TRUE,
+                'required' => true,
                 'filters' => [
-                    ['name' => 'StripTags'],
-                    ['name' => 'StringTrim'],
+                    ['name' => Filter\StripTags::class],
+                    ['name' => Filter\StringTrim::class],
                 ],
                 'validators' => [
                     [
                         'name' => Validator\NotEmpty::class,
-                        'break_chain_on_failure' => TRUE,
+                        'break_chain_on_failure' => true,
                         'options' => [
                             'messages' => [
                                 Validator\NotEmpty::IS_EMPTY => _("You must specify your new password"),
@@ -138,15 +140,15 @@ class ResetPasswordForm extends Form implements InputFilterProviderInterface
                 ],
             ],
             $this->getRetypeCredentialName() => [
-                'required' => TRUE,
+                'required' => true,
                 'filters' => [
-                    ['name' => 'StripTags'],
-                    ['name' => 'StringTrim'],
+                    ['name' => Filter\StripTags::class],
+                    ['name' => Filter\StringTrim::class],
                 ],
                 'validators' => [
                     [
                         'name' => Validator\NotEmpty::class,
-                        'break_chain_on_failure' => TRUE,
+                        'break_chain_on_failure' => true,
                         'options' => [
                             'messages' => [
                                 Validator\NotEmpty::IS_EMPTY => _("You must specify your new password"),

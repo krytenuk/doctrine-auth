@@ -112,7 +112,7 @@ class LoginLog implements EntityInterface
     }
 
     /**
-     * 
+     *
      * @param DateTimeInterface $dateLogged
      * @return LoginLog
      */

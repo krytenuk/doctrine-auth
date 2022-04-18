@@ -1,0 +1,16 @@
+<h3><?= $this->translate('Please select your authentication method'); ?></h3>
+<?php
+$this->userAuthMethodsForm->setAttribute('action', $this->url('doctrine-auth/default', ['action' => 'select-auth-method']));
+$this->formElementErrors()->setAttributes(['class' => 'errors']);
+$this->userAuthMethodsForm->prepare();
+echo $this->form()->openTag($this->userAuthMethodsForm);
+?>
+<dl class="auth-methods">
+    <dt><?= $this->formLabel($this->userAuthMethodsForm->get('method')) ?></dt>
+    <dd><?= $this->formRadio($this->userAuthMethodsForm->get('method')) ?>
+        <?= $this->formElementErrors($this->userAuthMethodsForm->get('method')); ?></dd>
+    <dd><?= $this->formElement($this->userAuthMethodsForm->get('csrf')) ?>
+        <?= $this->formElementErrors($this->userAuthMethodsForm->get('csrf')); ?>
+        <?= $this->formSubmit($this->userAuthMethodsForm->get('submit')) ?></dd>
+</dl>
+<?= $this->form()->closeTag(); ?>

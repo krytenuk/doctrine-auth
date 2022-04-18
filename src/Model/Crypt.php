@@ -71,7 +71,6 @@ class Crypt
                     'pass_phrase' => $config['doctrineAuth']['rsaKeyPassphrase'],
                     'binary_output' => false,
         ]);
-
         return $this;
     }
 
@@ -115,5 +114,5 @@ class Crypt
     {
         return $this->bcrypt->verify($password, $hash);
     }
-
+  
 }
