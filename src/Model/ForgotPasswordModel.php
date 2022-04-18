@@ -11,13 +11,12 @@ use DateTime;
 use DateInterval;
 use Laminas\Stdlib\Parameters;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
-use Laminas\Crypt\Password\Bcrypt;
+use FwsDoctrineAuth\Model\Crypt;
 use Laminas\View\Renderer\PhpRenderer;
 use Laminas\View\Model\ViewModel;
 use Laminas\Mail\Message;
 use Laminas\Mime\Part as MimePart;
 use Laminas\Mime\Message as MimeMessage;
-use Laminas\Mail\Transport\Sendmail;
 
 /**
  * ForgotPassword
@@ -26,6 +25,8 @@ use Laminas\Mail\Transport\Sendmail;
  */
 class ForgotPasswordModel extends AbstractModel
 {
+    
+    use SendMailTrait;
 
     /**
      *
@@ -203,22 +204,6 @@ class ForgotPasswordModel extends AbstractModel
     }
 
     /**
-     * Send email
-     * @param Message $message
-     * @return boolean
-     */
-    protected function sendMail(Message $message)
-    {
-        $transport = new Sendmail();
-        try {
-            $transport->send($message);
-            return true;
-        } catch (Exception $exception) {
-            return false;
-        }
-    }
-
-    /**
      * Process new password form
      * @param Parameters $postData
      * @return boolean
@@ -240,8 +225,8 @@ class ForgotPasswordModel extends AbstractModel
         }
         
         /* Encrypt credential */
-        $bcrypt = new Bcrypt();
-        $this->userEntity->$credentialSetter($bcrypt->create($this->resetPasswordForm->getData()[$this->resetPasswordForm->getCredentialName()]));
+        $crypt = new Crypt();
+        $this->userEntity->$credentialSetter($crypt->bcrypytCreate($this->resetPasswordForm->getData()[$this->resetPasswordForm->getCredentialName()]));
         /* Persist user entity */
         $this->entityManager->persist($this->userEntity);
         /* Remove password reset entity */

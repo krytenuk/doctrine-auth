@@ -1,0 +1,22 @@
+<h3><?= $this->translate('Pair with Authenticator App'); ?></h3>
+<?php if ($this->qrCode === null): ?>
+    <p><?= $this->translate('Error: Unable to generate QR code'); ?></p>
+<?php else: ?>
+    <p><?= $this->translate('Please scan the QR code with your Google Authenticator app then enter the code generated below'); ?></p>
+    <img src="data:image/png;base64, <?= base64_encode($this->qrCode); ?>" />
+    <?php
+    $this->authCodeForm->setAttribute('action', $this->url('doctrine-auth/default', ['action' => 'set-google-authentication']));
+    $this->formElementErrors()->setAttributes(['class' => 'errors']);
+    $this->authCodeForm->prepare();
+    echo $this->form()->openTag($this->authCodeForm);
+    ?>
+    <dl class="auth-methods">
+        <dt><?= $this->formLabel($this->authCodeForm->get('code')); ?></dt>
+        <dd><?= $this->formText($this->authCodeForm->get('code')) ?>
+            <?= $this->formElementErrors($this->authCodeForm->get('code')); ?></dd>
+        <dd><?= $this->formElement($this->authCodeForm->get('csrf')) ?>
+            <?= $this->formElementErrors($this->authCodeForm->get('csrf')); ?>
+            <?= $this->formSubmit($this->authCodeForm->get('submit')) ?></dd>
+    </dl>
+    <?= $this->form()->closeTag(); ?>
+<?php endif; ?>

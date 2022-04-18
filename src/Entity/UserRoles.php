@@ -22,25 +22,34 @@ class UserRoles implements EntityInterface
 {
 
     /**
-     * @var integer
+     * @var int|null
      *
      * @ORM\Column(name="user_role_id", type="integer", nullable=false)
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
-    private $userRoleId;
+    private int $userRoleId;
 
     /**
      * @var string
      *
      * @ORM\Column(name="role", type="string", length=100, nullable=false)
      */
-    private $role;
-
-
+    private string $role;
 
     /**
-     * Get userRoleId
+     * Set user role id
+     * @param int $userRoleId
+     * @return UserRoles
+     */
+    public function setUserRoleId(int $userRoleId): UserRoles
+    {
+        $this->userRoleId = $userRoleId;
+        return $this;
+    }
+
+    /**
+     * Get user role id
      *
      * @return int|null
      */
@@ -53,9 +62,9 @@ class UserRoles implements EntityInterface
      * Set role
      *
      * @param string $role
-     * @return $this
+     * @return UserRoles
      */
-    public function setRole(string $role)
+    public function setRole(string $role): UserRoles
     {
         $this->role = $role;
         return $this;
@@ -70,4 +79,5 @@ class UserRoles implements EntityInterface
     {
         return $this->role;
     }
+    
 }

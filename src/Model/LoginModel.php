@@ -2,17 +2,24 @@
 
 namespace FwsDoctrineAuth\Model;
 
+use FwsDoctrineAuth\Model\TwoFactorAuthModel;
+use FwsDoctrineAuth\Form\LoginForm;
 use Doctrine\ORM\EntityManager;
 use Laminas\Form\FormInterface;
-use DateTime;
+use Laminas\Stdlib\ParametersInterface;
+use DateTimeImmutable;
+use DateInterval;
 use Laminas\Session\Container;
 use Laminas\Session\SessionManager;
-use Laminas\Stdlib\Parameters;
 use Laminas\Authentication\AuthenticationService;
 use FwsDoctrineAuth\Model\Acl;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use FwsDoctrineAuth\Entity\BaseUsers;
 use Laminas\Form\ElementInterface;
+use FwsDoctrineAuth\Entity\FailedLoginAttemptsLog;
+use FwsDoctrineAuth\Entity\IpBlocked;
+use FwsDoctrineAuth\Model\Crypt;
+use Laminas\Authentication\Result;
 
 /**
  * LoginModel
@@ -26,96 +33,113 @@ class LoginModel extends AbstractModel
      *
      * @var LoginForm
      */
-    private $form;
+    private LoginForm $loginForm;
+
+    /**
+     * 
+     * @var TwoFactorAuthModel
+     */
+    private TwoFactorAuthModel $twoFactorAuthModel;
 
     /**
      *
      * @var AuthenticationService
      */
-    private $authService;
+    private AuthenticationService $authService;
 
     /**
      *
      * @var EntityManager
      */
-    private $entityManager;
+    private EntityManager $entityManager;
 
     /**
      *
-     * @var DateTime
+     * @var BaseUsers|null
      */
-    private $currentDateTime;
-
-    /**
-     *
-     * @var BaseUsers
-     */
-    private $identity;
+    private ?BaseUsers $identity = null;
 
     /**
      *
      * @var Container
      */
-    private $authContainer;
+    private Container $authContainer;
 
     /**
      *
      * @var SessionManager
      */
-    private $sessionManager;
+    private SessionManager $sessionManager;
 
     /**
      *
      * @var Acl
      */
-    private $acl;
+    private Acl $acl;
+
+    /**
+     * 
+     * @var ParametersInterface
+     */
+    private ParametersInterface $serverParams;
 
     /**
      *
-     * @var Array
+     * @var array
      */
-    private $config;
+    private array $config;
 
     /**
      *
      * @var string
      */
-    private $callback;
+    private string $callback = '';
 
     /**
-     * Set model dependencies
+     *  Set model dependencies
      * 
-     * @param FormInterface $form
+     * @param TwoFactorAuthModel $twoFactorAuthModel
+     * @param LoginForm $loginForm
      * @param AuthenticationService $authService
      * @param EntityManager $entityManager
-     * @param DateTime $currentDateTime
      * @param Container $authContainer
      * @param SessionManager $sessionManager
      * @param Acl $acl
+     * @param ParametersInterface $serverParams
      * @param array $config
      */
     public function __construct(
-            FormInterface $form,
+            TwoFactorAuthModel $twoFactorAuthModel,
+            LoginForm $loginForm,
             AuthenticationService $authService,
             EntityManager $entityManager,
-            DateTime $currentDateTime,
             Container $authContainer,
             SessionManager $sessionManager,
             Acl $acl,
+            ParametersInterface $serverParams,
             Array $config)
     {
-        $this->form = $form;
+        $this->twoFactorAuthModel = $twoFactorAuthModel;
+        $this->loginForm = $loginForm;
         $this->authService = $authService;
         $this->entityManager = $entityManager;
-        $this->currentDateTime = $currentDateTime;
         $this->authContainer = $authContainer;
         $this->sessionManager = $sessionManager;
         $this->acl = $acl;
+        $this->serverParams = $serverParams;
         $this->config = $config;
 
         /* Store login callback if set */
         if (isset($config['doctrineAuth']['loginCallback'])) {
             $this->callback = $config['doctrineAuth']['loginCallback'];
+        }
+
+        if (isset($this->authContainer->authMethod) === false) {
+            $this->authContainer->authMethod = null;
+        }
+
+        if (isset($this->authContainer->codeSentAttempts) === false) {
+            $this->authContainer->codeSentAttempts = 0;
         }
     }
 
@@ -123,29 +147,20 @@ class LoginModel extends AbstractModel
      *
      * @return FormInterface
      */
-    public function getForm(): FormInterface
+    public function getLoginForm(): FormInterface
     {
-        return $this->form;
+        return $this->loginForm;
     }
 
     /**
-     *
-     * @return Users
+     * Validate the login/auth code form
+     * @param ParametersInterface $postData
+     * @return bool
      */
-    public function getIdentity(): BaseUsers
+    public function processForm(ParametersInterface $postData): bool
     {
-        return $this->identity;
-    }
-
-    /**
-     * Validate the login form
-     * @param Parameters $postData
-     * @return boolean
-     */
-    public function processForm(Parameters $postData)
-    {
-        $this->form->setData($postData);
-        return $this->form->isValid();
+        $this->loginForm->setData($postData);
+        return $this->loginForm->isValid();
     }
 
     /**
@@ -156,10 +171,9 @@ class LoginModel extends AbstractModel
     public function login(?Array $data)
     {
         if ($data === null) {
-            $data = $this->form->getData();
+            $data = $this->loginForm->getData();
         }
 
-        /* Authenticate user */
         $adapter = $this->authService->getAdapter();
         $adapter->setIdentity($data[$this->config['doctrine']['authentication']['orm_default']['identity_property']]);
         $adapter->setCredential($data[$this->config['doctrine']['authentication']['orm_default']['credential_property']]);
@@ -175,19 +189,145 @@ class LoginModel extends AbstractModel
 
         /* User not active */
         if ($this->identity->isUserActive() === false) {
+            $this->authService->clearIdentity();
             return false;
         }
-        
+
         /* Execute login callback if exists */
         if (class_exists($this->callback)) {
             $callback = new $this->callback();
-            $callback($this->identity, $this->form, $data);
+            $callback($this->identity, $this->loginForm, $data);
         }
-        
-        /* Store identity and update user on database */
-        $this->authService->getStorage()->write($this->identity);
+
+        /* Use 2FA */
+        $this->authContainer->identity = $this->identity;
+        if ($this->use2Fa() === true) {
+            $this->authService->clearIdentity();
+            $this->authContainer->codeSent = false;
+            $this->authContainer->codeSentAttempts = 0;
+            $this->twoFactorAuthModel->generateCode();
+        }
+        /* Update user on database */
         $this->entityManager->persist($this->identity);
-        return $this->flushEntityManager($this->entityManager);
+        $saved = $this->flushEntityManager($this->entityManager);
+        $this->entityManager->detach($this->identity);
+        return $saved;
+    }
+
+    /**
+     * Set identity
+     * @param BaseUsers $identity
+     * @return LoginModel
+     */
+    public function setIdentity(BaseUsers $identity): LoginModel
+    {
+        $this->identity = $identity;
+        $this->authService->getStorage()->write($identity);
+        return $this;
+    }
+
+    /**
+     * Get identity
+     * @return BaseUsers|null
+     */
+    public function getIdentity(): ?BaseUsers
+    {
+        if ($this->identity instanceof BaseUsers) {
+            return $this->identity;
+        }
+
+        if ($this->authContainer->identity instanceof BaseUsers) {
+            $this->identity = $this->authContainer->identity;
+            return $this->identity;
+        }
+        return null;
+    }
+
+    /**
+     * Check if using 2FA
+     * @param BaseUsers|null $identity
+     * @return bool
+     * @throws DoctrineAuthException
+     */
+    public function use2Fa(): bool
+    {
+        /* useTwoFactorAuthentication key not found in config */
+        if (isset($this->config['doctrineAuth']['useTwoFactorAuthentication']) === false) {
+            throw new DoctrineAuthException('useTwoFactorAuthentication setting not found in config');
+        }
+
+        if ($this->config['doctrineAuth']['useTwoFactorAuthentication'] === false) {
+            return false;
+        }
+
+        return $this->getIdentity() instanceof BaseUsers ? $this->identity->hasAuthMethods() : false;
+    }
+
+    /**
+     * Get 2FA model
+     * @return TwoFactorAuthModel
+     */
+    public function getTwoFactorAuthModel(): TwoFactorAuthModel
+    {
+        return $this->twoFactorAuthModel;
+    }
+
+    /**
+     * Set identity
+     * @param BaseUsers $identity
+     * @return LoginModel
+     */
+    public function setIdentity(BaseUsers $identity): LoginModel
+    {
+        $this->identity = $identity;
+        $this->authService->getStorage()->write($identity);
+        return $this;
+    }
+
+    /**
+     * Get identity
+     * @return BaseUsers|null
+     */
+    public function getIdentity(): ?BaseUsers
+    {
+        if ($this->identity instanceof BaseUsers) {
+            return $this->identity;
+        }
+
+        if ($this->authContainer->identity instanceof BaseUsers) {
+            $this->identity = $this->authContainer->identity;
+            return $this->identity;
+        }
+        return null;
+    }
+
+    /**
+     * Check if using 2FA
+     * @param BaseUsers|null $identity
+     * @return bool
+     * @throws DoctrineAuthException
+     */
+    public function use2Fa(): bool
+    {
+        /* useTwoFactorAuthentication key not found in config */
+        if (isset($this->config['doctrineAuth']['useTwoFactorAuthentication']) === false) {
+            throw new DoctrineAuthException('useTwoFactorAuthentication setting not found in config');
+        }
+
+        if ($this->config['doctrineAuth']['useTwoFactorAuthentication'] === false) {
+            return false;
+        }
+
+        return $this->getIdentity() instanceof BaseUsers ? $this->identity->hasAuthMethods() : false;
+    }
+
+    /**
+     * Get 2FA model
+     * @return TwoFactorAuthModel
+     */
+    public function getTwoFactorAuthModel(): TwoFactorAuthModel
+    {
+        return $this->twoFactorAuthModel;
     }
 
     /**
@@ -198,17 +338,6 @@ class LoginModel extends AbstractModel
     {
         $this->authService->clearIdentity();
         $this->sessionManager->destroy();
-    }
-
-    /**
-     * Set identity
-     * @param BaseUsers $identity
-     * @return $this
-     */
-    public function setIdentity(BaseUsers $identity)
-    {
-        $this->identity = $identity;
-        return $this;
     }
 
     /**
@@ -268,12 +397,14 @@ class LoginModel extends AbstractModel
     }
 
     /**
-     * Get form identity element
-     * @return ElementInterface
+     * Set form identity element error message
+     * 
+     * @return LoginModel
      */
-    public function getFormIdentityElement(): ElementInterface
+    public function setFormIdentityMessage(string $message): LoginModel
     {
-        return $this->form->get($this->config['doctrine']['authentication']['orm_default']['identity_property']);
+        $this->loginForm->get($this->config['doctrine']['authentication']['orm_default']['identity_property'])->setMessages([$message]);
+        return $this;
     }
 
     /**
@@ -290,9 +421,87 @@ class LoginModel extends AbstractModel
      * 
      * @return array
      */
-    public function getConfig()
+    public function getConfig(): array
     {
         return $this->config;
+    }
+
+    /**
+     * 
+     * @return Container
+     */
+    public function getAuthContainer(): Container
+    {
+        return $this->authContainer;
+    }
+
+    /**
+     * Log failed login attempt
+     * @param string $emailAddress
+     * @return bool
+     */
+    public function logFailedAttempt(string $emailAddress): bool
+    {
+        $log = new FailedLoginAttemptsLog();
+        $log->setEmailAddress($emailAddress)
+                ->setIpAddress($this->serverParams->get('SERVER_ADDR'));
+
+        $this->entityManager->persist($log);
+        return $this->flushEntityManager($this->entityManager);
+    }
+
+    /**
+     * Check and block IP address if required
+     * @return bool
+     * @throws DoctrineAuthException
+     */
+    public function blockIp(): bool
+    {
+        if (isset($this->config['doctrineAuth']['maxLoginAttemptsTime']) === false) {
+            throw new DoctrineAuthException('maxLoginAttemptsTime config key not set');
+        }
+
+        if (isset($this->config['doctrineAuth']['maxLoginAttempts']) === false) {
+            throw new DoctrineAuthException('maxLoginAttempts config key not set');
+        }
+
+        $ipAddress = $this->serverParams->get('SERVER_ADDR');
+        $emailAddress = $this->identity instanceof BaseUsers ? $this->identity->getEmailAddress() : $this->loginForm->getData()['emailAddress'];
+        $now = new DateTimeImmutable('now');
+        $date = $now->sub(new DateInterval("PT{$this->config['doctrineAuth']['maxLoginAttemptsTime']}M"));
+        $failedAttempts = $this->entityManager->getRepository(FailedLoginAttemptsLog::class)->countFailedAttempts($ipAddress, $date);
+
+        if ($this->config['doctrineAuth']['maxLoginAttempts'] === null) {
+            return false;
+        }
+        if ($failedAttempts >= $this->config['doctrineAuth']['maxLoginAttempts']) {
+            $ipBlocked = new IpBlocked();
+            $ipBlocked->setIpAddress($ipAddress)
+                    ->setEmailAddress($emailAddress);
+            $this->entityManager->persist($ipBlocked);
+            return $this->flushEntityManager($this->entityManager);
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if IP address is blocked
+     * @return bool
+     */
+    public function isIpBlocked(): bool
+    {
+        if (isset($this->config['doctrineAuth']['loginReleaseTime']) === false) {
+            throw new DoctrineAuthException('loginReleaseTime config key not set');
+        }
+
+        if ($this->config['doctrineAuth']['loginReleaseTime'] > 0) {
+            $now = new DateTimeImmutable('now');
+            $date = $now->sub(new DateInterval("PT{$this->config['doctrineAuth']['loginReleaseTime']}M"));
+            $this->entityManager->getRepository(IpBlocked::class)->deleteBlockedIpAddress($this->serverParams->get('SERVER_ADDR'), $date);
+        }
+
+        return (bool) $this->entityManager->getRepository(IpBlocked::class)->count(['ipAddress' => $this->serverParams->get('SERVER_ADDR')]);
     }
 
 }

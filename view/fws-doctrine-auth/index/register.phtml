@@ -1,7 +1,7 @@
-<h2><?php echo $this->translate('Register'); ?></h2>
+<h2><?= $this->translate('Register'); ?></h2>
 <?php
-$this->form->setAttribute('action', $this->url('doctrine-auth/default', array('action' => 'register')));
-$this->formElementErrors()->setAttributes(array('class' => 'errors'));
+$this->form->setAttribute('action', $this->url('doctrine-auth/default', ['action' => 'register']));
+$this->formElementErrors()->setAttributes(['class' => 'errors']);
 echo $this->partial('form.phtml', ['form' => $this->form]);
 if ($this->errorMessage) {
     echo '<p class="error">' . $this->errorMessage . '</p>' . PHP_EOL;

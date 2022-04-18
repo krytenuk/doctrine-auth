@@ -31,11 +31,12 @@ class RegisterFormFactory implements FactoryInterface
         if (!class_exists($config['doctrineAuth']['registrationForm'])) {
             throw new DoctrineAuthException(sprintf('Registration form "%s" not found', $config['doctrineAuth']['registrationForm']));
         }
-        $form = new $config['doctrineAuth']['registrationForm'](
-                $container->get(EntityManager::class),
-                $config);
         
-        $form->setHydrator(new DoctrineObject($container->get(EntityManager::class)));
+        $entityManager = $container->get(EntityManager::class);
+        $form = new $config['doctrineAuth']['registrationForm'](
+                $entityManager,
+                $config);
+        $form->setHydrator(new DoctrineObject($entityManager));
         
         return $form;
     }

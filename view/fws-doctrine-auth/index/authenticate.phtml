@@ -1,0 +1,38 @@
+<?php
+
+use FwsDoctrineAuth\Model\TwoFactorAuthModel;
+?>
+<h3><?= $this->translate('Enter Authentication Code'); ?></h3>
+<?php
+$this->authCodeForm->setAttribute('action', $this->url('doctrine-auth/default', ['action' => 'authenticate']));
+$this->formElementErrors()->setAttributes(['class' => 'errors']);
+$this->authCodeForm->prepare();
+echo $this->form()->openTag($this->authCodeForm);
+if ($this->codeSent === false):
+    ?>
+    <p><?= $this->translate('Error: Unable to send authentication code'); ?></p>
+    <P>
+        <a href="<?= $this->url('doctrine-auth/default', ['action' => 'resend-code']); ?>"><?= $this->translate('Try again'); ?></a>
+        <?php if ($this->user->getAuthMethods()->count() > 1): ?>
+            or <a href="<?= $this->url('doctrine-auth/default', ['action' => 'select-auth-method']); ?>"><?= $this->translate('pick another authentication method'); ?></a>
+        <?php endif; ?>
+    </p>
+<?php else: ?>
+    <dl class="auth-methods">
+        <dt><?= $this->partial($this->partial, ['user' => $this->user]); ?></dt>
+        <dd><?= $this->formText($this->authCodeForm->get('code')) ?>
+            <?= $this->formElementErrors($this->authCodeForm->get('code')); ?></dd>
+        <dd><?= $this->formElement($this->authCodeForm->get('csrf')) ?>
+            <?= $this->formElementErrors($this->authCodeForm->get('csrf')); ?>
+            <?= $this->formSubmit($this->authCodeForm->get('submit')) ?></dd>
+    </dl>
+    <?php if ($this->authMethod === TwoFactorAuthModel::GOOGLEAUTHENTICATOR && $this->user->getAuthMethods()->count() > 1): ?>
+        <p><?= $this->translate('Code not working? Try'); ?> <a href="<?= $this->url('doctrine-auth/default', ['action' => 'select-auth-method']); ?>"><?= $this->translate('another method'); ?>.</p>
+    <?php else: ?>
+        <p><?= $this->translate('Not received code?'); ?> <a href="<?= $this->url('doctrine-auth/default', ['action' => 'resend-code']); ?>"><?= $this->translate('Resend'); ?></a>
+            <?php if ($this->user->getAuthMethods()->count() > 1): ?>
+                <?= $this->translate('or try'); ?> <a href="<?= $this->url('doctrine-auth/default', ['action' => 'select-auth-method']); ?>"><?= $this->translate('another method'); ?>.</a>
+            <?php endif; ?></p>
+        <?php endif; ?>
+<?php endif; ?>
+<?= $this->form()->closeTag(); ?>
