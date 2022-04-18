@@ -2,7 +2,7 @@
 
 namespace FwsDoctrineAuth\Model;
 
-use Laminas\Crypt\Password\Bcrypt;
+use FwsDoctrineAuth\Model\Crypt;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use FwsDoctrineAuth\Entity\BaseUsers;
 
@@ -35,15 +35,15 @@ class HashPassword
         if (!method_exists($identity, $getter)) {
             throw new DoctrineAuthException(sprintf('No getter "%s" found in %s', $getter, get_class($identity)));
         }
-
+        
         /* Using raw password, registration login */
         if ($password === $identity->$getter()) {
             return true;
         }
 
         /* Check encrypted password */
-        $bcrypt = new Bcrypt();
-        return $bcrypt->verify($password, $identity->$getter());
+        $crypt = new Crypt();
+        return $crypt->bcryptVerify($password, $identity->$getter());
     }
 
 }

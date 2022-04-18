@@ -102,12 +102,41 @@ class IndexController extends AbstractActionController
 
         /* Login authentication failed */
         if ($this->loginModel->login(null) === false) {
+            $this->loginModel->setFormIdentityMessage(_('User not found'));
             if ($this->loginModel->logFailedAttempt($viewModel->form->getData()['emailAddress']) === true) {
                 $this->blockIp($viewModel->form->getData()['emailAddress']);
                 return $viewModel;
             }
+        }
 
-            $this->loginModel->setFormIdentityMessage(_('User not found'));
+        /* Use 2FA */
+        if ($this->loginModel->use2Fa() === true) {
+            return $this->redirect()->toRoute('doctrine-auth/default', ['action' => 'select-auth-method']);
+        }
+
+        return $this->getRedirect();
+    }
+
+    /**
+     * Let the user choose their 2FA method 
+     * @return ViewModel
+     */
+    public function selectAuthMethodAction()
+    {
+        if ($this->loginModel->getIdentity() instanceof BaseUsers === false) {
+            return $this->redirect()->toRoute('doctrine-auth/default', ['action' => 'login']);
+        }
+
+        $viewModel = new ViewModel();
+        $viewModel->userAuthMethodsForm = $this->loginModel->getTwoFactorAuthModel()->getSelectAuthMethodForm();
+
+        if ($this->getRequest()->isPost() === false) {
+            return $viewModel;
+        }
+
+        $postData = $this->getRequest()->getPost();
+        if ($this->loginModel->getTwoFactorAuthModel()->processSelectForm($postData) === false) {
+            $this->loginModel->getTwoFactorAuthModel()->getSelectAuthMethodForm()->get('method')->setMessages([_('You must select your authentication method')]);
             return $viewModel;
         }
 

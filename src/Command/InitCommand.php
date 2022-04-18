@@ -121,7 +121,7 @@ EOT
             $this->entityManager->flush();
             $output->writeln('<info>Finished processing user roles from config.</info>');
         } catch (Exception $exception) {
-            $output->writeln('<error>Error writing to database.</error>');
+            $output->writeln(sprintf('<error>Error writing to database: %s.</error>', $exception->getMessage()));
         }
     }
 

@@ -42,13 +42,6 @@ class LoginLog implements EntityInterface
     private bool $used2fa = false;
 
     /**
-     * @var int
-     *
-     * @ORM\Column(name="login_attempts", type="smallint", nullable=false, options={"default":0})
-     */
-    private int $attempts = 0;
-
-    /**
      * @var DateTimeInterface
      *
      * @ORM\Column(name="date_logged", type="datetime", nullable=false)
@@ -89,15 +82,6 @@ class LoginLog implements EntityInterface
 
     /**
      * 
-     * @return int
-     */
-    public function getAttempts(): int
-    {
-        return $this->attempts;
-    }
-
-    /**
-     * 
      * @return DateTimeInterface
      */
     public function getDateLogged(): DateTimeInterface
@@ -128,18 +112,7 @@ class LoginLog implements EntityInterface
     }
 
     /**
-     * 
-     * @param int $attempts
-     * @return LoginLog
-     */
-    public function setAttempts(int $attempts): LoginLog
-    {
-        $this->attempts = $attempts;
-        return $this;
-    }
-
-    /**
-     * 
+     *
      * @param DateTimeInterface $dateLogged
      * @return LoginLog
      */

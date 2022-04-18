@@ -6,6 +6,7 @@ use Laminas\ServiceManager\Factory\FactoryInterface;
 use Psr\Container\ContainerInterface;
 use FwsDoctrineAuth\Model\TwoFactorAuthModel;
 use Laminas\View\Renderer\PhpRenderer;
+use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use DateTimeImmutable;
 use DateTimeZone;
 

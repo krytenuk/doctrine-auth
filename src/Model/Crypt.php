@@ -28,11 +28,32 @@ class Crypt
 
     /**
      * 
-     * @var Bcrypt|null
+     * @var Bcrypt
      */
     private Bcrypt $bcrypt;
-    
-    public function __construct(array $config)
+
+    public function __construct(?array $config = null)
+    {
+        $this->bcrypt = new Bcrypt();
+
+        if ($config === null) {
+            return $this;
+        }
+
+        if ($config instanceof Traversable) {
+            $config = ArrayUtils::iteratorToArray($config);
+        }
+
+        $this->setConfig($config);
+    }
+
+    /**
+     * Set config and setup RSA
+     * @param array $config
+     * @return Crypt
+     * @throws DoctrineAuthException
+     */
+    public function setConfig(array $config): Crypt
     {
         if (!isset($config['doctrineAuth']['rsaPublicKeyFile'])) {
             throw new DoctrineAuthException('rsaPublicKeyFile key not set in config');
@@ -50,8 +71,7 @@ class Crypt
                     'pass_phrase' => $config['doctrineAuth']['rsaKeyPassphrase'],
                     'binary_output' => false,
         ]);
-        
-        $this->bcrypyt = new Bcrypt();
+        return $this;
     }
 
     /**
@@ -84,4 +104,15 @@ class Crypt
         return $this->bcrypt->create($password);
     }
 
+    /**
+     * Check password
+     * @param string $password
+     * @param string $hash
+     * @return bool
+     */
+    public function bcryptVerify(string $password, string $hash): bool
+    {
+        return $this->bcrypt->verify($password, $hash);
+    }
+  
 }

@@ -15,8 +15,11 @@ use Laminas\Authentication\AuthenticationService;
 use FwsDoctrineAuth\Model\Acl;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use FwsDoctrineAuth\Entity\BaseUsers;
+use Laminas\Form\ElementInterface;
 use FwsDoctrineAuth\Entity\FailedLoginAttemptsLog;
 use FwsDoctrineAuth\Entity\IpBlocked;
+use FwsDoctrineAuth\Model\Crypt;
+use Laminas\Authentication\Result;
 
 /**
  * LoginModel
@@ -171,7 +174,6 @@ class LoginModel extends AbstractModel
             $data = $this->loginForm->getData();
         }
 
-        /* Authenticate user */
         $adapter = $this->authService->getAdapter();
         $adapter->setIdentity($data[$this->config['doctrine']['authentication']['orm_default']['identity_property']]);
         $adapter->setCredential($data[$this->config['doctrine']['authentication']['orm_default']['credential_property']]);
@@ -210,6 +212,64 @@ class LoginModel extends AbstractModel
         $saved = $this->flushEntityManager($this->entityManager);
         $this->entityManager->detach($this->identity);
         return $saved;
+    }
+
+    /**
+     * Set identity
+     * @param BaseUsers $identity
+     * @return LoginModel
+     */
+    public function setIdentity(BaseUsers $identity): LoginModel
+    {
+        $this->identity = $identity;
+        $this->authService->getStorage()->write($identity);
+        return $this;
+    }
+
+    /**
+     * Get identity
+     * @return BaseUsers|null
+     */
+    public function getIdentity(): ?BaseUsers
+    {
+        if ($this->identity instanceof BaseUsers) {
+            return $this->identity;
+        }
+
+        if ($this->authContainer->identity instanceof BaseUsers) {
+            $this->identity = $this->authContainer->identity;
+            return $this->identity;
+        }
+        return null;
+    }
+
+    /**
+     * Check if using 2FA
+     * @param BaseUsers|null $identity
+     * @return bool
+     * @throws DoctrineAuthException
+     */
+    public function use2Fa(): bool
+    {
+        /* useTwoFactorAuthentication key not found in config */
+        if (isset($this->config['doctrineAuth']['useTwoFactorAuthentication']) === false) {
+            throw new DoctrineAuthException('useTwoFactorAuthentication setting not found in config');
+        }
+
+        if ($this->config['doctrineAuth']['useTwoFactorAuthentication'] === false) {
+            return false;
+        }
+
+        return $this->getIdentity() instanceof BaseUsers ? $this->identity->hasAuthMethods() : false;
+    }
+
+    /**
+     * Get 2FA model
+     * @return TwoFactorAuthModel
+     */
+    public function getTwoFactorAuthModel(): TwoFactorAuthModel
+    {
+        return $this->twoFactorAuthModel;
     }
 
     /**
