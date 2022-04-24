@@ -229,7 +229,7 @@ class TwoFactorAuthModel
     public function authenticate(): bool
     {
         if (isset($this->authContainer->code) === false) {
-            return false;
+            $this->authContainer->code = null;
         }
 
         switch ($this->authContainer->authMethod) {
@@ -239,10 +239,10 @@ class TwoFactorAuthModel
                     return false;
                 }
                 $google2Fa = new Google2FA();
-                return $google2Fa->verifyKey($secret, $this->authForm->getData()['code']);
+                return $google2Fa->verifyKey($secret, (string)$this->authForm->getData()['code']);
             case self::EMAIL:
             case self::SMS:
-                return (int) $this->authForm->getData()['code'] === $this->authContainer->code;
+                return $this->authForm->getData()['code'] === $this->authContainer->code;
         }
         return false;
     }
@@ -257,6 +257,14 @@ class TwoFactorAuthModel
             return $this->authContainer->identity->countAuthMethods();
         }
         return 0;
+    }
+    
+    public function getSingleAuthMethod()
+    {
+        if ($this->countUserAuthMethods() !== 1) {
+            return null;
+        }
+        return $this->authContainer->identity->getAuthMethods()->current();
     }
 
     /**

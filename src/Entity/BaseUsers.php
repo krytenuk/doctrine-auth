@@ -92,7 +92,7 @@ class BaseUsers implements EntityInterface
     /**
      * @var UserRoles
      *
-     * @ORM\ManyToOne(targetEntity="FwsDoctrineAuth\Entity\UserRoles", fetch="EAGER")
+     * @ORM\ManyToOne(targetEntity="FwsDoctrineAuth\Entity\UserRoles", cascade={"persist", "merge"}, fetch="EAGER")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="user_role_id", referencedColumnName="user_role_id")
      * })
@@ -102,21 +102,21 @@ class BaseUsers implements EntityInterface
     /**
      * @var PasswordReminder|null
      *
-     * @ORM\OneToOne(targetEntity="FwsDoctrineAuth\Entity\PasswordReminder", mappedBy="user", orphanRemoval=true, cascade={"persist"})
+     * @ORM\OneToOne(targetEntity="FwsDoctrineAuth\Entity\PasswordReminder", mappedBy="user", orphanRemoval=true, cascade={"persist", "merge"})
      */
     private ?PasswordReminder $passwordReminder = null;
 
     /**
      * @var Collection
      *
-     * @ORM\OneToMany(targetEntity="FwsDoctrineAuth\Entity\TwoFactorAuthMethods", mappedBy="user", orphanRemoval=true, cascade={"persist"}, fetch="EAGER")
+     * @ORM\OneToMany(targetEntity="FwsDoctrineAuth\Entity\TwoFactorAuthMethods", mappedBy="user", orphanRemoval=true, cascade={"persist", "merge"}, fetch="EAGER")
      */
     private Collection $authMethods;
 
     /**
      * @var Collection
      *
-     * @ORM\OneToMany(targetEntity="FwsDoctrineAuth\Entity\LoginLog", mappedBy="user", orphanRemoval=true, cascade={"persist"}, fetch="EAGER")
+     * @ORM\OneToMany(targetEntity="FwsDoctrineAuth\Entity\LoginLog", mappedBy="user", orphanRemoval=true, cascade={"persist", "merge"}, fetch="EAGER")
      */
     private Collection $logins;
 
@@ -522,13 +522,11 @@ class BaseUsers implements EntityInterface
             'emailAddress' => $this->emailAddress,
             'mobileNumber' => $this->mobileNumber,
             'userActive' => $this->userActive,
-            'use2fa' => $this->use2fa,
             'dateCreated' => $this->dateCreated,
             'dateModified' => $this->dateModified,
             'userRole' => $this->userRole,
             'authMethods' => $this->authMethods->toArray(),
             'logins' => $this->logins->toArray(),
-            'googleAuth' => $this->googleAuth,
         ];
     }
 
@@ -538,13 +536,11 @@ class BaseUsers implements EntityInterface
         $this->emailAddress = $data['emailAddress'];
         $this->mobileNumber = $data['mobileNumber'];
         $this->userActive = $data['userActive'];
-        $this->use2fa = $data['use2fa'];
         $this->dateCreated = $data['dateCreated'];
         $this->dateModified = $data['dateModified'];
         $this->userRole = $data['userRole'];
         $this->authMethods = new ArrayCollection($data['authMethods']);
         $this->logins = new ArrayCollection($data['logins']);
-        $this->googleAuth = $data['googleAuth'];
     }
 
 }

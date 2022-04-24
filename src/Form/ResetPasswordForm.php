@@ -56,6 +56,7 @@ class ResetPasswordForm extends Form implements InputFilterProviderInterface
             'attributes' => [
                 'size' => 16,
                 'maxlength' => 16,
+                'autofocus' => true,
             ],
             'options' => [
                 'label' => sprintf(_('New %s'), $this->config['doctrineAuth']['formElements']['credential_label']),

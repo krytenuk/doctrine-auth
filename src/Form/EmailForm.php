@@ -51,9 +51,8 @@ class EmailForm extends Form implements InputFilterProviderInterface
      */
     public function init(): void
     {
-        /* Identity property not found in config */
-        if (!isset($this->config['doctrine']['authentication']['orm_default']['identity_property'])) {
-            throw new DoctrineAuthException('identity_property not found in config');
+        if (!isset($this->config['doctrineAuth']['formElements']['identity_label'])) {
+            throw new DoctrineAuthException('identity_label not found in config');
         }
 
         /*
@@ -66,6 +65,7 @@ class EmailForm extends Form implements InputFilterProviderInterface
             'attributes' => [
                 'size' => 30,
                 'maxlength' => 255,
+                'autofocus' => true,
             ],
             'options' => [
                 'label' => _($this->config['doctrineAuth']['formElements']['identity_label']),
@@ -139,6 +139,10 @@ class EmailForm extends Form implements InputFilterProviderInterface
      */
     public function getIdentityName(): string
     {
+        if (!isset($this->config['doctrine']['authentication']['orm_default']['identity_property'])) {
+            throw new DoctrineAuthException('identity_property not found in config');
+        }
+        
         return $this->config['doctrine']['authentication']['orm_default']['identity_property'];
     }
 
