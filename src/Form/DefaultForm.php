@@ -72,6 +72,7 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
             'attributes' => [
                 'size' => 16,
                 'maxlength' => 255,
+                'autofocus' => true,
             ],
             'options' => [
                 'label' => _($this->config['doctrineAuth']['formElements']['identity_label']),

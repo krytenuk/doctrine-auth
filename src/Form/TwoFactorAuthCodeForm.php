@@ -30,6 +30,7 @@ class TwoFactorAuthCodeForm extends Form implements InputFilterProviderInterface
             'attributes' => [
                 'size' => 6,
                 'maxlength' => 6,
+                'autofocus' => true,
             ],
             'options' => [
                 'label' => _('Code'),
@@ -64,7 +65,7 @@ class TwoFactorAuthCodeForm extends Form implements InputFilterProviderInterface
             'code' => [
                 'required' => true,
                 'filters' => [
-                    ['name' => Filter\Digits::class],
+                    ['name' => Filter\ToInt::class],
                 ],
                 'validators' => [
                     [
@@ -77,29 +78,17 @@ class TwoFactorAuthCodeForm extends Form implements InputFilterProviderInterface
                         ],
                     ],
                     [
-                        'name' => Validator\StringLength::class,
+                        'name' => Validator\Between::class,
                         'break_chain_on_failure' => true,
                         'options' => [
                             'encoding' => 'UTF-8',
-                            'min' => 6,
-                            'max' => 6,
+                            'min' => 100000,
+                            'max' => 999999,
                             'messages' => [
-                                Validator\StringLength::INVALID => _("The security code must contain %max% digits"),
-                                Validator\StringLength::TOO_LONG => _("The security code must contain %max% digits"),
-                                Validator\StringLength::TOO_SHORT => _("The security code must contain %min% digits"),
-                            ],
-                        ],
-                    ],
-                    [
-                        'name' => Validator\Digits::class,
-                        'options' => [
-                            'encoding' => 'UTF-8',
-                            'min' => 11,
-                            'max' => 20,
-                            'messages' => [
-                                Validator\Digits::INVALID => _("The security code must only contain digits"),
-                                Validator\Digits::NOT_DIGITS => _("The security code must only contain digits"),
-                                Validator\Digits::STRING_EMPTY => _("The security code must only contain digits"),
+                                Validator\Between::NOT_BETWEEN => _("The security code must contain 6 digits"),
+                                Validator\Between::NOT_BETWEEN_STRICT => _("The security code must contain 6 digits"),
+                                Validator\Between::VALUE_NOT_NUMERIC => _("The security code is invalid"),
+                                Validator\Between::VALUE_NOT_STRING => _("The security code is invalid"),
                             ],
                         ],
                     ],

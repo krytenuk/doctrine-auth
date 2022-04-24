@@ -19,4 +19,5 @@
             <?= $this->formSubmit($this->authCodeForm->get('submit')) ?></dd>
     </dl>
     <?= $this->form()->closeTag(); ?>
+    <p><?= $this->translate('Not working?'); ?> <a href="<?= $this->url('doctrine-auth/default', ['action' => 'regenerate-google-secret']); ?>"><?= $this->translate('Regenerate code'); ?></a></p>
 <?php endif; ?>

@@ -173,7 +173,6 @@ class Select2faModel extends AbstractModel
         }
 
         $this->identity->addAuthMethod($authMethodEntity);
-        $this->identity->setUse2fa(true);
         $this->entityManager->persist($this->identity);
         $saved = $this->flushEntityManager($this->entityManager);
         $this->entityManager->detach($this->identity);
@@ -195,9 +194,6 @@ class Select2faModel extends AbstractModel
         }
 
         $this->identity->removeAuthMethod($methodEntity);
-        if ($this->identity->getAuthMethods()->isEmpty()) {
-            $this->identity->setUse2fa(false);
-        }
         $this->authenticationService->clearIdentity();
         $this->entityManager->persist($this->identity);
         $saved = $this->flushEntityManager($this->entityManager);
