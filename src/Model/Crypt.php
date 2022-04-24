@@ -64,7 +64,6 @@ class Crypt
         if (!isset($config['doctrineAuth']['rsaKeyPassphrase'])) {
             throw new DoctrineAuthException('rsaKeyPassphrase key not set in config');
         }
-
         $this->rsa = Rsa::factory([
                     'public_key' => $config['doctrineAuth']['rsaPublicKeyFile'],
                     'private_key' => $config['doctrineAuth']['rsaPrivateKeyFile'],
