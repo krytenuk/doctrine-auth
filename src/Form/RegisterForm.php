@@ -48,8 +48,8 @@ class RegisterForm extends DefaultForm
     public function getInputFilterSpecification(): array
     {
         $stringToUpperFilter = new Filter\StringToUpper();
-        if (isset($this->config['doctrineAuth']['siteCoutryCode']) === false) {
-            throw new DoctrineAuthException('siteCoutryCode not found in doctrineAuth config');
+        if (isset($this->config['doctrineAuth']['siteCountryCode']) === false) {
+            throw new DoctrineAuthException('siteCountryCode not found in doctrineAuth config');
         }
 
         return array_merge(parent::getInputFilterSpecification(),
@@ -90,9 +90,9 @@ class RegisterForm extends DefaultForm
                             ],
                             [
                                 'name' => I18nValidator\PhoneNumber::class,
-                                'options' => [
+                                'options' 
                                     'allowed_types' => ['mobile'],
-                                    'country' => $stringToUpperFilter->filter($this->config['doctrineAuth']['siteCoutryCode']),
+                                    'country' => $stringToUpperFilter->filter($this->config['doctrineAuth']['siteCountryCode']),
                                     'messages' => [
                                         I18nValidator\PhoneNumber::INVALID => _("This is not a valid mobile number"),
                                         I18nValidator\PhoneNumber::NO_MATCH => _("This is not a valid mobile number"),
