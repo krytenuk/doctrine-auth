@@ -39,11 +39,14 @@ class TwoFactorAuthModel
     const GOOGLEAUTHENTICATOR = 'google-auth';
     const EMAIL = 'email';
     const SMS = 'sms';
+    
+    /**
+     * Misc settings
+     */
     const BULKSMS_API_BASE_URL = 'https://api.bulksms.com/v1/';
     const BULKSMS_API_SUCCESS_STATUS_CODE = 201;
     const SEND_SMS_MAX_ATTEMPTS = 10;
     const ENC_JSON = 'application/json';
-    const GOOGLE_AUTHENTICATOR_BASE_URL = 'https://www.authenticatorapi.com/api.asmx/ValidatePin';
 
     /**
      * Valid 2FA methods
