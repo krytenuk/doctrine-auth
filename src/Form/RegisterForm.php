@@ -90,7 +90,7 @@ class RegisterForm extends DefaultForm
                             ],
                             [
                                 'name' => I18nValidator\PhoneNumber::class,
-                                'options' 
+                                'options' => [
                                     'allowed_types' => ['mobile'],
                                     'country' => $stringToUpperFilter->filter($this->config['doctrineAuth']['siteCountryCode']),
                                     'messages' => [
