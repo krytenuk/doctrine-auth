@@ -40,10 +40,7 @@ Updated dependancy versions
 
 0.3.0
 Added two factor authentication
-<<<<<<< HEAD
 Added user database encryption
-=======
 Added max login attempts and user block entity
 Added login log entity
 Added translation config entry
->>>>>>> 39f845f1636dc29ded5988e50528d68b2002c743

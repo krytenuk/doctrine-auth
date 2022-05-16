@@ -145,10 +145,12 @@ return [
         'factories' => [
             ViewHelper\ObfuscateEmail::class => InvokableFactory::class,
             ViewHelper\ObfuscatePhoneNumber::class => InvokableFactory::class,
+            ViewHelper\Decrypt::class => ViewHelper\Service\DecryptFactory::class,
         ],
         'aliases' => [
             'obfuscateEmail' => ViewHelper\ObfuscateEmail::class,
             'obfuscatePhoneNumber' => ViewHelper\ObfuscatePhoneNumber::class,
+            'decrypt' => ViewHelper\Decrypt::class,
         ],
     ],
 ];

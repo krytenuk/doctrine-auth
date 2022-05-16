@@ -5,6 +5,9 @@ namespace FwsDoctrineAuth\Model;
 use Laminas\Crypt\PublicKey\Rsa;
 use Laminas\Crypt\Password\Bcrypt;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
+use Laminas\Crypt\PublicKey\Rsa\Exception\InvalidArgumentException;
+use Laminas\Crypt\PublicKey\Rsa\Exception\RuntimeException;
+use Exception;
 
 /**
  * Description of Crypt
@@ -15,24 +18,29 @@ class Crypt
 {
 
     /**
-     * 
+     *
      * @var array
      */
     private array $config;
 
     /**
-     * 
+     *
      * @var Rsa
      */
     private Rsa $rsa;
 
     /**
-     * 
+     *
      * @var Bcrypt
      */
     private Bcrypt $bcrypt;
 
-    public function __construct(?array $config = null)
+    /**
+     * 
+     * @param array|Traversable $config
+     * @return $this
+     */
+    public function __construct($config = null)
     {
         $this->bcrypt = new Bcrypt();
 
@@ -76,35 +84,49 @@ class Crypt
     /**
      * Encrypt value
      * @param string $value
-     * @return string
+     * @return string|null
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
      */
-    public function rsaEncrypt(string $value): string
+    public function rsaEncrypt(string $value): ?string
     {
-        return $this->rsa->encrypt($value);
+        try {
+            return $this->rsa->encrypt($value);
+        } catch (Exception $ex) {
+            return null;
+        }
+        
     }
 
     /**
      * Decrypt value
      * @param string $value
-     * @return string
+     * @return string|null
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
      */
-    public function rsaDecrypt(string $value): string
+    public function rsaDecrypt(string $value): ?string
     {
-        return $this->rsa->decrypt($value);
+        try {
+            return $this->rsa->decrypt($value);
+        } catch (Exception $ex) {
+            return null;
+        }
+        
     }
 
     /**
      * Encrypt password
-     * @param type $password
-     * @return type
+     * @param string $password
+     * @return string
      */
-    public function bcrypytCreate($password)
+    public function bcrypytCreate(string $password): string
     {
         return $this->bcrypt->create($password);
     }
 
     /**
-     * Check password
+     * Check encrypted password
      * @param string $password
      * @param string $hash
      * @return bool
@@ -113,5 +135,5 @@ class Crypt
     {
         return $this->bcrypt->verify($password, $hash);
     }
-  
+
 }
