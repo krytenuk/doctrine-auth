@@ -154,9 +154,6 @@ class RegisterModel extends AbstractModel
         if (is_callable([$this->userEntity, $credentialGetter]) === false) {
             throw new DoctrineAuthException(sprintf('Method "%s" not found in "%s"', $credentialGetter, get_class($this->userEntity)));
         }
-        /* Encrypt user credential property */
-        $bcrypt = new Bcrypt();
-        $this->userEntity->$credentialSetter($bcrypt->create($this->form->get($this->config['doctrine']['authentication']['orm_default']['credential_property'])->getValue()));
 
         $crypt = new Crypt($this->config);
         $this->userEntity->$credentialSetter($crypt->bcrypytCreate($this->userEntity->$credentialGetter()));

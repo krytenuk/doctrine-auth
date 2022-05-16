@@ -39,11 +39,14 @@ class TwoFactorAuthModel
     const GOOGLEAUTHENTICATOR = 'google-auth';
     const EMAIL = 'email';
     const SMS = 'sms';
+    
+    /**
+     * Misc settings
+     */
     const BULKSMS_API_BASE_URL = 'https://api.bulksms.com/v1/';
     const BULKSMS_API_SUCCESS_STATUS_CODE = 201;
     const SEND_SMS_MAX_ATTEMPTS = 10;
     const ENC_JSON = 'application/json';
-    const GOOGLE_AUTHENTICATOR_BASE_URL = 'https://www.authenticatorapi.com/api.asmx/ValidatePin';
 
     /**
      * Valid 2FA methods
@@ -229,7 +232,7 @@ class TwoFactorAuthModel
     public function authenticate(): bool
     {
         if (isset($this->authContainer->code) === false) {
-            return false;
+            $this->authContainer->code = null;
         }
 
         switch ($this->authContainer->authMethod) {
@@ -239,10 +242,10 @@ class TwoFactorAuthModel
                     return false;
                 }
                 $google2Fa = new Google2FA();
-                return $google2Fa->verifyKey($secret, $this->authForm->getData()['code']);
+                return $google2Fa->verifyKey($secret, (string)$this->authForm->getData()['code']);
             case self::EMAIL:
             case self::SMS:
-                return (int) $this->authForm->getData()['code'] === $this->authContainer->code;
+                return $this->authForm->getData()['code'] === $this->authContainer->code;
         }
         return false;
     }
@@ -257,6 +260,14 @@ class TwoFactorAuthModel
             return $this->authContainer->identity->countAuthMethods();
         }
         return 0;
+    }
+    
+    public function getSingleAuthMethod()
+    {
+        if ($this->countUserAuthMethods() !== 1) {
+            return null;
+        }
+        return $this->authContainer->identity->getAuthMethods()->current();
     }
 
     /**

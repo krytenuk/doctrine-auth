@@ -15,11 +15,9 @@ use Laminas\Authentication\AuthenticationService;
 use FwsDoctrineAuth\Model\Acl;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use FwsDoctrineAuth\Entity\BaseUsers;
-use Laminas\Form\ElementInterface;
 use FwsDoctrineAuth\Entity\FailedLoginAttemptsLog;
 use FwsDoctrineAuth\Entity\IpBlocked;
-use FwsDoctrineAuth\Model\Crypt;
-use Laminas\Authentication\Result;
+use FwsDoctrineAuth\Entity\LoginLog;
 
 /**
  * LoginModel
@@ -209,38 +207,7 @@ class LoginModel extends AbstractModel
         }
         /* Update user on database */
         $this->entityManager->persist($this->identity);
-        $saved = $this->flushEntityManager($this->entityManager);
-        $this->entityManager->detach($this->identity);
-        return $saved;
-    }
-
-    /**
-     * Set identity
-     * @param BaseUsers $identity
-     * @return LoginModel
-     */
-    public function setIdentity(BaseUsers $identity): LoginModel
-    {
-        $this->identity = $identity;
-        $this->authService->getStorage()->write($identity);
-        return $this;
-    }
-
-    /**
-     * Get identity
-     * @return BaseUsers|null
-     */
-    public function getIdentity(): ?BaseUsers
-    {
-        if ($this->identity instanceof BaseUsers) {
-            return $this->identity;
-        }
-
-        if ($this->authContainer->identity instanceof BaseUsers) {
-            $this->identity = $this->authContainer->identity;
-            return $this->identity;
-        }
-        return null;
+        return $this->flushEntityManager($this->entityManager);
     }
 
     /**
@@ -299,35 +266,6 @@ class LoginModel extends AbstractModel
             return $this->identity;
         }
         return null;
-    }
-
-    /**
-     * Check if using 2FA
-     * @param BaseUsers|null $identity
-     * @return bool
-     * @throws DoctrineAuthException
-     */
-    public function use2Fa(): bool
-    {
-        /* useTwoFactorAuthentication key not found in config */
-        if (isset($this->config['doctrineAuth']['useTwoFactorAuthentication']) === false) {
-            throw new DoctrineAuthException('useTwoFactorAuthentication setting not found in config');
-        }
-
-        if ($this->config['doctrineAuth']['useTwoFactorAuthentication'] === false) {
-            return false;
-        }
-
-        return $this->getIdentity() instanceof BaseUsers ? $this->identity->hasAuthMethods() : false;
-    }
-
-    /**
-     * Get 2FA model
-     * @return TwoFactorAuthModel
-     */
-    public function getTwoFactorAuthModel(): TwoFactorAuthModel
-    {
-        return $this->twoFactorAuthModel;
     }
 
     /**
@@ -502,6 +440,23 @@ class LoginModel extends AbstractModel
         }
 
         return (bool) $this->entityManager->getRepository(IpBlocked::class)->count(['ipAddress' => $this->serverParams->get('SERVER_ADDR')]);
+    }
+    
+    /**
+     * 
+     * @param bool $used2fa
+     * @return void
+     */
+    public function logSuccessfulLogin(bool $used2fa): void
+    {
+        $loginLog = new LoginLog();
+        $loginLog->setUser($this->entityManager->getRepository(BaseUsers::class)->findOneBy(['userId' => $this->identity->getUserId()]))
+                ->setUsed2fa($used2fa);
+        $this->entityManager->persist($loginLog);
+        $this->flushEntityManager($this->entityManager);
+        
+        $this->identity->addLogin($loginLog);
+        $this->authService->getStorage()->write($this->identity);
     }
 
 }
