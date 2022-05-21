@@ -78,11 +78,22 @@ class TwoFactorAuthCodeForm extends Form implements InputFilterProviderInterface
                         ],
                     ],
                     [
+                        'name' => Validator\Digits::class,
+                        'break_chain_on_failure' => true,
+                        'options' => [
+                            'messages' => [
+                                Validator\Digits::INVALID => _("The security code must only contain digits"),
+                                Validator\Digits::NOT_DIGITS => _("The security code must only contain digits"),
+                                Validator\Digits::STRING_EMPTY => _("You must enter the security code"),
+                            ],
+                        ],
+                    ],
+                    [
                         'name' => Validator\Between::class,
                         'break_chain_on_failure' => true,
                         'options' => [
                             'encoding' => 'UTF-8',
-                            'min' => 100000,
+                            'min' => 1,
                             'max' => 999999,
                             'messages' => [
                                 Validator\Between::NOT_BETWEEN => _("The security code must contain 6 digits"),

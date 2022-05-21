@@ -372,7 +372,7 @@ class IndexController extends AbstractActionController
         $this->select2faModel->addMethod(TwoFactorAuthModel::GOOGLEAUTHENTICATOR);
         $this->loginModel->setIdentity($this->select2faModel->getAuthContainer()->identity);
         $this->loginModel->logSuccessfulLogin(true);
-        return $this->getRedirect();
+        return $this->redirect()->toRoute('doctrine-auth/default', ['action' => 'select-two-factor-authentication']);
     }
 
     public function regenerateGoogleSecretAction()

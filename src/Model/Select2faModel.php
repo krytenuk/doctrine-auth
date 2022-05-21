@@ -192,6 +192,10 @@ class Select2faModel extends AbstractModel
         if ($methodEntity instanceof TwoFactorAuthMethods === false) {
             return false;
         }
+        
+        if ($method === TwoFactorAuthModel::GOOGLEAUTHENTICATOR) {
+            $this->authContainer->secret = null;
+        }
 
         $this->identity->removeAuthMethod($methodEntity);
         $this->authenticationService->clearIdentity();
@@ -199,7 +203,7 @@ class Select2faModel extends AbstractModel
         $saved = $this->flushEntityManager($this->entityManager);
         $this->entityManager->detach($this->identity);
         $this->authenticationService->clearIdentity();
-        $this->authenticationService->getStorage()->write($this->identity);
+        $this->authenticationService->getStorage()->write($this->identity);        
         return $saved;
     }
 
@@ -256,7 +260,7 @@ class Select2faModel extends AbstractModel
         if ($this->authContainer->identity instanceof BaseUsers === false) {
             return null;
         }
-                
+
         $result = Builder::create()
                 ->writer(new PngWriter())
                 ->writerOptions([])
