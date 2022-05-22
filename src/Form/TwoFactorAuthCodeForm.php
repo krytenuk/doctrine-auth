@@ -65,7 +65,7 @@ class TwoFactorAuthCodeForm extends Form implements InputFilterProviderInterface
             'code' => [
                 'required' => true,
                 'filters' => [
-                    ['name' => Filter\ToInt::class],
+                    ['name' => Filter\Digits::class],
                 ],
                 'validators' => [
                     [
