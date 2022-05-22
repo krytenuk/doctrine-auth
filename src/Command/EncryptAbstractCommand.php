@@ -36,11 +36,12 @@ abstract class EncryptAbstractCommand extends AbstractCommand
                 continue;
             }
 
-            if ($this->crypt->rsaDecrypt($entity->$getter()) !== null) {
+            $crypt = new Crypt($this->config);
+            if ($crypt->rsaDecrypt($entity->$getter()) !== null) {
                 $this->output->writeln(sprintf('<error>Field %s is already encrypted.</error>', $field));
                 continue;
             }
-            $encrypted = $this->crypt->rsaEncrypt($entity->$getter());
+            $encrypted = $crypt->rsaEncrypt($entity->$getter());
             if ($encrypted === null) {
                 $this->output->writeln(sprintf('<error>Unable to encrypt field %s.</error>', $field));
                 continue;

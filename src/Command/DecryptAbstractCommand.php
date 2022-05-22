@@ -36,7 +36,8 @@ abstract class DecryptAbstractCommand extends AbstractCommand
                 continue;
             }
 
-            $decrypted = $this->crypt->rsaDecrypt($entity->$getter());
+            $crypt = new Crypt($this->config);
+            $decrypted = $crypt->rsaDecrypt($entity->$getter());
             if ($decrypted === null) {
                 $this->output->writeln(sprintf('<error>Field %s is not encrypted.</error>', $field));
                 continue;

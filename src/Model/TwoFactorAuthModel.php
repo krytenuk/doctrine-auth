@@ -165,7 +165,7 @@ class TwoFactorAuthModel
      */
     public function generateCode(): TwoFactorAuthModel
     {
-        $this->authContainer->code = (int) mt_rand(100000, 999999);
+        $this->authContainer->code = (string) mt_rand(100000, 999999);
         return $this;
     }
 
@@ -242,7 +242,7 @@ class TwoFactorAuthModel
                     return false;
                 }
                 $google2Fa = new Google2FA();
-                return $google2Fa->verifyKey($secret, (string)$this->authForm->getData()['code']);
+                return $google2Fa->verifyKey($secret, $this->authForm->getData()['code']);
             case self::EMAIL:
             case self::SMS:
                 return $this->authForm->getData()['code'] === $this->authContainer->code;

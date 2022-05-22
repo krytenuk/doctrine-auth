@@ -77,7 +77,6 @@ abstract class AbstractCommand extends Command
     {
         $this->entityManager = $entityManager;
         $this->config = $config;
-        $this->crypt = new Crypt($config);
         parent::__construct();
     }
 
