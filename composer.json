@@ -1,6 +1,5 @@
 {
     "name": "krytenuk/doctrine-auth",
-    "version": "0.3.1",
     "description": "Laminas module for authentication using Doctrine",
     "require": {
         "php": "^7.4 || ^8.0",
