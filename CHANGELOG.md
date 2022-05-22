@@ -47,3 +47,6 @@ Added translation config entry
 
 0.3.1
 Fixed bug with selecting Google 2FA
+
+0.3.2
+Fixed bug where Google 2FA did not work with leading zero
