@@ -44,3 +44,6 @@ Added user database encryption
 Added max login attempts and user block entity
 Added login log entity
 Added translation config entry
+
+0.3.1
+Fixed bug with selecting Google 2FA
