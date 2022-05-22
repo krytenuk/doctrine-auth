@@ -7,7 +7,6 @@ use FwsDoctrineAuth\Entity\EntityInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use FwsDoctrineAuth\Model\Crypt;
 use Doctrine\ORM\EntityRepository;
 
 /**
@@ -35,12 +34,6 @@ abstract class AbstractCommand extends Command
      * @var EntityManagerInterface
      */
     protected EntityManagerInterface $entityManager;
-
-    /**
-     * 
-     * @var Crypt
-     */
-    protected Crypt $crypt;
 
     /**
      * Laminas config

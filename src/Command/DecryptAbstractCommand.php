@@ -3,7 +3,7 @@
 namespace FwsDoctrineAuth\Command;
 
 use FwsDoctrineAuth\Entity\EntityInterface;
-use Laminas\Crypt\PublicKey\Rsa\Exception\RuntimeException;
+use FwsDoctrineAuth\Model\Crypt;
 
 /**
  * Description of EncryptAbstractCommand
