@@ -23,7 +23,7 @@ class PasswordReminder implements EntityInterface
 
     /**
      * @var int|null
-     * @ORM\Column(name="password_reminder_id", type="integer", nullable=false)
+     * @ORM\Column(name="password_reminder_id", type="integer", options={"unsigned"=true}, nullable=false)
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
@@ -119,10 +119,10 @@ class PasswordReminder implements EntityInterface
 
     /**
      * 
-     * @param DateTimeImmutable $dateCreated
+     * @param DateTimeInterface $dateCreated
      * @return $this
      */
-    public function setDateCreated(DateTimeImmutable $dateCreated)
+    public function setDateCreated(DateTimeInterface $dateCreated)
     {
         $this->dateCreated = $dateCreated;
         return $this;

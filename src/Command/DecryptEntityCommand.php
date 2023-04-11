@@ -32,7 +32,7 @@ class DecryptEntityCommand extends DecryptAbstractCommand
                 ->setDescription('Decrypt given entitys data')
                 ->setHelp(
                         <<<EOT
-Encrypt sensitive data on database
+Decrypt sensitive data on database
 EOT
                 )
                 ->addArgument('entity', InputArgument::REQUIRED, 'Entity class to decrypt, must be instance of FwsDoctrineAuth\Entity\EntityInterface')

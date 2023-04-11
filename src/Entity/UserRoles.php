@@ -24,7 +24,7 @@ class UserRoles implements EntityInterface
     /**
      * @var int|null
      *
-     * @ORM\Column(name="user_role_id", type="integer", nullable=false)
+     * @ORM\Column(name="user_role_id", type="integer", options={"unsigned"=true}, nullable=false)
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
