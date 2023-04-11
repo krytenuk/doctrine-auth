@@ -22,7 +22,7 @@ class IpBlocked implements EntityInterface
 
     /**
      * @var int|null
-     * @ORM\Column(name="block_id", type="integer", nullable=false)
+     * @ORM\Column(name="block_id", type="integer", options={"unsigned"=true}, nullable=false)
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */

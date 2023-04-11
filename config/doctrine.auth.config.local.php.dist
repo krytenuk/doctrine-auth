@@ -47,8 +47,8 @@ return [
          * Encryption
          */
         'encryptData' => false, // Encrypt user data, default = false
-        'rsaPrivateKeyFile' => 'rsa/id_rsa.pem', // <- path and filename of your rsa private key @see https://docs.rightscale.com/faq/How_Do_I_Generate_My_Own_SSH_Key_Pair.html
-        'rsaPublicKeyFile' => 'rsa/id_rsa.pub', // <- path and filename of your rsa public key
+        'rsaPrivateKeyFile' => 'rsa/key.pem', // <- path and filename of your rsa private key @see https://docs.rightscale.com/faq/How_Do_I_Generate_My_Own_SSH_Key_Pair.html
+        'rsaPublicKeyFile' => 'rsa/key.pub', // <- path and filename of your rsa public key
         'rsaKeyPassphrase' => 'passphrase', // Optional passphrase used when creating the above keys
         /**
          * Registration

@@ -18,7 +18,7 @@ class LoginLog implements EntityInterface
 
     /**
      * @var int|null
-     * @ORM\Column(name="log_id", type="integer", nullable=false)
+     * @ORM\Column(name="log_id", type="integer", options={"unsigned"=true}, nullable=false)
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
