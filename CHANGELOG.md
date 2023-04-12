@@ -56,5 +56,4 @@ Fixed command line error when no encryption set
 Changed email/sms code type to string
 
 0.3.4 Changed auto generated id's to unsigned int (may break database)
-
-0.3.5 Changed type hint for PasswordReminder::setDateCreated() to DateTimeInterface
+Changed type hint for PasswordReminder::setDateCreated() to DateTimeInterface
