@@ -1,0 +1,53 @@
+<h3><?= $this->translate('Enter Authentication Code'); ?></h3>
+
+<?php if ($this->codeSent === false): ?>
+    <p class="error"><?= $this->translate('Unable to send authentication code'); ?></p>
+    <P>
+        <a href="<?= $this->url('doctrine-auth/2fa/resend-code'); ?>"><?= $this->translate('Try again'); ?></a>
+        <?php if ($this->user->getAuthMethods()->count() > 1): ?>
+            or
+            <a href="<?= $this->url('doctrine-auth/2fa/select-auth-method'); ?>"><?= $this->translate('pick another authentication method'); ?></a>
+        <?php endif; ?>
+    </p>
+<?php else: ?>
+    <?php
+    $this->authCodeForm->setAttribute('action', $this->url('doctrine-auth/2fa/authenticate'));
+    $this->formElementErrors()->setAttributes(['class' => 'errors']);
+    $this->authCodeForm->prepare();
+    echo $this->form()->openTag($this->authCodeForm);
+    ?>
+    <div class="enter-code">
+        <p><?= $this->translate('A single use code has been sent to'); ?><br>
+            <?= $this->obfuscatePhoneNumber($this->user->getMobileNumber()); ?></p>
+        <p>Please check your mobile device and enter the code below</p>
+        <div class="code">
+            <?= $this->formText($this->authCodeForm->get('code')) ?>
+            <?= $this->formElementErrors($this->authCodeForm->get('code')); ?>
+        </div>
+        <div class="submit">
+            <?= $this->formElement($this->authCodeForm->get('csrf')) ?>
+            <?= $this->formElementErrors($this->authCodeForm->get('csrf')); ?>
+            <?= $this->formSubmit($this->authCodeForm->get('submit')) ?>
+        </div>
+    </div>
+    <?= $this->form()->closeTag(); ?>
+    <p>
+        <?= $this->translate('Not received code?'); ?>
+        <a href="<?= $this->url('doctrine-auth/2fa/resend-code'); ?>">
+            <?= $this->translate('Resend'); ?>
+        </a>
+        <?php if ($this->user->getAuthMethods()->count() > 1):  // user has more than one 2FA method set ?>
+            <?= $this->translate('or try'); ?>
+            <a href="<?= $this->url('doctrine-auth/2fa/select-auth-method'); ?>">
+                <?= $this->translate('another method'); ?>
+            </a>
+        <?php endif; ?>
+    </p>
+<?php endif; ?>
+
+
+
+
+
+
+

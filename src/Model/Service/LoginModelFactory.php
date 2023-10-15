@@ -2,15 +2,16 @@
 
 namespace FwsDoctrineAuth\Model\Service;
 
-use Laminas\ServiceManager\Factory\FactoryInterface;
-use Psr\Container\ContainerInterface;
-use FwsDoctrineAuth\Model\LoginModel;
-use FwsDoctrineAuth\Model\TwoFactorAuthModel;
-use Laminas\Authentication\AuthenticationService;
-use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use Doctrine\ORM\EntityManager;
-use Laminas\Session\SessionManager;
+use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use FwsDoctrineAuth\Model\Acl;
+use FwsDoctrineAuth\Model\LoginModel;
+use Laminas\Authentication\AuthenticationService;
+use Laminas\ServiceManager\Factory\FactoryInterface;
+use Laminas\Session\SessionManager;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * Description of LoginModelFactory
@@ -24,29 +25,31 @@ class LoginModelFactory implements FactoryInterface
      * Create login model class
      * @param ContainerInterface $container
      * @param string $requestedName
-     * @param array $options
+     * @param array|null $options
      * @return LoginModel
+     * @throws DoctrineAuthException
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
-    public function __invoke(ContainerInterface $container, $requestedName, Array $options = null)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null): LoginModel
     {
         $config = $container->get('config');
-
-        if (isset($config['doctrineAuth']['loginForm']) === false) {
+        $loginForm = $config['doctrineAuth']['loginForm'] ?? null;
+        if (!$loginForm) {
             throw new DoctrineAuthException('"loginForm" not found in config');
         }
-        if (class_exists($config['doctrineAuth']['loginForm']) === false) {
-            throw new DoctrineAuthException(sprintf('Login form "%s" not found', $config['doctrineAuth']['loginForm']));
+        $formElementManager = $container->get('FormElementManager');
+        if (!($formElementManager->has($loginForm) && class_exists($loginForm))) {
+            throw new DoctrineAuthException(sprintf('Login form "%s" not found', $loginForm));
         }
 
         return new LoginModel(
-                $container->get(TwoFactorAuthModel::class),
-                $container->get('FormElementManager')->get($config['doctrineAuth']['loginForm']),
+                $formElementManager->get($loginForm),
                 $container->get(AuthenticationService::class),
                 $container->get(EntityManager::class),
-                $container->get('authContainer'),
+                $container->get('authContainerStorage'),
                 $container->get(SessionManager::class),
                 $container->get(Acl::class),
-                $container->get('request')->getServer(),
                 $config
         );
     }

@@ -3,7 +3,13 @@
 namespace FwsDoctrineAuth\Model;
 
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityRepository;
+use Doctrine\ORM\Exception\NotSupported;
+use Doctrine\ORM\Exception\ORMException;
+use Doctrine\Persistence\Mapping\MappingException;
+use Doctrine\Persistence\ObjectRepository;
 use Exception;
+use FwsDoctrineAuth\Entity\EntityInterface;
 
 /**
  * AbstractModel
@@ -12,29 +18,5 @@ use Exception;
  */
 abstract class AbstractModel
 {
-
-    /**
-     * Flush Doctrine Entity Manager
-     * @param EntityManager $entityManager
-     * @return boolean
-     */
-    protected function flushEntityManager(EntityManager $entityManager)
-    {
-        try {
-            $entityManager->flush();
-        } catch (Exception $exception) {
-            $this->clearEntityManager($entityManager);
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Clear Doctrine entity manager
-     * @param EntityManager $entityManager
-     */
-    public function clearEntityManager(EntityManager $entityManager)
-    {
-        $entityManager->clear();
-    }
+    Use EntityManagerTrait;
 }    

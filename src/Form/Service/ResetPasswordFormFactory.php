@@ -2,8 +2,13 @@
 
 namespace FwsDoctrineAuth\Form\Service;
 
+use FwsDoctrineAuth\Exception\DoctrineAuthException;
+use FwsDoctrineAuth\Form\ResetPasswordForm;
+use Laminas\Form\FormInterface;
 use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * ForgotPasswordFormFactory
@@ -14,22 +19,17 @@ class ResetPasswordFormFactory implements FactoryInterface
 {
 
     /**
-     * 
+     *
      * @param ContainerInterface $container
      * @param string $requestedName
-     * @param array $options
-     * @return RegisterForm
+     * @param array|null $options
+     * @return FormInterface
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
-    public function __invoke(ContainerInterface $container, $requestedName, Array $options = null)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null): FormInterface
     {   
-        $config = $container->get('config');
-        if (!isset($config['doctrineAuth']['newPasswordForm'])) {
-            throw new DoctrineAuthException('"newPasswordForm" not found in config');
-        }
-        if (!class_exists($config['doctrineAuth']['newPasswordForm'])) {
-            throw new DoctrineAuthException(sprintf('New password form "%s" not found', $config['doctrineAuth']['newPasswordForm']));
-        }  
-        return new $config['doctrineAuth']['newPasswordForm']($container->get('config'));
+        return new ResetPasswordForm($container->get('config'));
     }
 
 }

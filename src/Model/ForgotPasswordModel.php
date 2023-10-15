@@ -2,21 +2,23 @@
 
 namespace FwsDoctrineAuth\Model;
 
-use Doctrine\ORM\EntityManager;
-use FwsDoctrineAuth\Form\ResetPasswordForm;
-use FwsDoctrineAuth\Form\EmailForm;
-use FwsDoctrineAuth\Entity\PasswordReminder;
-use FwsDoctrineAuth\Entity\BaseUsers;
-use DateTime;
 use DateInterval;
-use Laminas\Stdlib\Parameters;
+use DateTime;
+use Doctrine\ORM\EntityManagerInterface;
+use Exception;
+use FwsDoctrineAuth\Entity\AuthUserInterface;
+use FwsDoctrineAuth\Entity\BaseUser;
+use FwsDoctrineAuth\Entity\PasswordReminder;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
-use FwsDoctrineAuth\Model\Crypt;
-use Laminas\View\Renderer\PhpRenderer;
-use Laminas\View\Model\ViewModel;
+use FwsDoctrineAuth\Form\ForgottenPasswordForm;
+use FwsDoctrineAuth\Form\ResetPasswordForm;
+use Laminas\Crypt\Password\Bcrypt;
 use Laminas\Mail\Message;
-use Laminas\Mime\Part as MimePart;
 use Laminas\Mime\Message as MimeMessage;
+use Laminas\Mime\Part as MimePart;
+use Laminas\Stdlib\Parameters;
+use Laminas\View\Model\ViewModel;
+use Laminas\View\Renderer\PhpRenderer;
 
 /**
  * ForgotPassword
@@ -25,112 +27,78 @@ use Laminas\Mime\Message as MimeMessage;
  */
 class ForgotPasswordModel extends AbstractModel
 {
-    
     use SendMailTrait;
 
-    /**
-     *
-     * @var EntityManager
-     */
-    private $entityManager;
+    private ?AuthUserInterface $userEntity = null;
+    private ?PasswordReminder $resetEntity = null;
+    private bool $formValid = false;
+    private ?string $credentialProperty;
+    private ?string $identityClass;
+    private ?string $identityProperty;
 
     /**
      *
-     * @var ForgotPasswordForm
-     */
-    private $emailForm;
-
-    /**
-     *
-     * @var ResetPasswordForm
-     */
-    private $resetPasswordForm;
-
-    /**
-     *
-     * @var BaseUsers
-     */
-    private $userEntity;
-
-    /**
-     *
-     * @var PasswordReminder
-     */
-    private $resetEntity;
-
-    /**
-     *
-     * @var array
-     */
-    private $config;
-
-    /**
-     *
-     * @var Url
-     */
-    private $phpRenderer;
-
-    /**
-     *
-     * @var boolean
-     */
-    private $formValid = FALSE;
-
-    /**
-     *
-     * @var string
-     */
-    private $credentialProperty;
-
-    /**
-     * 
-     * @param EntityManager $entityManager
+     * @param EntityManagerInterface $entityManager
      * @param ResetPasswordForm $resetPasswordForm
-     * @param EmailForm $emailForm
+     * @param ForgottenPasswordForm $emailForm
      * @param PhpRenderer $phpRenderer
      * @param array $config
+     * @throws DoctrineAuthException
      */
     public function __construct(
-            EntityManager $entityManager,
-            ResetPasswordForm $resetPasswordForm,
-            EmailForm $emailForm,
-            PhpRenderer $phpRenderer,
-            Array $config
+        protected EntityManagerInterface $entityManager,
+        protected ResetPasswordForm      $resetPasswordForm,
+        protected ForgottenPasswordForm  $emailForm,
+        protected PhpRenderer            $phpRenderer,
+        protected array                  $config
     )
     {
-        $this->entityManager = $entityManager;
-        $this->resetPasswordForm = $resetPasswordForm;
-        $this->emailForm = $emailForm;
-        $this->config = $config;
-        $this->phpRenderer = $phpRenderer;
-        $this->credentialProperty = $this->config['doctrine']['authentication']['orm_default']['credential_property'];
+        $this->credentialProperty = $this->config['doctrine']['authentication']['orm_default']['credential_property'] ?? null;
+
+        $this->identityProperty = $this->config['doctrine']['authentication']['orm_default']['identity_property'] ?? null;
+        if (!$this->identityProperty === null) {
+            throw new DoctrineAuthException('identity_property not set in config');
+        }
+
+        $this->identityClass = $this->config['doctrine']['authentication']['orm_default']['identity_class'] ?? null;
+        if (!$this->identityClass === null) {
+            throw new DoctrineAuthException('identity_class not set in config');
+        }
     }
 
     /**
      * Find user by link code if valid
      * @param string $code
      * @return boolean
+     * @throws Exception
      */
-    public function findUser($code)
+    public function findUser(string $code): bool
     {
-        /* Find password reset entity from database */
-        $this->resetEntity = $this->entityManager->getRepository(PasswordReminder::class)->findOneBy(['code' => $code]);
-        /* Password reset entity not found */
-        if ($this->resetEntity instanceof PasswordReminder === false) {
+        /** Find password reset entity from database */
+        $repository = $this->getEntityRepository($this->entityManager, PasswordReminder::class);
+        /** Repository not found */
+        if ($repository === null) {
+            return false;
+        }
+        $this->resetEntity = $repository->findOneBy(['code' => $code]);
+        /** Password reset entity not found */
+        if (!$this->resetEntity instanceof PasswordReminder) {
             return false;
         }
 
-        /* Calculate reset link expiry date/time */
+        /** Calculate reset link expiry date/time */
         $today = new DateTime();
         $date = $this->resetEntity->getDateCreated()->add(new DateInterval(sprintf('PT%dH', $this->config['doctrineAuth']['passwordLinkActiveFor'])));
-        /* Link valid */
+        /** Link valid */
         if ($date > $today) {
             /* Store user */
             $this->userEntity = $this->resetEntity->getUser();
             return true;
         }
         /* Link expired */
-        $this->entityManager->remove($this->resetEntity);
+        if (!$this->removeEntity($this->entityManager, $this->resetEntity)) {
+            return false;
+        }
         $this->flushEntityManager($this->entityManager);
         return false;
     }
@@ -140,44 +108,51 @@ class ForgotPasswordModel extends AbstractModel
      * @param Parameters $postData
      * @return bool
      */
-    public function processEmailForm(Parameters $postData)
+    public function processEmailForm(Parameters $postData): bool
     {
         $this->emailForm->setData($postData);
-        /* Email form not valid */
-        if ($this->emailForm->isValid() === false) {
+        /** Email form not valid */
+        if (!$this->emailForm->isValid()) {
             return false;
         }
         $this->formValid = true;
 
-        /* Find user entity */
-        $this->userEntity = $this->entityManager->getRepository($this->config['doctrine']['authentication']['orm_default']['identity_class'])->findOneBy([$this->config['doctrine']['authentication']['orm_default']['identity_property'] => $this->emailForm->getData()[$this->emailForm->getIdentityName()]]);
-        /* User not found */
-        if ($this->userEntity instanceof BaseUsers === false) {
+        /** Find user entity */
+        $repository = $this->getEntityRepository($this->entityManager, $this->identityClass);
+        /* Repository not found */
+        if ($repository === null) {
+            return false;
+        }
+        $this->userEntity = $repository->findOneBy([$this->identityProperty => $this->emailForm->getData()[$this->emailForm->getIdentityName()]]);
+        /** User not found on database */
+        if (!$this->userEntity instanceof BaseUser) {
             return false;
         }
 
-        /* Get or create password reset entity */
+        /** Get or create password reset entity */
         if ($this->userEntity->hasPasswordReminder()) {
             $this->resetEntity = $this->userEntity->getPasswordReminder();
         } else {
             $this->resetEntity = new PasswordReminder();
+            $this->resetEntity->setUser($this->userEntity);
+            $this->userEntity->setPasswordReminder($this->resetEntity);
         }
 
-        /* Populate password reset entity and persist user entity */
-        $this->resetEntity->setDateCreated(new DateTime())
-                ->setUser($this->userEntity)
-                ->setCode(uniqid());
-        $this->userEntity->setPasswordReminder($this->resetEntity);
-        $this->entityManager->persist($this->userEntity);
-        /* Attempt to save user entity */
+        /** Populate password reset entity and persist user entity */
+        $this->resetEntity
+            ->setDateCreated(new DateTime())
+            ->setCode(uniqid());
+
+        /** Save user entity */
         return $this->flushEntityManager($this->entityManager);
     }
 
     /**
      * Email request to set login details
      * @return boolean
+     * @throws DoctrineAuthException
      */
-    public function sendEmail()
+    public function sendEmail(): bool
     {
         /* Render email body */
         $viewModel = new ViewModel();
@@ -209,44 +184,44 @@ class ForgotPasswordModel extends AbstractModel
      * @return boolean
      * @throws DoctrineAuthException
      */
-    public function processResetForm(Parameters $postData)
+    public function processResetForm(Parameters $postData): bool
     {
         $this->resetPasswordForm->setData($postData);
         /* Form is invalid */
-        if ($this->resetPasswordForm->isValid() === false) {
+        if (!$this->resetPasswordForm->isValid()) {
             return false;
         }
         $this->formValid = true;
-        
+
         /* Get credential setter name and check it exists in user entity */
         $credentialSetter = 'set' . ucfirst($this->resetPasswordForm->getCredentialName());
-        if (is_callable([$this->userEntity, $credentialSetter]) === false) {
+        if (!is_callable([$this->userEntity, $credentialSetter])) {
             throw new DoctrineAuthException(sprintf('Method "%s" not found in "%s"', $credentialSetter, get_class($this->userEntity)));
         }
-        
-        /* Encrypt credential */
-        $crypt = new Crypt();
-        $this->userEntity->$credentialSetter($crypt->bcrypytCreate($this->resetPasswordForm->getData()[$this->resetPasswordForm->getCredentialName()]));
-        /* Persist user entity */
-        $this->entityManager->persist($this->userEntity);
+
+        /* Hash password */
+        $crypt = new Bcrypt();
+        $this->userEntity->$credentialSetter($crypt->create($this->resetPasswordForm->getData()[$this->resetPasswordForm->getCredentialName()]));
         /* Remove password reset entity */
-        $this->entityManager->remove($this->resetEntity);
+        if (!$this->removeEntity($this->entityManager, $this->resetEntity)) {
+            return false;
+        }
         /* Save user entity to database */
         return $this->flushEntityManager($this->entityManager);
     }
 
     /**
-     *
-     * @return EmailForm
+     * Get email password form
+     * @return ForgottenPasswordForm
      */
-    public function getEmailForm(): EmailForm
+    public function getEmailForm(): ForgottenPasswordForm
     {
         return $this->emailForm;
     }
 
     /**
-     *
-     * @return \FwsDoctrineAuth\Model\ResetPasswordForm
+     * Get reset password form
+     * @return ResetPasswordForm
      */
     public function getResetPasswordForm(): ResetPasswordForm
     {
@@ -257,7 +232,7 @@ class ForgotPasswordModel extends AbstractModel
      *
      * @return boolean
      */
-    public function isFormValid()
+    public function isFormValid(): bool
     {
         return $this->formValid;
     }
@@ -266,7 +241,7 @@ class ForgotPasswordModel extends AbstractModel
      *
      * @return array
      */
-    public function getConfig()
+    public function getConfig(): array
     {
         return $this->config;
     }

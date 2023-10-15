@@ -1,0 +1,52 @@
+<?php
+
+use Laminas\Form\Element\Button;
+use Laminas\Form\Element\Password;
+
+$this->form->prepare();
+echo $this->form()->openTag($this->form);
+?>
+<dl class="zend_form">
+    <?php foreach ($this->form as $element): ?>
+        <?php if ($element->getLabel() !== null && $element instanceof Button === false): ?>
+            <dt><?= $this->formLabel($element) ?></dt>
+        <?php endif; ?>
+        <dd>
+            <?php
+            echo $this->formElement($element);
+            if ($this->form->getName() == 'reset-password' && $element instanceof Password) {
+                echo '&nbsp;<button class="show-hide-password" value="show">Show</button>';
+            }
+            echo $this->formElementErrors($element);
+            ?>
+        </dd>
+    <?php endforeach; ?>
+</dl>
+<?= $this->form()->closeTag(); ?>
+<?php if ($this->form->getName() == 'reset-password'): ?>
+    <script type="text/javascript">
+        window.onload = function () {
+            var buttons = document.getElementsByClassName('show-hide-password')
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].onclick = function (event) {
+                    event.preventDefault();
+                    var element = this.previousElementSibling;
+                    var type;
+
+                    if (element.getAttribute('type') === 'password') {
+                        type = 'text';
+                        this.innerHTML = 'Hide';
+                    } else {
+                        type = 'password';
+                        this.innerHTML = 'Show';
+                    }
+                    var attributes = element.attributes;
+                    for (var i = 0; i < attributes.length; i++) {
+                        element.setAttribute(attributes[i].name, attributes[i].value);
+                    }
+                    element.setAttribute('type', type);
+                };
+            }
+        };
+    </script>
+<?php endif; ?>

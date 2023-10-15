@@ -2,9 +2,13 @@
 
 namespace FwsDoctrineAuth\Listener;
 
+use FwsDoctrineAuth\Model\Acl;
 use Laminas\Mvc\MvcEvent;
 use Laminas\Authentication\AuthenticationService;
-use FwsDoctrineAuth\Entity\BaseUsers;
+use FwsDoctrineAuth\Entity\BaseUser;
+use Laminas\View\Helper\Navigation;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * NavigationListener
@@ -17,32 +21,34 @@ class NavigationListener
     /**
      * Inject ACL & user role into navigation view helper
      * @param MvcEvent $event
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
-    public function addAcl(MvcEvent $event)
+    public function addAcl(MvcEvent $event): void
     {
         $serviceManager = $event->getApplication()->getServiceManager();
 
         $config = $serviceManager->get('config');
 
         /* Don't inject ACL into navigation view helper (set in config) */
-        if (isset($config['doctrineAuthAcl']['injectAclIntoNavigation']) === false || $config['doctrineAuthAcl']['injectAclIntoNavigation'] === false) {
+        if (!(isset($config['doctrineAuthAcl']['injectAclIntoNavigation']) && $config['doctrineAuthAcl']['injectAclIntoNavigation'])) {
             return;
         }
 
-        /* @var \Laminas\View\Helper\Navigation $plugin */
+        /* @var Navigation $plugin */
         $plugin = $serviceManager->get('ViewHelperManager')->get('navigation');
 
-        /* @var $acl \FwsDoctrineAuth\Model\Acl */
+        /* @var $acl Acl */
         $acl = $serviceManager->get('acl');
 
         /* @var $auth AuthenticationService */
         $auth = $serviceManager->get(AuthenticationService::class);
 
-        $role = $acl->getDefultRole();
+        $role = $acl->getDefaultRole();
 
-        if ($auth->hasIdentity() === true) {
+        if ($auth->hasIdentity()) {
             $user = $auth->getIdentity();
-            if ($user instanceof BaseUsers === true) {
+            if ($user instanceof BaseUser) {
                 $role = $user->getUserRole()->getRole();
             }
         }

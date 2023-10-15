@@ -2,8 +2,13 @@
 
 namespace FwsDoctrineAuth\Form\Service;
 
+use FwsDoctrineAuth\Exception\DoctrineAuthException;
+use FwsDoctrineAuth\Form\SelectTwoFactorAuthMethodForm;
+use Laminas\Form\FormInterface;
 use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
+use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * SelectTwoFactorAuthMethodFormFactory
@@ -14,22 +19,20 @@ class SelectTwoFactorAuthMethodFormFactory implements FactoryInterface
 {
 
     /**
-     * 
+     *
      * @param ContainerInterface $container
      * @param string $requestedName
-     * @param array $options
-     * @return RegisterForm
+     * @param array|null $options
+     * @return FormInterface
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
-    public function __invoke(ContainerInterface $container, $requestedName, Array $options = null)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null): FormInterface
     {
-        $config = $container->get('config');
-        if (!isset($config['doctrineAuth']['selectTwoFactorAuthMethodForm'])) {
-            throw new DoctrineAuthException('"selectTwoFactorAuthMethodForm" not found in config');
-        }
-        if (!class_exists($config['doctrineAuth']['selectTwoFactorAuthMethodForm'])) {
-            throw new DoctrineAuthException(sprintf('Select two factor authentication form "%s" not found', $config['doctrineAuth']['selectTwoFactorAuthMethodForm']));
-        }
-        return new $config['doctrineAuth']['selectTwoFactorAuthMethodForm']($container->get('authContainer'));
+        return new SelectTwoFactorAuthMethodForm(
+            $container->get('authContainerStorage'),
+            $container->get('config')
+        );
     }
 
 }

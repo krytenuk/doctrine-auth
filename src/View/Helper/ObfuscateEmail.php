@@ -16,9 +16,9 @@ class ObfuscateEmail extends AbstractHelper
     /**
      * Obfuscate email address
      * @param string $email
-     * @return type
+     * @return string
      */
-    public function __invoke(string $email)
+    public function __invoke(string $email): string
     {
         $pieces = explode("@", $email);
         $name = implode('@', array_slice($pieces, 0, count($pieces) - 1));

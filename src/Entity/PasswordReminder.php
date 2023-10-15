@@ -3,7 +3,6 @@
 namespace FwsDoctrineAuth\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use FwsDoctrineAuth\Entity\BaseUsers;
 use DateTimeInterface;
 use DateTimeImmutable;
 
@@ -37,14 +36,14 @@ class PasswordReminder implements EntityInterface
     private string $code;
     
     /**
-     * @var BaseUsers
+     * @var BaseUser
      *
-     * @ORM\OneToOne(targetEntity="FwsDoctrineAuth\Entity\BaseUsers", inversedBy="passwordReminder")
+     * @ORM\OneToOne(targetEntity="FwsDoctrineAuth\Entity\BaseUser", inversedBy="passwordReminder")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="user_id", referencedColumnName="user_id", onDelete="cascade")
      * })
      */
-    private BaseUsers $user;
+    private BaseUser $user;
 
     /**
      * @var DateTimeInterface
@@ -79,9 +78,9 @@ class PasswordReminder implements EntityInterface
     
     /**
      * 
-     * @return BaseUsers|null
+     * @return BaseUser|null
      */
-    public function getUser(): ?BaseUsers
+    public function getUser(): ?BaseUser
     {
         return $this->user;
     }
@@ -98,9 +97,9 @@ class PasswordReminder implements EntityInterface
     /**
      * 
      * @param string $code
-     * @return $this
+     * @return PasswordReminder
      */
-    public function setCode(string $code)
+    public function setCode(string $code): PasswordReminder
     {
         $this->code = $code;
         return $this;
@@ -108,10 +107,10 @@ class PasswordReminder implements EntityInterface
 
     /**
      * 
-     * @param BaseUsers $user
-     * @return $this
+     * @param BaseUser $user
+     * @return PasswordReminder
      */
-    public function setUser(BaseUsers $user)
+    public function setUser(BaseUser $user): PasswordReminder
     {
         $this->user = $user;
         return $this;
@@ -120,9 +119,9 @@ class PasswordReminder implements EntityInterface
     /**
      * 
      * @param DateTimeInterface $dateCreated
-     * @return $this
+     * @return PasswordReminder
      */
-    public function setDateCreated(DateTimeInterface $dateCreated)
+    public function setDateCreated(DateTimeInterface $dateCreated): PasswordReminder
     {
         $this->dateCreated = $dateCreated;
         return $this;

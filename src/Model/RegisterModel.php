@@ -2,93 +2,51 @@
 
 namespace FwsDoctrineAuth\Model;
 
-use Doctrine\ORM\EntityManager;
-use Laminas\Form\FormInterface;
-use FwsDoctrineAuth\Entity\BaseUsers;
-use FwsDoctrineAuth\Entity\UserRoles;
-use Laminas\Stdlib\Parameters;
+use Doctrine\ORM\EntityManagerInterface;
+use FwsDoctrineAuth\Entity\AuthUserInterface;
+use FwsDoctrineAuth\Entity\BaseUser;
+use FwsDoctrineAuth\Entity\Repository\UserRoleRepository;
+use FwsDoctrineAuth\Entity\UserRole;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
-use FwsDoctrineAuth\Model\Acl;
-use FwsDoctrineAuth\Model\LoginModel;
-use DateTime;
-use FwsDoctrineAuth\Model\Crypt;
+use FwsDoctrineAuth\Form\RegisterForm;
+use Laminas\Crypt\Password\Bcrypt;
+use Laminas\Http\Response;
+use Laminas\Stdlib\Parameters;
 
 /**
  * Description of RegisterModel
  *
  * @author Garry Childs <info@freedomwebservices.net>
+ *
  */
 class RegisterModel extends AbstractModel
 {
 
-    /**
-     *
-     * @var BaseUsers
-     */
-    private $userEntity;
+    private AuthUserInterface $userEntity;
+    private ?string $callback = null;
 
     /**
      *
-     * @var RegisterForm
-     */
-    private $form;
-
-    /**
-     *
-     * @var EntityManager
-     */
-    private $entityManager;
-
-    /**
-     *
-     * @var string
-     */
-    private $callback;
-
-    /**
-     *
-     * @var array
-     */
-    private $config;
-
-    /**
-     *
-     * @var Acl
-     */
-    private $acl;
-
-    /**
-     *
-     * @var LoginModel
-     */
-    private $loginModel;
-
-    /**
-     * 
-     * @param FormInterface $form
-     * @param EntityManager $entityManager
+     * @param RegisterForm $form
+     * @param EntityManagerInterface $entityManager
      * @param Acl $acl
      * @param LoginModel $loginModel
      * @param array $config
      * @throws DoctrineAuthException
      */
     public function __construct(
-            FormInterface $form,
-            EntityManager $entityManager,
-            Acl $acl,
-            LoginModel $loginModel,
-            Array $config)
+            protected RegisterForm $form,
+            protected EntityManagerInterface $entityManager,
+            protected Acl $acl,
+            protected LoginModel $loginModel,
+            protected array $config
+    )
     {
-        $this->form = $form;
-        $this->entityManager = $entityManager;
-        $this->acl = $acl;
-        $this->loginModel = $loginModel;
-        $this->config = $config;
         if (isset($config['doctrineAuth']['registrationCallback'])) {
             $this->callback = $config['doctrineAuth']['registrationCallback'];
         }
 
-        if (isset($config['doctrine']['authentication']['orm_default']['identity_class']) === false) {
+        if (!isset($config['doctrine']['authentication']['orm_default']['identity_class'])) {
             throw new DoctrineAuthException('identity_class not found in config');
         }
         $this->userEntity = new $config['doctrine']['authentication']['orm_default']['identity_class']();
@@ -97,9 +55,9 @@ class RegisterModel extends AbstractModel
 
     /**
      * Get the registration form
-     * @return FormInterface
+     * @return RegisterForm
      */
-    public function getForm(): FormInterface
+    public function getForm(): RegisterForm
     {
         return $this->form;
     }
@@ -110,35 +68,33 @@ class RegisterModel extends AbstractModel
      * @return boolean
      * @throws DoctrineAuthException
      */
-    public function processForm(Parameters $postData)
+    public function processForm(Parameters $postData): bool
     {
         /* Registration allowed in config */
-        if ($this->allowRegistration() === false) {
+        if (!$this->allowRegistration()) {
             return false;
         }
 
         $this->form->setData($postData);
 
         /* Register form invalid */
-        if ($this->form->isValid() === false) {
+        if (!$this->form->isValid()) {
             return false;
         }
 
         /* userActiveAfterRegistration key not set in config */
-        if (isset($this->config['doctrineAuth']['userActiveAfterRegistration']) === false) {
+        if (!isset($this->config['doctrineAuth']['userActiveAfterRegistration'])) {
             throw new DoctrineAuthException('"userActiveAfterRegistration" key not found in config');
         }
 
         /* useTwoFactorAuthentication key not set in config */
-        if (isset($this->config['doctrineAuth']['useTwoFactorAuthentication']) === false) {
+        if (!isset($this->config['doctrineAuth']['useTwoFactorAuthentication'])) {
             throw new DoctrineAuthException('useTwoFactorAuthentication key not found in config');
         }
 
         /* Set user fields not defined in form */
         $this->userEntity->setUserActive((bool) $this->config['doctrineAuth']['userActiveAfterRegistration']);
-        $this->userEntity->setDateCreated(new DateTime());
-        $this->userEntity->setDateModified(new DateTime());
-        
+
         /* credential_property not set in config */
         if (!isset($this->config['doctrine']['authentication']['orm_default']['credential_property'])) {
             throw new DoctrineAuthException('credential_property not found in config');
@@ -148,45 +104,39 @@ class RegisterModel extends AbstractModel
         $credentialSetter = 'set' . ucfirst($this->config['doctrine']['authentication']['orm_default']['credential_property']);
         $credentialGetter = 'get' . ucfirst($this->config['doctrine']['authentication']['orm_default']['credential_property']);
         /* Credential setter does not exist in user entity */
-        if (is_callable([$this->userEntity, $credentialSetter]) === false) {
+        if (!is_callable([$this->userEntity, $credentialSetter])) {
             throw new DoctrineAuthException(sprintf('Method "%s" not found in "%s"', $credentialSetter, get_class($this->userEntity)));
         }
-        if (is_callable([$this->userEntity, $credentialGetter]) === false) {
+        if (!is_callable([$this->userEntity, $credentialGetter])) {
             throw new DoctrineAuthException(sprintf('Method "%s" not found in "%s"', $credentialGetter, get_class($this->userEntity)));
         }
 
-        $crypt = new Crypt($this->config);
-        $this->userEntity->$credentialSetter($crypt->bcrypytCreate($this->userEntity->$credentialGetter()));
-        
-        /* Encrypt data? */
-        if ($this->config['doctrineAuth']['encryptData'] === true) {
-            $this->userEntity->setEncrypted(true);
-        }
-        /* Encrypt BaseUsers data */
-        if ($this->userEntity->isEncrypted()) {
-            if ($this->userEntity->getMobileNumber()) {
-                $this->userEntity->setMobileNumber($crypt->rsaEncrypt($this->userEntity->getMobileNumber()));
-            }
-        }
+        $bcrypt = new Bcrypt();
+        $this->userEntity->$credentialSetter($bcrypt->create($this->userEntity->$credentialGetter()));
+
 
         /* Default register role not set in config */
-        if (isset($this->config['doctrineAuthAcl']['defaultRegisterRole']) === false) {
+        if (!isset($this->config['doctrineAuthAcl']['defaultRegisterRole'])) {
             throw new DoctrineAuthException('defaultRegisterRole not found in config');
         }
 
         /**
          * Get default registration role id from ACL
-         * @var string $roleId
          */
         $roleId = $this->acl->getDefaultRegistrationRole()->getRoleId();
         /* Role id set */
         if ($roleId) {
+            /** @var UserRoleRepository $repository */
+            $repository = $this->getEntityRepository($this->entityManager, UserRole::class);
+            if ($repository === null) {
+                return false;
+            }
             /**
              * Get user role from database 
-             * @var UserRoles $role 
+             * @var UserRole $role
              */
-            $role = $this->entityManager->getRepository(UserRoles::class)->findOneByRole($roleId);
-            if ($role instanceof UserRoles) {
+            $role = $repository->findOneByRole($roleId);
+            if ($role instanceof UserRole) {
                 /* Set user role */
                 $this->userEntity->setUserRole($role);
             } else {
@@ -195,13 +145,13 @@ class RegisterModel extends AbstractModel
         }
 
         /* Run custom callback if set */
-        if (class_exists($this->callback)) {
+        if ($this->callback !== null && class_exists($this->callback)) {
             $callback = new $this->callback();
             $callback($this->userEntity, $this->form, $postData, $this->config);
         }
 
         /* Persist user entity and update database */
-        $this->entityManager->persist($this->userEntity);
+        $this->persistEntity($this->entityManager, $this->userEntity);
         return $this->flushEntityManager($this->entityManager);
     }
 
@@ -210,7 +160,7 @@ class RegisterModel extends AbstractModel
      *
      * @return boolean
      */
-    public function allowRegistration()
+    public function allowRegistration(): bool
     {
         return (bool) $this->config['doctrineAuth']['allowRegistration'];
     }
@@ -218,21 +168,11 @@ class RegisterModel extends AbstractModel
     /**
      * Auto login after successful registration?
      *
-     * @return boolesn
+     * @return bool
      */
-    public function autoLogin()
+    public function autoLogin(): bool
     {
         return (bool) $this->config['doctrineAuth']['autoRegistrationLogin'];
-    }
-
-    /**
-     * Where to go if session container does not have redirect stored
-     *
-     * @return array
-     */
-    public function getDefaultRedirect(): Array
-    {
-        return $this->loginModel->getDefaultRedirect($this->userEntity);
     }
 
     /**
@@ -240,14 +180,16 @@ class RegisterModel extends AbstractModel
      * @return boolean
      * @throws DoctrineAuthException
      */
-    public function login()
+    public function login(): bool
     {
-        $identitypropertyGetter = 'get' . ucfirst($this->config['doctrine']['authentication']['orm_default']['identity_property']);
-        $credentialPropertyGetter = 'get' . ucfirst($this->config['doctrine']['authentication']['orm_default']['credential_property']);
-        if (is_callable([$this->form->getData(), $identitypropertyGetter]) === true && is_callable([$this->form->getData(), $credentialPropertyGetter]) === true) {
+        $identityProperty = $this->config['doctrine']['authentication']['orm_default']['identity_property'];
+        $credentialProperty = $this->config['doctrine']['authentication']['orm_default']['credential_property'];
+        $identityPropertyGetter = 'get' . ucfirst($identityProperty);
+        $credentialPropertyGetter = 'get' . ucfirst($credentialProperty);
+        if (is_callable([$this->form->getData(), $identityPropertyGetter]) && is_callable([$this->form->getData(), $credentialPropertyGetter])) {
             return $this->loginModel->login([
-                        $this->config['doctrine']['authentication']['orm_default']['identity_property'] => $this->form->getData()->$identitypropertyGetter(),
-                        $this->config['doctrine']['authentication']['orm_default']['credential_property'] => $this->form->getData()->$credentialPropertyGetter(),
+                        $identityProperty => $this->form->getData()->$identityPropertyGetter(),
+                        $credentialProperty => $this->form->getData()->$credentialPropertyGetter(),
             ]);
         }
         throw new DoctrineAuthException('Unable to get identity and/or credential value(s)');
@@ -257,9 +199,18 @@ class RegisterModel extends AbstractModel
      * Return Laminas config
      * @return array
      */
-    public function getConfig()
+    public function getConfig(): array
     {
         return $this->config;
+    }
+
+    /**
+     * Get the newly registered user
+     * @return AuthUserInterface
+     */
+    public function getUser(): AuthUserInterface
+    {
+        return $this->userEntity;
     }
 
 }

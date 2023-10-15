@@ -2,6 +2,7 @@
 
 namespace FwsDoctrineAuth\Model;
 
+use Exception;
 use Laminas\Mail\Transport\Sendmail as SendmailTransport;
 use Laminas\Mail\Transport\File as FileTransport;
 use Laminas\Mail\Transport\FileOptions;
@@ -19,26 +20,29 @@ trait SendMailTrait
      * Send email
      * @param Message $message
      * @return boolean
+     * @throws DoctrineAuthException
      */
-    protected function sendMail(Message $message)
+    protected function sendMail(Message $message): bool
     {
-        if (is_array($this->config) === false) {
-            new DoctrineAuthException('Config not found');
+        if (!is_array($this->config)) {
+            throw new DoctrineAuthException('Config not found');
         }
 
-        if (isset($this->config['doctrineAuth']['sendEmails']) === false) {
-            new DoctrineAuthException('sendEmails configuration key not set');
+        $sendEmails = $this->config['doctrineAuth']['sendEmails'] ?? null;
+        if ($sendEmails === null) {
+            throw new DoctrineAuthException('sendEmails configuration not set');
         }
 
-        if ($this->config['doctrineAuth']['sendEmails'] === true) {
+        if ($sendEmails) {
             $transport = new SendmailTransport();
         } else {
-            if (isset($this->config['doctrineAuth']['emailsFolder']) === false) {
-                new DoctrineAuthException('emailsFolder configuration key not set');
+            $emailsFolder = $this->config['doctrineAuth']['emailsFolder'] ?? null;
+            if (!$emailsFolder) {
+                throw new DoctrineAuthException('emailsFolder configuration key not set');
             }
             $options = new FileOptions([
-                'path' => "{$this->config['doctrineAuth']['emailsFolder']}/",
-                'callback' => function (FileTransport $transport) {
+                'path' => rtrim("$emailsFolder", '/'),
+                'callback' => function () {
                     return 'Message_' . microtime(true) . '_' . mt_rand() . '.eml';
                 },
             ]);
@@ -48,7 +52,7 @@ trait SendMailTrait
         try {
             $transport->send($message);
             return true;
-        } catch (Exception $exception) {
+        } catch (Exception) {
             return false;
         }
     }

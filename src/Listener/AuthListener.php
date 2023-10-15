@@ -2,14 +2,17 @@
 
 namespace FwsDoctrineAuth\Listener;
 
+use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use Laminas\Authentication\AuthenticationService;
-use FwsDoctrineAuth\Controller\IndexController;
+use FwsDoctrineAuth\Controller\LoginController;
 use FwsDoctrineAuth\Model\Acl;
-use Exception;
 use Laminas\Http\Response;
-use FwsDoctrineAuth\Entity\BaseUsers;
+use FwsDoctrineAuth\Entity\BaseUser;
 use Laminas\Mvc\MvcEvent;
+use Laminas\Stdlib\ResponseInterface;
 use Laminas\View\Model\JsonModel;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * Description of AuthListener
@@ -19,6 +22,13 @@ use Laminas\View\Model\JsonModel;
 class AuthListener
 {
 
+    /**
+     * @param MvcEvent $event
+     * @return Response|JsonModel|void
+     * @throws ContainerExceptionInterface
+     * @throws DoctrineAuthException
+     * @throws NotFoundExceptionInterface
+     */
     public function checkUser(MvcEvent $event)
     {
         $application = $event->getApplication();
@@ -27,15 +37,15 @@ class AuthListener
         /* @var $auth AuthenticationService */
         $auth = $serviceManager->get(AuthenticationService::class);
 
-        /* @var $acl \FwsDoctrineAuth\Model\Acl */
+        /* @var $acl Acl */
         $acl = $serviceManager->get('acl');
 
         /* Get user role */
-        $role = $acl->getDefultRole();
-        if ($auth->hasIdentity() === true) {
-            /* @var $user BaseUsers */
+        $role = $acl->getDefaultRole();
+        if ($auth->hasIdentity()) {
+            /* @var $user BaseUser */
             $user = $auth->getIdentity();
-            if ($user instanceof BaseUsers === true) {
+            if ($user instanceof BaseUser) {
                 $role = $user->getUserRole()->getRole();
             }
         }
@@ -45,43 +55,40 @@ class AuthListener
         $action = $routeMatch->getParam('action');
 
         /* Resource not found in ACL (defined in config) */
-        if ($acl->hasResource($controller) === false) {
+        if (!$acl->hasResource($controller)) {
             $config = $serviceManager->get('config');
-            if (isset($config['controllers']['aliases']) === true) {
+            if (isset($config['controllers']['aliases'])) {
                 $controller = $this->getControllerAlias($controller, $acl, $config['controllers']['aliases']);
             } else {
-                throw new Exception(sprintf('ACL Resource "%s" not defined', $controller));
+                throw new DoctrineAuthException(sprintf('ACL Resource "%s" not defined', $controller));
             }
         }
 
-        /* User allowed to access resource */
-        if ($acl->isAllowed($role, $controller, $action) === true) {
+        /** User allowed to access resource */
+        if ($acl->isAllowed($role, $controller, $action)) {
             return;
         }
 
-        /*
-         * User NOT allowed to access resource
-         */
         $request = $event->getRequest();
         $response = $event->getResponse();
-        /* ajax request */
+        /** ajax request */
         if ($request->isXmlHttpRequest()) {
             $response->setStatusCode(Response::STATUS_CODE_200);
             $viewModel = new JsonModel(['redirect' => $event->getRouter()->assemble(['action' => 'login'], ['name' => 'doctrine-auth/default', 'force_canonical' => true])]);
             $event->setViewModel($viewModel);
-            $event->stopPropagation(true);
+            $event->stopPropagation();
             return $viewModel;
         } else {
-            /* On login page */
-            if ($controller == IndexController::class && $action == 'login') {
-                /* Redirect to logout */
+            /** On login page */
+            if ($controller == LoginController::class && $action == 'login') {
+                /* Redirect to log out */
                 return $this->redirect($event, $response, $event->getRouter()->assemble(['action' => 'logout'], ['name' => 'doctrine-auth/default']));
             }
 
-            /* User trying to access restricted page */
-            if ($controller !== IndexController::class) {
-                /* Store page user is trying to access */
-                $container = $serviceManager->get('authContainer');
+            /** User trying to access restricted page */
+            if ($controller !== LoginController::class) {
+                /** Store page user is trying to access in session */
+                $container = $serviceManager->get('authContainerStorage');
                 $container->redirect = [
                     'url' => $event->getRouter()->getRequestUri()->toString(),
                     'controller' => $controller,
@@ -95,16 +102,17 @@ class AuthListener
 
     /**
      * Redirect with 302 http status code
+     * @param MvcEvent $event
      * @param Response $response
      * @param string $url
      * @return Response
      */
-    private function redirect(MvcEvent $event, Response $response, string $url): Response
+    private function redirect(MvcEvent $event, ResponseInterface $response, string $url): Response
     {
         $response->getHeaders()->addHeaderLine('Location', $url);
         $response->setStatusCode(Response::STATUS_CODE_302);
         $response->sendHeaders();
-        $event->stopPropagation(true);
+        $event->stopPropagation();
         return $response;
     }
 
@@ -113,17 +121,17 @@ class AuthListener
      * @param string $controller
      * @param Acl $acl
      * @param array $aliases
-     * @return boolean|string
-     * @throws \Exception
+     * @return string
+     * @throws DoctrineAuthException
      */
-    public function getControllerAlias($controller, Acl $acl, array $aliases)
+    public function getControllerAlias(string $controller, Acl $acl, array $aliases): string
     {
         if (in_array($controller, $aliases)) {
             if ($acl->hasResource($aliases[$controller])) {
                 return $aliases[$controller];
             }
         }
-        throw new Exception('ACL resource or controller alias "' . $controller . '" not defined');
+        throw new DoctrineAuthException('ACL resource or controller alias "' . $controller . '" not defined');
     }
 
 }

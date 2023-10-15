@@ -2,12 +2,15 @@
 
 namespace FwsDoctrineAuth\Model\Service;
 
+use FwsDoctrineAuth\Form\Service\DoctrineAuthFormFactory;
 use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use FwsDoctrineAuth\Model\ForgotPasswordModel;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use Doctrine\ORM\EntityManager;
 use Laminas\View\Renderer\PhpRenderer;
+use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * ForgotPasswordModelFactory
@@ -20,33 +23,21 @@ class ForgotPasswordModelFactory implements FactoryInterface
     /**
      * Create forgot password model class
      * @param ContainerInterface $container
-     * @param type $requestedName
-     * @param array $options
+     * @param string $requestedName
+     * @param array|null $options
      * @return ForgotPasswordModel
      * @throws DoctrineAuthException
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
-    public function __invoke(ContainerInterface $container, $requestedName, Array $options = null)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null): ForgotPasswordModel
     {
-        $config = $container->get('config');
-        if (isset($config['doctrineAuth']['emailResetLinkForm']) === false) {
-            throw new DoctrineAuthException('"emailResetLinkForm" not found in config');
-        }
-        if (class_exists($config['doctrineAuth']['emailResetLinkForm']) === false) {
-            throw new DoctrineAuthException(sprintf('Email reset link form "%s" not found', $config['doctrineAuth']['emailResetLinkForm']));
-        }
-        if (isset($config['doctrineAuth']['newPasswordForm']) === false) {
-            throw new DoctrineAuthException('"newPasswordForm" not found in config');
-        }
-        if (class_exists($config['doctrineAuth']['newPasswordForm']) === false) {
-            throw new DoctrineAuthException(sprintf('New password form "%s" not found', $config['doctrineAuth']['newPasswordForm']));
-        }
-        
         return new ForgotPasswordModel(
-                $container->get(EntityManager::class),
-                $container->get('FormElementManager')->get($config['doctrineAuth']['newPasswordForm']),
-                $container->get('FormElementManager')->get($config['doctrineAuth']['emailResetLinkForm']),
-                $container->get(PhpRenderer::class),
-                $container->get('config')
+            $container->get(EntityManager::class),
+            $container->get('FormElementManager')->get(DoctrineAuthFormFactory::RESET_PASSWORD_FORM),
+            $container->get('FormElementManager')->get(DoctrineAuthFormFactory::FORGOTTEN_PASSWORD_FORM),
+            $container->get(PhpRenderer::class),
+            $container->get('config')
         );
     }
 

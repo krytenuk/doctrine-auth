@@ -2,6 +2,8 @@
 
 namespace FwsDoctrineAuth\Form;
 
+use FwsDoctrineAuth\Exception\DoctrineAuthException;
+
 /**
  * LoginForm
  *

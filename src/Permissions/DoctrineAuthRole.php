@@ -11,33 +11,34 @@ use Laminas\Permissions\Acl\Role\GenericRole;
  */
 class DoctrineAuthRole extends GenericRole
 {
-    /**
-     *
-     * @var array
-     */
-    protected $route;
+    protected array $route;
 
     /**
      * Sets the Role identifier
      *
      * @param string $roleId
+     * @param array $route
      */
-    public function __construct($roleId, Array $route = [])
+    public function __construct(string $roleId, array $route = [])
     {
         parent::__construct($roleId);
         $this->setRoute($route);
     }
-    
-    public function setRoute(Array $route)
+
+    /**
+     * @param array $route
+     * @return DoctrineAuthRole
+     */
+    public function setRoute(array $route): DoctrineAuthRole
     {
         $this->route = $route;
+        return $this;
     }
-    
+
     /**
-     * 
      * @return array
      */
-    public function getRoute() : Array
+    public function getRoute(): array
     {
         return $this->route;
     }

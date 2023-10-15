@@ -15,10 +15,10 @@ class ObfuscatePhoneNumber extends AbstractHelper
 
     /**
      * Obfuscate email address
-     * @param string $email
-     * @return type
+     * @param string $phone
+     * @return string
      */
-    public function __invoke(string $phone)
+    public function __invoke(string $phone): string
     {
         return str_pad(substr($phone, -4), strlen($phone), '*', STR_PAD_LEFT);
     }

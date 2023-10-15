@@ -2,10 +2,12 @@
 
 namespace FwsDoctrineAuth\Form;
 
-use Laminas\Form\Form;
-use Laminas\Session\Container;
+use FwsDoctrineAuth\Entity\AuthUserInterface;
+use FwsDoctrineAuth\Entity\TwoFactorAuthMethod;
+use FwsDoctrineAuth\Exception\DoctrineAuthException;
+use FwsDoctrineAuth\Model\AuthContainerStorage;
 use Laminas\Form\Element;
-use FwsDoctrineAuth\Model\Select2faModel;
+use Laminas\Form\Form;
 
 /**
  * SelectTwoFactorAuthMethodForm
@@ -14,33 +16,35 @@ use FwsDoctrineAuth\Model\Select2faModel;
  */
 class SelectTwoFactorAuthMethodForm extends Form
 {
-    
+
     /**
-     * Authentication session storage container
-     * @var Container
+     * @var string[]
      */
-    private Container $authContainer;
-    
+    private array $allowedMethods = [];
+
     /**
-     * 
-     * @param Container $authContainer
+     *
+     * @param AuthContainerStorage $authContainerStorage
+     * @param array $config
      */
-    public function __construct(Container $authContainer)
+    public function __construct(
+        protected AuthContainerStorage $authContainerStorage,
+        protected array $config
+    )
     {
         parent::__construct('select-method');
-        $this->authContainer = $authContainer;
         $this->setAttribute('method', 'post');
     }
-    
+
     public function init(): void
     {
         $this->add([
             'name' => 'method',
             'type' => Element\Radio::class,
             'options' => [
-                'label' => _('Select authentiction method'),
+                'label' => _('Select authentication method'),
                 'label_attributes' => ['class' => 'required'],
-                'value_options' => $this->getMethodOptions(),
+                'value_options' => [],
             ],
             
         ]);
@@ -60,27 +64,50 @@ class SelectTwoFactorAuthMethodForm extends Form
             'type' => Element\Submit::class,
             'attributes' => [
                 'value' => _('Select'),
-                'id' => 'submitbutton',
                 'label' => _('Select'),
             ],
         ]);
     }
-    
+
     /**
-     * Get 2FA methods array
-     * @return array
+     * @param array $allowedMethods
+     * @return SelectTwoFactorAuthMethodForm
+     * @throws DoctrineAuthException
      */
-    private function getMethodOptions(): array
+    public function setAllowedMethods(array $allowedMethods): SelectTwoFactorAuthMethodForm
+    {
+        $options = $this->getMethodOptions($allowedMethods);
+        $this->get('method')->setValueOptions($options);
+        return $this;
+    }
+
+    /**
+     * Get 2FA methods array from user attempting to login
+     * @return string[]
+     * @throws DoctrineAuthException
+     */
+    private function getMethodOptions(array $allowedMethods): array
     {
         $methodsArray = [];
-        if (!is_object($this->authContainer->identity) || !method_exists($this->authContainer->identity, 'getAuthMethods')) {
+        if (!$allowedMethods) {
             return $methodsArray;
         }
-        
-        foreach ($this->authContainer->identity->getAuthMethods() as $method) {
-            $methodsArray[$method->getMethod()] = Select2faModel::getMethodTitle($method->getMethod());
+
+        $identity = $this->authContainerStorage->getIdentity();
+        if (!$identity instanceof AuthUserInterface) {
+            return $methodsArray;
         }
-        
+
+        $authMethods = $identity->getAuthMethods() ?? [];
+        /** @var TwoFactorAuthMethod $authMethod */
+        foreach ($authMethods as $authMethod) {
+            $name = $authMethod->getMethod();
+            if (!array_key_exists($name, $allowedMethods)) {
+                throw new DoctrineAuthException(sprintf('Adaptor for 2FA method %s not registered in config', $name));
+            }
+            $methodsArray[$name] = $allowedMethods[$name]::getTitle();
+        }
+
         return $methodsArray;
     }
 }

@@ -1,9 +1,8 @@
-<?php
+<?php /** @noinspection ALL */
 
 namespace FwsDoctrineAuth\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use FwsDoctrineAuth\Entity\TwoFactorAuthMethods;
 use DateTimeInterface;
 use DateTimeImmutable;
 
@@ -16,28 +15,22 @@ use DateTimeImmutable;
 class GoogleAuth implements EntityInterface
 {
     /**
-     * Base 32 characters
-     * @var string
-     */
-    protected string $base32Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-    
-    /**
      *
      * @var string
      * @ORM\Column(name="secret", type="string", length=40, nullable=false, unique=true)
      * @ORM\Id
      */
     private string $secret;
-    
+
     /**
-     * @var TwoFactorAuthMethods
+     * @var TwoFactorAuthMethod
      *
-     * @ORM\OneToOne(targetEntity="FwsDoctrineAuth\Entity\TwoFactorAuthMethods", inversedBy="googleAuth")
+     * @ORM\OneToOne(targetEntity="FwsDoctrineAuth\Entity\TwoFactorAuthMethod", inversedBy="googleAuth")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="auth_method_id", referencedColumnName="auth_method_id", onDelete="cascade")
      * })
      */
-    private TwoFactorAuthMethods $authMethod;
+    private TwoFactorAuthMethod $authMethod;
 
     /**
      * @var DateTimeInterface
@@ -62,9 +55,9 @@ class GoogleAuth implements EntityInterface
     
     /**
      * Get auth method
-     * @return TwoFactorAuthMethods
+     * @return TwoFactorAuthMethod
      */
-    public function getAuthMethod(): TwoFactorAuthMethods
+    public function getAuthMethod(): TwoFactorAuthMethod
     {
         return $this->authMethod;
     }
@@ -91,10 +84,10 @@ class GoogleAuth implements EntityInterface
     
     /**
      * Set authentication method
-     * @param TwoFactorAuthMethods $authMethod
+     * @param TwoFactorAuthMethod $authMethod
      * @return GoogleAuth
      */
-    public function setAuthMethod(TwoFactorAuthMethods $authMethod): GoogleAuth
+    public function setAuthMethod(TwoFactorAuthMethod $authMethod): GoogleAuth
     {
         $this->authMethod = $authMethod;
         return $this;

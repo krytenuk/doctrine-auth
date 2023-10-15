@@ -2,10 +2,14 @@
 
 namespace FwsDoctrineAuth\Form\Service;
 
+use FwsDoctrineAuth\Exception\DoctrineAuthException;
+use FwsDoctrineAuth\Form\RegisterForm;
 use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Doctrine\ORM\EntityManager;
 use Doctrine\Laminas\Hydrator\DoctrineObject;
+use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * Description of LoginFormFactory
@@ -16,29 +20,21 @@ class RegisterFormFactory implements FactoryInterface
 {
 
     /**
-     * 
+     *
      * @param ContainerInterface $container
      * @param string $requestedName
-     * @param array $options
+     * @param array|null $options
      * @return RegisterForm
+     * @throws DoctrineAuthException
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
-    public function __invoke(ContainerInterface $container, $requestedName, Array $options = null)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null): RegisterForm
     {
-        $config = $container->get('config');
-        if (!isset($config['doctrineAuth']['registrationForm'])) {
-            throw new DoctrineAuthException('"registrationForm" not found in config');
-        }
-        if (!class_exists($config['doctrineAuth']['registrationForm'])) {
-            throw new DoctrineAuthException(sprintf('Registration form "%s" not found', $config['doctrineAuth']['registrationForm']));
-        }
-        
-        $entityManager = $container->get(EntityManager::class);
-        $form = new $config['doctrineAuth']['registrationForm'](
-                $entityManager,
-                $config);
-        $form->setHydrator(new DoctrineObject($entityManager));
-        
-        return $form;
+        return new RegisterForm(
+            $container->get(EntityManager::class),
+            $container->get('config')
+        );
     }
 
 }

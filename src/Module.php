@@ -2,6 +2,8 @@
 
 namespace FwsDoctrineAuth;
 
+use Doctrine\ORM\EntityManagerInterface;
+use FwsDoctrineAuth\Model\TwoFactorAuthentication\Adapter\AbstractAdapter;
 use Laminas\EventManager\EventInterface;
 use Laminas\ModuleManager\Feature\BootstrapListenerInterface;
 use Laminas\EventManager\LazyListenerAggregate;
@@ -10,18 +12,19 @@ use Laminas\Authentication\AuthenticationService;
 use FwsDoctrineAuth\Command;
 use Doctrine\ORM\Tools\Console\ConsoleRunner;
 use FwsDoctrineAuth\Model\HashPassword;
+use Symfony\Component\Console\Application;
 
 class Module implements BootstrapListenerInterface
 {
 
     /**
      * 
-     * @param EventInterface $event
+     * @param EventInterface $e
      */
-    public function onBootstrap(EventInterface $event)
+    public function onBootstrap(EventInterface $e): void
     {
-        $eventManager = $event->getApplication()->getEventManager();
-        $serviceManager = $event->getApplication()->getServiceManager();
+        $eventManager = $e->getApplication()->getEventManager();
+        $serviceManager = $e->getApplication()->getServiceManager();
 
         $config = $serviceManager->get('config');
 
@@ -38,7 +41,7 @@ class Module implements BootstrapListenerInterface
      * 
      * @return array
      */
-    public function getConfig()
+    public function getConfig(): array
     {
         return include __DIR__ . '/../config/module.config.php';
     }
@@ -47,7 +50,7 @@ class Module implements BootstrapListenerInterface
      * 
      * @return array
      */
-    public function getServiceConfig()
+    public function getServiceConfig(): array
     {
         return [
             'factories' => [
@@ -62,23 +65,19 @@ class Module implements BootstrapListenerInterface
      * Add doctrine cli command
      * @param ModuleManagerInterface $moduleManager
      */
-    public function init(ModuleManagerInterface $moduleManager)
+    public function init(ModuleManagerInterface $moduleManager): void
     {
-        $events = $moduleManager->getEventManager()->getSharedManager();
-        // Attach to helper set event and load the entity manager helper.
-        $events->attach('doctrine', 'loadCli.post', function (EventInterface $event) {
-            /* @var $cli \Symfony\Component\Console\Application */
+        $events = $moduleManager->getEventManager();
+
+        $events->getSharedManager()->attach('doctrine', 'loadCli.post', function (EventInterface $event) {
+            /* @var $cli Application */
             $cli = $event->getTarget();
-            /* @var $entityManager \Doctrine\ORM\EntityManagerInterface */
+            /* @var $entityManager EntityManagerInterface */
             $entityManager = $cli->getHelperSet()->get('em')->getEntityManager();
             $config = $event->getParam('ServiceManager')->get('config');
             ConsoleRunner::addCommands($cli);
             $cli->addCommands([
                 new Command\InitCommand($entityManager, $config),
-                new Command\EncryptUsersCommand($entityManager, $config),
-                new Command\DecryptUsersCommand($entityManager, $config),
-                new Command\EncryptEntityCommand($entityManager, $config),
-                new Command\DecryptEntityCommand($entityManager, $config),
             ]);
         });
     }

@@ -3,7 +3,6 @@
 namespace FwsDoctrineAuth\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use FwsDoctrineAuth\Entity\BaseUsers;
 use DateTimeInterface;
 use DateTimeImmutable;
 
@@ -25,14 +24,14 @@ class LoginLog implements EntityInterface
     private ?int $logId = null;
 
     /**
-     * @var BaseUsers
+     * @var BaseUser
      *
-     * @ORM\ManyToOne(targetEntity="FwsDoctrineAuth\Entity\BaseUsers", inversedBy="logins")
+     * @ORM\ManyToOne(targetEntity="FwsDoctrineAuth\Entity\BaseUser", inversedBy="logins")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="user_id", referencedColumnName="user_id", onDelete="cascade")
      * })
      */
-    private BaseUsers $user;
+    private BaseUser $user;
 
     /**
      * @var bool
@@ -64,9 +63,9 @@ class LoginLog implements EntityInterface
 
     /**
      * 
-     * @return BaseUsers
+     * @return BaseUser
      */
-    public function getUser(): BaseUsers
+    public function getUser(): BaseUser
     {
         return $this->user;
     }
@@ -77,7 +76,7 @@ class LoginLog implements EntityInterface
      */
     public function getUsed2fa(): bool
     {
-        return (bool) $this->used2fa;
+        return $this->used2fa;
     }
 
     /**
@@ -91,10 +90,10 @@ class LoginLog implements EntityInterface
 
     /**
      * 
-     * @param BaseUsers $user
+     * @param BaseUser $user
      * @return LoginLog
      */
-    public function setUser(BaseUsers $user): LoginLog
+    public function setUser(BaseUser $user): LoginLog
     {
         $this->user = $user;
         return $this;

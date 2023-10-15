@@ -2,9 +2,13 @@
 
 namespace FwsDoctrineAuth\Form\Service;
 
+use FwsDoctrineAuth\Exception\DoctrineAuthException;
+use FwsDoctrineAuth\Form\LoginForm;
 use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Doctrine\ORM\EntityManager;
+use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * Description of LoginFormFactory
@@ -14,16 +18,21 @@ use Doctrine\ORM\EntityManager;
 class LoginFormFactory implements FactoryInterface
 {
 
-    public function __invoke(ContainerInterface $container, $requestedName, Array $options = null)
+    /**
+     * @param ContainerInterface $container
+     * @param $requestedName
+     * @param array|null $options
+     * @return LoginForm
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws DoctrineAuthException
+     */
+    public function __invoke(ContainerInterface $container, $requestedName, Array $options = null): LoginForm
     {
-        $config = $container->get('config');
-        if (!isset($config['doctrineAuth']['loginForm'])) {
-            throw new DoctrineAuthException('"loginForm" not found in config');
-        }
-        if (!class_exists($config['doctrineAuth']['loginForm'])) {
-            throw new DoctrineAuthException(sprintf('Login form "%s" not found', $config['doctrineAuth']['loginForm']));
-        }
-        return new $config['doctrineAuth']['loginForm']($container->get(EntityManager::class), $container->get('config'));
+        return new LoginForm(
+            $container->get(EntityManager::class),
+            $container->get('config')
+        );
     }
 
 }

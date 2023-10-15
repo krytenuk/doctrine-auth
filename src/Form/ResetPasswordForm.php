@@ -16,21 +16,15 @@ use FwsDoctrineAuth\Exception\DoctrineAuthException;
  */
 class ResetPasswordForm extends Form implements InputFilterProviderInterface
 {
-
-    /**
-     *
-     * @var array
-     */
-    protected $config;
-
     /**
      * 
      * @param array $config
      */
-    public function __construct(Array $config)
+    public function __construct(
+        protected array $config
+    )
     {
         parent::__construct('reset-password');
-        $this->config = $config;
         $this->setAttribute('method', 'post');
     }
 
@@ -42,14 +36,13 @@ class ResetPasswordForm extends Form implements InputFilterProviderInterface
     public function init(): void
     {
         /* Identity and/or credential label not set in config */
-        if (isset($this->config['doctrineAuth']['formElements']['identity_label']) === false || isset($this->config['doctrineAuth']['formElements']['credential_label']) === false) {
+        if (!(isset($this->config['doctrineAuth']['formElements']['identity_label']) && isset($this->config['doctrineAuth']['formElements']['credential_label'])) ) {
             throw new DoctrineAuthException('identity_label and/or credential_label not found in config');
         }
         
         /*
          * Create form elements
          */
-
         $this->add([
             'name' => $this->getCredentialName(),
             'type' => Element\Password::class,
@@ -188,7 +181,7 @@ class ResetPasswordForm extends Form implements InputFilterProviderInterface
      * Get credential name from config
      * @return string
      */
-    public function getCredentialName()
+    public function getCredentialName(): string
     {
         return $this->config['doctrine']['authentication']['orm_default']['credential_property'];
     }
@@ -197,7 +190,7 @@ class ResetPasswordForm extends Form implements InputFilterProviderInterface
      * Get retype credential name from config
      * @return string
      */
-    public function getRetypeCredentialName()
+    public function getRetypeCredentialName(): string
     {
         return sprintf('retype%s', ucfirst($this->config['doctrine']['authentication']['orm_default']['credential_property']));
     }

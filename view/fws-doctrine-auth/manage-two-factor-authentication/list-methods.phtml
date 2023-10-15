@@ -1,0 +1,40 @@
+<?php
+
+use Laminas\Filter\StringToLower;
+use Laminas\Mvc\Plugin\FlashMessenger\FlashMessenger;
+use Laminas\View\Renderer\PhpRenderer;
+
+/**
+ * @var PhpRenderer $this
+ * @method FlashMessenger flashMessenger()
+ */
+$stringToLower = new StringToLower();
+?>
+<h2>Select two factor authentication method</h2>
+<?= $this->flashMessenger()->render(FlashMessenger::NAMESPACE_SUCCESS); ?>
+<?= $this->flashMessenger()->render(FlashMessenger::NAMESPACE_ERROR); ?>
+
+<?php if (!$this->allowedMethods): ?>
+    <p><?= $this->translate('No two factor authentication methods found!'); ?></p>
+<?php else: ?>
+    <dl class="auth-methods">
+        <?php
+        foreach ($this->allowedMethods as $method):
+            $title = $stringToLower->filter($method['adaptor']::getTitle());
+            if ($method['isSet']) {
+                $route = $method['adaptor']::getRemove2faMethodRoute();
+                $action = 'Remove';
+            } else {
+                $route = $method['adaptor']::getAdd2faMethodRoute();
+                $action = 'Add';
+            }
+            ?>
+            <dt><?= $method['adaptor']::getTitle(); ?></dt>
+            <dd>
+                <a href="<?= $this->url($route['name'], $route['defaults'], $route['query']); ?>">
+                    <?= sprintf($this->translate('%s %s authentication method'), $action, $title); ?>
+                </a>
+            </dd>
+        <?php endforeach; ?>
+    </dl>
+<?php endif; ?>

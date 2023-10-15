@@ -1,3 +1,7 @@
 <?= $this->siteName ?>.
 <?= $this->translate('A single use login authentication code has been requested.'); ?>
-<?= sprintf($this->translate('Your code is %s, please enter this on the login page. This code will expire in %d minutes.'), $this->code, $this->expires); ?>
+<?= sprintf($this->translate('Your code is %s, please enter this on the login page. This code will expire in %s.'),
+    $this->code,
+    $this->expires .
+    ($this->expires === 1 ? $this->translate(' minute') : $this->translate(' minutes'))
+); ?>

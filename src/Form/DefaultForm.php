@@ -12,6 +12,7 @@ use Laminas\Validator;
 use DoctrineModule\Validator as DoctrineModuleValidator;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Exception\NotSupported;
 
 /**
  * DefaultForm
@@ -20,54 +21,47 @@ use Doctrine\ORM\EntityManager;
  */
 abstract class DefaultForm extends Form implements InputFilterProviderInterface
 {
+    protected ?string $identityProperty = null;
+    protected ?string $credentialProperty = null;
+    protected ?string $identityLabel = null;
+    protected ?string $credentialLabel = null;
 
     /**
      *
-     * @var array
-     */
-    protected $config;
-
-    /**
-     *
-     * @var ObjectManager
-     */
-    protected $objectManager;
-
-    /**
-     * 
-     * @param EntityManager $objectManager
+     * @param EntityManager $entityManager
      * @param array $config
+     * @throws DoctrineAuthException
      */
-    public function __construct(EntityManager $objectManager, array $config)
+    public function __construct(
+        protected EntityManager $entityManager,
+        protected array         $config
+    )
     {
+        /* Identity/credential property not found in config */
+        $this->identityProperty = $this->config['doctrine']['authentication']['orm_default']['identity_property'] ?? null;
+        $this->credentialProperty = $this->config['doctrine']['authentication']['orm_default']['credential_property'] ?? null;
+        if (!($this->identityProperty && $this->credentialProperty)) {
+            throw new DoctrineAuthException('identity_property and/or credential_property not found in config');
+        }
+        /* Identity/credential label not found in config */
+        $this->identityLabel = $this->config['doctrineAuth']['formElements']['identity_label'];
+        $this->credentialLabel = $this->config['doctrineAuth']['formElements']['credential_label'];
+        if (!($this->identityLabel && $this->credentialLabel)) {
+            throw new DoctrineAuthException('identity_label and/or credential_label not found in config');
+        }
+
         parent::__construct('auth');
-        $this->objectManager = $objectManager;
-        $this->config = $config;
         $this->setAttribute('method', 'post');
     }
 
     /**
      * Create form elements
      * @return void
-     * @throws DoctrineAuthException
      */
     public function init(): void
     {
-        /* Identity property not found in config */
-        if (isset($this->config['doctrine']['authentication']['orm_default']['identity_property']) === false || isset($this->config['doctrine']['authentication']['orm_default']['credential_property']) === false) {
-            throw new DoctrineAuthException('identity_property and/or credential_property not found in config');
-        }
-
-        /* Credential property not found in config */
-        if (isset($this->config['doctrineAuth']['formElements']['identity_label']) === false || isset($this->config['doctrineAuth']['formElements']['credential_label']) === false) {
-            throw new DoctrineAuthException('identity_label and/or credential_label not found in config');
-        }
-                
-        /*
-         * Add form elements
-         */
         $this->add([
-            'name' => $this->config['doctrine']['authentication']['orm_default']['identity_property'],
+            'name' => $this->identityProperty,
             'type' => Element\Text::class,
             'attributes' => [
                 'size' => 16,
@@ -75,20 +69,20 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
                 'autofocus' => true,
             ],
             'options' => [
-                'label' => _($this->config['doctrineAuth']['formElements']['identity_label']),
+                'label' => _($this->identityLabel),
                 'label_attributes' => ['class' => 'required'],
             ],
         ]);
 
         $this->add([
-            'name' => $this->config['doctrine']['authentication']['orm_default']['credential_property'],
+            'name' => $this->credentialProperty,
             'type' => Element\Password::class,
             'attributes' => [
                 'size' => 16,
                 'maxlength' => 16,
             ],
             'options' => [
-                'label' => _($this->config['doctrineAuth']['formElements']['credential_label']),
+                'label' => _($this->credentialLabel),
                 'label_attributes' => ['class' => 'required'],
             ],
         ]);
@@ -113,7 +107,6 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
             'type' => Element\Submit::class,
             'attributes' => [
                 'value' => _('Submit'),
-                'id' => 'submitbutton',
                 'label' => _('Submit'),
             ],
         ]);
@@ -131,7 +124,7 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
         $validationGroup = [];
         foreach ($formOrFieldset as $element) {
             if ($element instanceof Fieldset) {
-                $validationGroup[$element->getName()] = $this->getValidationGroup($element);
+                $validationGroup[$element->getName()] = $this->getValidationGroup();
             } else {
                 $validationGroup[] = $element->getName();
             }
@@ -142,7 +135,7 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
     /**
      * Set form filters and validators
      * @return array
-     * @throws DoctrineAuthException
+     * @throws DoctrineAuthException|NotSupported
      */
     public function getInputFilterSpecification(): array
     {
@@ -192,9 +185,10 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
         ];
 
         /* Register form */
-        if ($this instanceof RegisterForm === true) {
+        if ($this instanceof RegisterForm) {
             /* Identity class not found in config */
-            if (isset($this->config['doctrine']['authentication']['orm_default']['identity_class']) === false) {
+            $identityClass = $this->config['doctrine']['authentication']['orm_default']['identity_class'] ?? null;
+            if (!$identityClass) {
                 throw new DoctrineAuthException('identity_class not found in config');
             }
             /* Add no object exists validator to identity validators */
@@ -202,9 +196,9 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
                 'name' => DoctrineModuleValidator\NoObjectExists::class,
                 'break_chain_on_failure' => true,
                 'options' => [
-                    'target_class' => $this->config['doctrine']['authentication']['orm_default']['identity_class'],
-                    'object_repository' => $this->objectManager->getRepository($this->config['doctrine']['authentication']['orm_default']['identity_class']),
-                    'fields' => [$this->config['doctrine']['authentication']['orm_default']['identity_property']],
+                    'target_class' => $identityClass,
+                    'object_repository' => $this->entityManager->getRepository($identityClass),
+                    'fields' => [$this->identityProperty],
                     'messages' => [
                         DoctrineModuleValidator\NoObjectExists::ERROR_OBJECT_FOUND => _("This email address is already registered"),
                     ],
@@ -215,13 +209,13 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
         $filter = [];
 
         /* Add custom user filters and validators if exists */
-        if (method_exists($this, 'addInputFilterSpecification') === true) {
+        if (method_exists($this, 'addInputFilterSpecification')) {
             $filter = $this->addInputFilterSpecification();
         }
 
         /* Return input filters and validators */
         return array_merge($filter, [
-            $this->config['doctrine']['authentication']['orm_default']['identity_property'] => [
+            $this->identityProperty => [
                 'required' => true,
                 'filters' => [
                     ['name' => Filter\StripTags::class],
@@ -229,7 +223,7 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
                 ],
                 'validators' => $validators
             ],
-            $this->config['doctrine']['authentication']['orm_default']['credential_property'] => [
+            $this->credentialProperty => [
                 'required' => true,
                 'filters' => [
                     ['name' => Filter\StripTags::class],

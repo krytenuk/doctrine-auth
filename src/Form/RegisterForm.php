@@ -2,6 +2,9 @@
 
 namespace FwsDoctrineAuth\Form;
 
+use Doctrine\Laminas\Hydrator\DoctrineObject;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Exception\NotSupported;
 use Laminas\Form\Element;
 use Laminas\Filter;
 use Laminas\Validator;
@@ -15,9 +18,15 @@ use FwsDoctrineAuth\Exception\DoctrineAuthException;
  */
 class RegisterForm extends DefaultForm
 {
+    public function __construct(EntityManager $entityManager, array $config)
+    {
+        parent::__construct($entityManager, $config);
+        $this->setHydrator(new DoctrineObject($entityManager));
+    }
+
 
     /**
-     * Create form elemets
+     * Create form elements
      * @return void
      */
     public function init(): void
@@ -43,12 +52,13 @@ class RegisterForm extends DefaultForm
     /**
      * Get input filter specification array
      * @return array
-     * @throws DoctrineAuthException
+     * @throws DoctrineAuthException|NotSupported
      */
     public function getInputFilterSpecification(): array
     {
         $stringToUpperFilter = new Filter\StringToUpper();
-        if (isset($this->config['doctrineAuth']['siteCountryCode']) === false) {
+        $siteCountryCode = $this->config['doctrineAuth']['siteCountryCode'] ?? null;
+        if (!$siteCountryCode) {
             throw new DoctrineAuthException('siteCountryCode not found in doctrineAuth config');
         }
 
@@ -92,7 +102,7 @@ class RegisterForm extends DefaultForm
                                 'name' => I18nValidator\PhoneNumber::class,
                                 'options' => [
                                     'allowed_types' => ['mobile'],
-                                    'country' => $stringToUpperFilter->filter($this->config['doctrineAuth']['siteCountryCode']),
+                                    'country' => $stringToUpperFilter->filter($siteCountryCode),
                                     'messages' => [
                                         I18nValidator\PhoneNumber::INVALID => _("This is not a valid mobile number"),
                                         I18nValidator\PhoneNumber::NO_MATCH => _("This is not a valid mobile number"),
