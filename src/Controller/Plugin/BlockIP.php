@@ -10,8 +10,8 @@ use FwsDoctrineAuth\Entity\IpBlocked;
 use FwsDoctrineAuth\Entity\Repository\FailedLoginAttemptsLogRepository;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use FwsDoctrineAuth\Model\EntityManagerTrait;
+use FwsDoctrineAuth\Model\GetClientIpAddress;
 use Laminas\Mvc\Controller\Plugin\AbstractPlugin;
-use Laminas\Stdlib\ParametersInterface;
 
 class BlockIP extends AbstractPlugin
 {
@@ -19,7 +19,7 @@ class BlockIP extends AbstractPlugin
 
     public function __construct(
         protected EntityManagerInterface $entityManager,
-        protected ParametersInterface    $serverParams,
+        protected GetClientIpAddress     $clientIpAddress,
         protected array                  $config
     )
     {
@@ -33,36 +33,42 @@ class BlockIP extends AbstractPlugin
      */
     public function __invoke(string $emailEntered): bool
     {
-        $maxLoginAttemptsTime = $this->config['doctrineAuth']['maxLoginAttemptsTime'] ?? null;
+        $maxLoginAttemptsTime = $this->config['doctrineAuth']['maxLoginAttemptsTime'] ?? 0;
         if (!$maxLoginAttemptsTime) {
             throw new DoctrineAuthException('maxLoginAttemptsTime config key not set');
+        }
+        $maxLoginAttemptsTime = (int) $maxLoginAttemptsTime;
+        if  (!$maxLoginAttemptsTime) {
+            throw new DoctrineAuthException('maxLoginAttemptsTime config must contain an integer greater than zero');
         }
 
         $maxLoginAttempts = $this->config['doctrineAuth']['maxLoginAttempts'] ?? null;
         if ($maxLoginAttempts === null) {
             throw new DoctrineAuthException('maxLoginAttempts config key not set');
         }
-
-        if ($maxLoginAttempts === 0) {
+        $maxLoginAttempts = (int) $maxLoginAttempts;
+        if (!$maxLoginAttempts) {
             return false;
         }
 
-        $ipAddress = $this->serverParams->get('REMOTE_ADDR');
+        $clientIp = $this->clientIpAddress->getClientIP();
+        if (!$clientIp) {
+            throw new DoctrineAuthException('Client IP address not found');
+        }
+
         $now = new DateTimeImmutable('now');
         $date = $now->sub(new DateInterval("PT{$maxLoginAttemptsTime}M"));
         /** @var FailedLoginAttemptsLogRepository $repository */
-        $repository = $this->getEntityRepository($this->entityManager, FailedLoginAttemptsLog::class);
-        if ($repository === null) {
-            throw new DoctrineAuthException('Unable to get repository for FailedLoginAttemptsLog::class');
-        }
-
-        $failedAttempts = $repository->countFailedAttempts($ipAddress, $date);
+        $repository = $this->entityManager->getRepository(FailedLoginAttemptsLog::class);
+        $failedAttempts = $repository->countFailedAttempts($clientIp, $date);
         if ($failedAttempts !== null && $failedAttempts >= $maxLoginAttempts) {
             $ipBlocked = new IpBlocked();
             $ipBlocked
-                ->setIpAddress($ipAddress)
+                ->setIpAddress($clientIp)
                 ->setEmailAddress($emailEntered);
-            $this->entityManager->persist($ipBlocked);
+            if (!$this->persistEntity($this->entityManager, $ipBlocked)) {
+                throw new DoctrineAuthException(sprintf('Unable to persist %s', $ipBlocked::class));
+            }
             if (!$this->flushEntityManager($this->entityManager)) {
                 throw new DoctrineAuthException('Unable to block IP address');
             }

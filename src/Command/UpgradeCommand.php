@@ -2,7 +2,9 @@
 
 namespace FwsDoctrineAuth\Command;
 
-class UpgradeCommand extends \Symfony\Component\Console\Command\Command
+use Symfony\Component\Console\Command\Command;
+
+class UpgradeCommand extends Command
 {
 
 }

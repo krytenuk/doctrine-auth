@@ -1,12 +1,10 @@
 <?php
 
 use FwsDoctrineAuth\Entity\BaseUser;
+use Laminas\Form\Element\Email;
 use Laminas\Session\Validator as SessionValidator;
 use Laminas\Session\Storage\SessionArrayStorage;
 use FwsDoctrineAuth\Form;
-use FwsDoctrineAuth\Model\TwoFactorAuthModel;
-use Laminas\I18n\Translator\TranslatorServiceFactory;
-use FwsDoctrineAuth\Model\TwoFactorAuthentication\Client;
 use FwsDoctrineAuth\Model\TwoFactorAuthentication\Adapter;
 
 return [
@@ -62,7 +60,7 @@ return [
          */
         Form\Service\DoctrineAuthFormFactory::LOGIN_FORM => Form\LoginForm::class,
         'loginCallback' => null, // <- class to use as callback during login, must use __invoke() magic method
-        'maxLoginAttempts' => 3, // <- Max login attempts allowed
+        'maxLoginAttempts' => 3, // <- Max login attempts allowed, 0 = unlimited
         'maxLoginAttemptsTime' => 5, // <- Number of minutes user can make the above login attempts, by default a user can make 3 wrong attempts within a 5-minute period before becoming blocked
         'loginReleaseTime' => 0, // <- Number of minutes user remains blocked for, 0 = don't unblock. If used should be greater than the above maxLoginAttemptsTime
         /**
@@ -74,11 +72,12 @@ return [
         'passwordLinkActiveFor' => 24, // <- Password reset link active for hours
         'fromEmail' => 'no-reply@example.com', // <- Email address for password reset link email, set reply to and from email
         /**
-         * Form labels
+         * Form labels and credential form element class
          */
         'formElements' => [
             'identity_label' => 'Email Address', // <- Form label for identity_property
             'credential_label' => 'Password', // <- Form label for credential_property
+            'identity_property_element' => Email::class, // <- Laminas Form Element FQCN for identity property, default Email::class @todo Document this
         ],
         /**
          * Two-factor authentication

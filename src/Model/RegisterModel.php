@@ -127,12 +127,8 @@ class RegisterModel extends AbstractModel
         /* Role id set */
         if ($roleId) {
             /** @var UserRoleRepository $repository */
-            $repository = $this->getEntityRepository($this->entityManager, UserRole::class);
-            if ($repository === null) {
-                return false;
-            }
+            $repository = $this->entityManager->getRepository(UserRole::class);
             /**
-             * Get user role from database 
              * @var UserRole $role
              */
             $role = $repository->findOneByRole($roleId);

@@ -20,8 +20,6 @@ use Doctrine\ORM\EntityManager;
 class ForgottenPasswordForm extends Form implements InputFilterProviderInterface
 {
     private ?string $identityClass;
-    private ?string $identityProperty;
-    private ?string $identityLabel;
 
     /**
      *
@@ -31,26 +29,16 @@ class ForgottenPasswordForm extends Form implements InputFilterProviderInterface
      */
     public function __construct(
         protected EntityManager $entityManager,
-        protected array $config
+        protected array         $config
     )
     {
-        $this->identityLabel = $this->config['doctrineAuth']['formElements']['identity_label'] ?? null;
-        if (!$this->identityLabel) {
-            throw new DoctrineAuthException('identity_label not found in config');
-        }
-
         $this->identityClass = $this->config['doctrine']['authentication']['orm_default']['identity_class'] ?? null;
         if (!$this->identityClass) {
             throw new DoctrineAuthException('identity_class not found in config');
         }
 
-        $this->identityProperty = $this->config['doctrine']['authentication']['orm_default']['identity_property'] ?? null;
-        if (!$this->identityProperty) {
-            throw new DoctrineAuthException('identity_property not found in config');
-        }
-
         parent::__construct('reset-password');
-        $this->setAttribute('method', 'post');
+        $this->setAttribute('method', 'POST');
     }
 
     /**
@@ -65,15 +53,15 @@ class ForgottenPasswordForm extends Form implements InputFilterProviderInterface
          */
 
         $this->add([
-            'name' => $this->getIdentityName(),
-            'type' => Element\Text::class,
+            'name' => 'emailAddress',
+            'type' => Element\Email::class,
             'attributes' => [
                 'size' => 30,
                 'maxlength' => 255,
                 'autofocus' => true,
             ],
             'options' => [
-                'label' => _($this->identityLabel),
+                'label' => _('Email Address'),
                 'label_attributes' => ['class' => 'required'],
             ],
         ]);
@@ -105,8 +93,10 @@ class ForgottenPasswordForm extends Form implements InputFilterProviderInterface
     public function getInputFilterSpecification(): array
     {
         $filter = new Filter\StringToLower();
+        $validatorChain = new Validator\ValidatorChain();
+
         return [
-            $this->getIdentityName() => [
+            'emailAddress' => [
                 'required' => TRUE,
                 'filters' => [
                     ['name' => Filter\StripTags::class],
@@ -118,8 +108,27 @@ class ForgottenPasswordForm extends Form implements InputFilterProviderInterface
                         'break_chain_on_failure' => TRUE,
                         'options' => [
                             'messages' => [
-                                Validator\NotEmpty::IS_EMPTY => sprintf(_("You must specify your %s"), $filter->filter($this->identityLabel)),
+                                Validator\NotEmpty::IS_EMPTY => _("You must specify your email address"),
                             ],
+                        ],
+                    ],
+                    [
+                        'name' => Validator\EmailAddress::class,
+                        'options' => [
+                            'deep' => true,
+                            'allow' => true,
+                            'mx' => true,
+//                            'messages' => [
+//                                Validator\EmailAddress::INVALID => ,
+//                                Validator\EmailAddress::INVALID_FORMAT => _("Your email address is invalid"),
+//                                Validator\EmailAddress::INVALID_HOSTNAME => _("Your email address is invalid"),
+//                                Validator\EmailAddress::INVALID_LOCAL_PART => _("Your email address is invalid"),
+//                                Validator\EmailAddress::INVALID_MX_RECORD => _("Your email address is invalid"),
+//                                Validator\EmailAddress::INVALID_SEGMENT => _("Your email address is invalid"),
+//                                Validator\EmailAddress::LENGTH_EXCEEDED => _("Your email address is invalid"),
+//                                Validator\EmailAddress::QUOTED_STRING => _("Your email address is invalid"),
+//                            ],
+                            'message' => _("Your email address is invalid"),
                         ],
                     ],
                     [
@@ -128,24 +137,14 @@ class ForgottenPasswordForm extends Form implements InputFilterProviderInterface
                         'options' => [
                             'target_class' => $this->identityClass,
                             'object_repository' => $this->entityManager->getRepository($this->identityClass),
-                            'fields' => [$this->getIdentityName()],
+                            'fields' => ['emailAddress'],
                             'messages' => [
-                                DoctrineModuleValidator\ObjectExists::ERROR_NO_OBJECT_FOUND => sprintf(_('This %s is not registered'), $filter->filter($this->identityLabel)),
+                                DoctrineModuleValidator\ObjectExists::ERROR_NO_OBJECT_FOUND => _('This email address is not registered'),
                             ],
                         ],
                     ],
-                ]
+                ],
             ],
         ];
     }
-
-    /**
-     * Get identity property name
-     * @return string|null
-     */
-    public function getIdentityName(): ?string
-    {
-        return $this->identityProperty;
-    }
-
 }

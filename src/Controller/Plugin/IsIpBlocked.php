@@ -8,17 +8,14 @@ use Doctrine\ORM\EntityManagerInterface;
 use FwsDoctrineAuth\Entity\IpBlocked;
 use FwsDoctrineAuth\Entity\Repository\IpBlockedRepository;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
-use FwsDoctrineAuth\Model\EntityManagerTrait;
+use FwsDoctrineAuth\Model\GetClientIpAddress;
 use Laminas\Mvc\Controller\Plugin\AbstractPlugin;
-use Laminas\Stdlib\ParametersInterface;
 
 class IsIpBlocked extends AbstractPlugin
 {
-    use EntityManagerTrait;
-
     public function __construct(
         protected EntityManagerInterface $entityManager,
-        protected ParametersInterface    $serverParams,
+        protected GetClientIpAddress     $clientIpAddress,
         protected array                  $config
     )
     {
@@ -36,18 +33,22 @@ class IsIpBlocked extends AbstractPlugin
             throw new DoctrineAuthException('loginReleaseTime config key not set');
         }
 
+        $clientIp = $this->clientIpAddress->getClientIP();
+        if (!$clientIp) {
+            throw new DoctrineAuthException('Client IP address not found');
+        }
+
+        /** @var IpBlockedRepository $repository */
+        $repository = $this->entityManager->getRepository(IpBlocked::class);
+
+        $loginReleaseTime = (int) $loginReleaseTime;
         if ($loginReleaseTime > 0) {
             $now = new DateTimeImmutable('now');
             $date = $now->sub(new DateInterval("PT{$loginReleaseTime}M"));
-            /** @var IpBlockedRepository $repository */
-            $repository = $this->entityManager->getRepository(IpBlocked::class);
-            if (!$repository) {
-                return false;
-            }
-            $repository->deleteBlockedIpAddress($this->serverParams->get('SERVER_ADDR'), $date);
+            $repository->deleteBlockedIpAddress($clientIp, $date);
         }
 
-        return (bool)$this->getEntityRepository($this->entityManager, IpBlocked::class)->count(['ipAddress' => $this->serverParams->get('SERVER_ADDR')]);
+        return (bool) $repository->count(['ipAddress' => $clientIp]);
     }
 
 }

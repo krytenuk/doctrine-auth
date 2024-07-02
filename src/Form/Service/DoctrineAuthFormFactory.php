@@ -3,6 +3,7 @@
 namespace FwsDoctrineAuth\Form\Service;
 
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
+use FwsDoctrineAuth\Form\LoginForm;
 use Laminas\Form\FormElementManager;
 use Laminas\Form\FormInterface;
 use Laminas\ServiceManager\Factory\FactoryInterface;
@@ -44,7 +45,11 @@ class DoctrineAuthFormFactory implements FactoryInterface
         if (!$form) {
             throw new DoctrineAuthException(sprintf('"%s" key not found in config', $requestedName));
         }
-        if (!$formElementManager->has($form) && class_exists($form)) {
+        if (!class_exists($form)) {
+            throw new DoctrineAuthException(sprintf('Class "%s" not found', $form));
+        }
+
+        if (!$formElementManager->has($form)) {
             throw new DoctrineAuthException(sprintf('Doctrine auth form "%s" not found', $form));
         }
 

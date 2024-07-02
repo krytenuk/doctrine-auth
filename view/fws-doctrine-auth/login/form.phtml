@@ -26,12 +26,12 @@ echo $this->form()->openTag($this->form);
 <?php if ($this->form->getName() == 'reset-password'): ?>
     <script type="text/javascript">
         window.onload = function () {
-            var buttons = document.getElementsByClassName('show-hide-password')
-            for (var i = 0; i < buttons.length; i++) {
+            const buttons = document.getElementsByClassName('show-hide-password');
+            for (let i = 0; i < buttons.length; i++) {
                 buttons[i].onclick = function (event) {
                     event.preventDefault();
-                    var element = this.previousElementSibling;
-                    var type;
+                    const element = this.previousElementSibling;
+                    let type;
 
                     if (element.getAttribute('type') === 'password') {
                         type = 'text';
@@ -40,8 +40,8 @@ echo $this->form()->openTag($this->form);
                         type = 'password';
                         this.innerHTML = 'Show';
                     }
-                    var attributes = element.attributes;
-                    for (var i = 0; i < attributes.length; i++) {
+                    const attributes = element.attributes;
+                    for (let i = 0; i < attributes.length; i++) {
                         element.setAttribute(attributes[i].name, attributes[i].value);
                     }
                     element.setAttribute('type', type);

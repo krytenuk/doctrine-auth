@@ -28,25 +28,10 @@ trait EntityManagerTrait
      * @param EntityManagerInterface $entityManager
      * @return EntityManagerTrait
      */
-    public function setEntityManager(EntityManagerInterface $entityManager): EntityManagerTrait
+    public function setEntityManager(EntityManagerInterface $entityManager): static
     {
         $this->entityManager = $entityManager;
         return $this;
-    }
-
-    /**
-     * Get entity repository
-     * @param EntityManager $entityManager
-     * @param string $entityClass
-     * @return EntityRepository|ObjectRepository|null
-     */
-    public function getEntityRepository(EntityManagerInterface $entityManager, string $entityClass): EntityRepository|ObjectRepository|null
-    {
-        try {
-            return $entityManager->getRepository($entityClass);
-        } catch (NotSupported) {
-            return null;
-        }
     }
 
     /**
@@ -58,11 +43,11 @@ trait EntityManagerTrait
     {
         try {
             $entityManager->flush();
+            return true;
         } catch (Exception) {
             $this->clearEntityManager($entityManager);
             return false;
         }
-        return true;
     }
 
     /**
@@ -107,7 +92,7 @@ trait EntityManagerTrait
         try {
             $entityManager->persist($entity);
             return true;
-        } catch (ORMException $e) {
+        } catch (ORMException) {
             return false;
         }
     }

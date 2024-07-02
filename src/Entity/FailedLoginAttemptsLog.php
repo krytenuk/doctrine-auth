@@ -27,14 +27,14 @@ class FailedLoginAttemptsLog implements EntityInterface
      *
      * @ORM\Column(name="email_address", type="string", length=100, nullable=false)
      */
-    private string $emailAddress;
+    private string|null $emailAddress = null;
 
     /**
      * @var string
      *
      * @ORM\Column(name="ip_address", type="string", length=16, nullable=false)
      */
-    private string $ipAddress;
+    private string|null $ipAddress = null;
 
     /**
      * @var DateTimeInterface
@@ -50,27 +50,27 @@ class FailedLoginAttemptsLog implements EntityInterface
     
     /**
      * 
-     * @return int
+     * @return int|null
      */
-    public function getLoginAttemptId(): int
+    public function getLoginAttemptId(): ?int
     {
         return $this->loginAttemptId;
     }
 
     /**
      * Get email address entered
-     * @return string
+     * @return string|null
      */
-    public function getEmailAddress(): string
+    public function getEmailAddress(): string|null
     {
         return $this->emailAddress;
     }
 
     /**
      * Get IP address of login attempt
-     * @return string
+     * @return string|null
      */
-    public function getIpAddress(): string
+    public function getIpAddress(): string|null
     {
         return $this->ipAddress;
     }

@@ -20,13 +20,12 @@ class IpBlockedRepository extends EntityRepository
      * Delete IP address from blocked list
      * @param string $ipAddress
      * @param DateTimeInterface|null $date
-     * @return bool|null
+     * @return void
      */
-    public function deleteBlockedIpAddress(string $ipAddress, ?DateTimeInterface $date = null): ?bool
+    public function deleteBlockedIpAddress(string $ipAddress, ?DateTimeInterface $date = null): void
     {
-        $builder = $this->getEntityManager()->createQueryBuilder();
+        $builder = $this->createQueryBuilder('ipb');
         $builder->delete()
-                ->from(IpBlocked::class, 'ipb')
                 ->where($builder->expr()->eq('ipb.ipAddress', ':ipAddress'))
                 ->setParameter('ipAddress', $ipAddress);
 
@@ -36,10 +35,8 @@ class IpBlockedRepository extends EntityRepository
         }
 
         try {
-            return (bool)$builder->getQuery()->getSingleScalarResult();
-        } catch (NoResultException|NonUniqueResultException) {
-            return null;
-        }
+            $builder->getQuery()->getSingleScalarResult();
+        } catch (NoResultException|NonUniqueResultException) {}
     }
 
 }

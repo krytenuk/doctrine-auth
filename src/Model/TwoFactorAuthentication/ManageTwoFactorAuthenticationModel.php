@@ -197,10 +197,7 @@ class ManageTwoFactorAuthenticationModel extends AbstractModel
             return null;
         }
 
-        $repository = $this->getEntityRepository($this->entityManager, TwoFactorAuthMethod::class);
-        if (!$repository) {
-            return null;
-        }
+        $repository = $this->entityManager->getRepository(TwoFactorAuthMethod::class);
         $this->methodEntity = $repository->findOneBy(['method' => $method, 'user' => $this->identity]);
         return $this->methodEntity;
     }

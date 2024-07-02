@@ -3,9 +3,10 @@
 namespace FwsDoctrineAuth\Model\TwoFactorAuthentication\Adapter\Service;
 
 use FwsDoctrineAuth\Model\TwoFactorAuthentication\Adapter\AuthenticationAppAdapter;
+use Laminas\ServiceManager\Factory\FactoryInterface;
 use Psr\Container\ContainerInterface;
 
-class AuthenticationAppAdapterFactory implements \Laminas\ServiceManager\Factory\FactoryInterface
+class AuthenticationAppAdapterFactory implements FactoryInterface
 {
 
     /**

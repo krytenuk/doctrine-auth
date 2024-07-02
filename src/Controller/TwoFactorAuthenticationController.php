@@ -16,7 +16,7 @@ use Laminas\View\Model\ViewModel;
  * @author Garry Childs <info@freedomwebservices.net>
  *
  * @method string translate($message, $textDomain = null, $locale = null)
- * @method Response getAuthRedirect(AuthUserInterface $identity)
+ * @method Response getAuthRedirect(AuthUserInterface $identity, bool $getDefault = false)
  * @method bool isIpBlocked()
  * @method bool blockIpAddress(string $emailEntered)
  * @method bool logFailedLoginAttempt(string $emailAddress)

@@ -5,6 +5,7 @@ namespace FwsDoctrineAuth\Model;
 use DateInterval;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\EntityRepository;
 use Exception;
 use FwsDoctrineAuth\Entity\AuthUserInterface;
 use FwsDoctrineAuth\Entity\BaseUser;
@@ -32,7 +33,6 @@ class ForgotPasswordModel extends AbstractModel
     private ?AuthUserInterface $userEntity = null;
     private ?PasswordReminder $resetEntity = null;
     private bool $formValid = false;
-    private ?string $credentialProperty;
     private ?string $identityClass;
     private ?string $identityProperty;
 
@@ -53,16 +53,17 @@ class ForgotPasswordModel extends AbstractModel
         protected array                  $config
     )
     {
-        $this->credentialProperty = $this->config['doctrine']['authentication']['orm_default']['credential_property'] ?? null;
-
-        $this->identityProperty = $this->config['doctrine']['authentication']['orm_default']['identity_property'] ?? null;
-        if (!$this->identityProperty === null) {
+        $this->identityProperty = (string) $this->config['doctrine']['authentication']['orm_default']['identity_property'] ?? '';
+        if (!$this->identityProperty) {
             throw new DoctrineAuthException('identity_property not set in config');
         }
 
-        $this->identityClass = $this->config['doctrine']['authentication']['orm_default']['identity_class'] ?? null;
-        if (!$this->identityClass === null) {
+        $this->identityClass = (string) $this->config['doctrine']['authentication']['orm_default']['identity_class'] ?? '';
+        if (!$this->identityClass) {
             throw new DoctrineAuthException('identity_class not set in config');
+        }
+        if (!class_exists($this->identityClass)) {
+            throw new DoctrineAuthException(sprintf('Identity class %s not does not exist', $this->identityClass));
         }
     }
 
@@ -75,11 +76,7 @@ class ForgotPasswordModel extends AbstractModel
     public function findUser(string $code): bool
     {
         /** Find password reset entity from database */
-        $repository = $this->getEntityRepository($this->entityManager, PasswordReminder::class);
-        /** Repository not found */
-        if ($repository === null) {
-            return false;
-        }
+        $repository = $this->entityManager->getRepository(PasswordReminder::class);
         $this->resetEntity = $repository->findOneBy(['code' => $code]);
         /** Password reset entity not found */
         if (!$this->resetEntity instanceof PasswordReminder) {
@@ -118,12 +115,8 @@ class ForgotPasswordModel extends AbstractModel
         $this->formValid = true;
 
         /** Find user entity */
-        $repository = $this->getEntityRepository($this->entityManager, $this->identityClass);
-        /* Repository not found */
-        if ($repository === null) {
-            return false;
-        }
-        $this->userEntity = $repository->findOneBy([$this->identityProperty => $this->emailForm->getData()[$this->emailForm->getIdentityName()]]);
+        $repository = $this->entityManager->getRepository($this->identityClass);
+        $this->userEntity = $repository->findOneBy(['emailAddress' => $this->emailForm->getData()['emailAddress']]);
         /** User not found on database */
         if (!$this->userEntity instanceof BaseUser) {
             return false;

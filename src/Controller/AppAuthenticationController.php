@@ -14,7 +14,7 @@ use Laminas\View\Model\ViewModel;
  */
 class AppAuthenticationController extends AbstractActionController
 {
-
+    use CheckHashTrait;
 
     /**
      * @param AppAuthenticationMethodModel $appAuthenticationMethodModel
@@ -48,7 +48,7 @@ class AppAuthenticationController extends AbstractActionController
             $this->appAuthenticationMethodModel->getTwoFactorAuthenticationModel()->processAuthForm($postData) &&
             $this->appAuthenticationMethodModel->getTwoFactorAuthenticationModel()->authenticate()
         )) {
-            $this->appAuthenticationMethodModel->getAuthCodeForm()->get('code')->setMessages([_('There is a problem with the code you entered')]);
+            $viewModel->authCodeForm->get('code')->setMessages([_('There is a problem with the code you entered')]);
             return $viewModel;
         }
 

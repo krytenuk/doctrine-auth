@@ -1,5 +1,6 @@
 <?php
 
+use Application\Controller\IndexController;
 use Laminas\Permissions\Acl\Acl as LaminasAcl;
 
 return [
@@ -56,7 +57,7 @@ return [
             [
                 'module' => 'application', // <- name of module
                 'controllers' => [
-                    \Application\Controller\IndexController::class, // <- array of module controllers
+                    IndexController::class, // <- array of module controllers
                     //\Application\Controller\OtherController::class,
                 ],
             ],

@@ -24,14 +24,14 @@ class LoginLog implements EntityInterface
     private ?int $logId = null;
 
     /**
-     * @var BaseUser
+     * @var AuthUserInterface|null
      *
      * @ORM\ManyToOne(targetEntity="FwsDoctrineAuth\Entity\BaseUser", inversedBy="logins")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="user_id", referencedColumnName="user_id", onDelete="cascade")
      * })
      */
-    private BaseUser $user;
+    private ?AuthUserInterface $user = null;
 
     /**
      * @var bool
@@ -51,21 +51,21 @@ class LoginLog implements EntityInterface
     {
         $this->dateLogged = new DateTimeImmutable();
     }
-    
+
     /**
-     * 
-     * @return int
+     *
+     * @return int|null
      */
-    public function getLogId(): int
+    public function getLogId(): ?int
     {
         return $this->logId;
     }
 
     /**
-     * 
-     * @return BaseUser
+     *
+     * @return AuthUserInterface|null
      */
-    public function getUser(): BaseUser
+    public function getUser(): ?AuthUserInterface
     {
         return $this->user;
     }
@@ -90,10 +90,10 @@ class LoginLog implements EntityInterface
 
     /**
      * 
-     * @param BaseUser $user
+     * @param AuthUserInterface $user
      * @return LoginLog
      */
-    public function setUser(BaseUser $user): LoginLog
+    public function setUser(AuthUserInterface $user): LoginLog
     {
         $this->user = $user;
         return $this;

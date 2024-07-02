@@ -61,25 +61,25 @@ class Module implements BootstrapListenerInterface
         ];
     }
 
-    /**
-     * Add doctrine cli command
-     * @param ModuleManagerInterface $moduleManager
-     */
-    public function init(ModuleManagerInterface $moduleManager): void
-    {
-        $events = $moduleManager->getEventManager();
-
-        $events->getSharedManager()->attach('doctrine', 'loadCli.post', function (EventInterface $event) {
-            /* @var $cli Application */
-            $cli = $event->getTarget();
-            /* @var $entityManager EntityManagerInterface */
-            $entityManager = $cli->getHelperSet()->get('em')->getEntityManager();
-            $config = $event->getParam('ServiceManager')->get('config');
-            ConsoleRunner::addCommands($cli);
-            $cli->addCommands([
-                new Command\InitCommand($entityManager, $config),
-            ]);
-        });
-    }
+//    /**
+//     * Add doctrine cli command
+//     * @param ModuleManagerInterface $moduleManager
+//     */
+//    public function init(ModuleManagerInterface $moduleManager): void
+//    {
+//        $events = $moduleManager->getEventManager();
+//
+//        $events->getSharedManager()->attach('doctrine', 'loadCli.post', function (EventInterface $event) {
+//            /* @var $cli Application */
+//            $cli = $event->getTarget();
+//            /* @var $entityManager EntityManagerInterface */
+//            $entityManager = $cli->getHelperSet()->get('em')->getEntityManager();
+//            $config = $event->getParam('ServiceManager')->get('config');
+//            ConsoleRunner::addCommands($cli);
+//            $cli->addCommands([
+//                new Command\InitCommand($entityManager, $config),
+//            ]);
+//        });
+//    }
 
 }

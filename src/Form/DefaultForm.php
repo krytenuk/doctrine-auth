@@ -2,6 +2,7 @@
 
 namespace FwsDoctrineAuth\Form;
 
+use Laminas\Form\ElementInterface;
 use Laminas\Form\Form;
 use Laminas\InputFilter\InputFilterProviderInterface;
 use Laminas\Form\Element;
@@ -25,6 +26,7 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
     protected ?string $credentialProperty = null;
     protected ?string $identityLabel = null;
     protected ?string $credentialLabel = null;
+    protected ?string $identityPropertyFormElement = null;
 
     /**
      *
@@ -49,9 +51,10 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
         if (!($this->identityLabel && $this->credentialLabel)) {
             throw new DoctrineAuthException('identity_label and/or credential_label not found in config');
         }
+        $this->identityPropertyFormElement = $this->config['doctrineAuth']['formElements']['identity_property_element'] ?? Element\Email::class;
 
         parent::__construct('auth');
-        $this->setAttribute('method', 'post');
+        $this->setAttribute('method', 'POST');
     }
 
     /**
@@ -62,7 +65,7 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
     {
         $this->add([
             'name' => $this->identityProperty,
-            'type' => Element\Text::class,
+            'type' => $this->identityPropertyFormElement,
             'attributes' => [
                 'size' => 16,
                 'maxlength' => 255,
@@ -73,6 +76,27 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
                 'label_attributes' => ['class' => 'required'],
             ],
         ]);
+        $identityElement = $this->get($this->identityProperty);
+        if ($identityElement instanceof Element\Email) {
+            $identityElement->setEmailValidator(new Validator\EmailAddress([
+                'options' => [
+                    'deep' => true,
+                    'allow' => true,
+                    'mx' => true,
+                    'messages' => [
+                        Validator\EmailAddress::INVALID => _("Your email address is invalid"),
+                        Validator\EmailAddress::INVALID_FORMAT => _("Your email address is invalid"),
+                        Validator\EmailAddress::INVALID_HOSTNAME => _("Your email address is invalid"),
+                        Validator\EmailAddress::INVALID_LOCAL_PART => _("Your email address is invalid"),
+                        Validator\EmailAddress::INVALID_MX_RECORD => _("Your email address is invalid"),
+                        Validator\EmailAddress::INVALID_SEGMENT => _("Your email address is invalid"),
+                        Validator\EmailAddress::LENGTH_EXCEEDED => _("Your email address is invalid"),
+                        Validator\EmailAddress::QUOTED_STRING => _("Your email address is invalid"),
+                    ],
+                ]
+            ]));
+        }
+
 
         $this->add([
             'name' => $this->credentialProperty,
@@ -115,9 +139,9 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
     }
 
     /**
-     * Get form or fieldset element names as an array for use in @see Form::setValidationGroup()
-     * @param FieldsetInterface $formOrFieldset
+     * Get form or fieldset element names as an array for use in @param FieldsetInterface $formOrFieldset
      * @return array
+     * @see Form::setValidationGroup()
      */
     private function generateValidationGroup(FieldsetInterface $formOrFieldset): array
     {
@@ -140,49 +164,15 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
     public function getInputFilterSpecification(): array
     {
         /* Default identity validators */
-        $validators = [
-            [
-                'name' => Validator\NotEmpty::class,
-                'break_chain_on_failure' => true,
-                'options' => [
-                    'messages' => [
-                        Validator\NotEmpty::IS_EMPTY => _("You must specify your email address"),
-                    ],
-                ],
+        $validatorChain = new Validator\ValidatorChain();
+        $validatorChain->attach(new Validator\NotEmpty([
+            'break_chain_on_failure' => true,
+            'messages' => [
+                Validator\NotEmpty::IS_EMPTY => _("You must specify your email address"),
             ],
-            [
-                'name' => Validator\StringLength::class,
-                'break_chain_on_failure' => true,
-                'options' => [
-                    'encoding' => 'UTF-8',
-                    'min' => 2,
-                    'max' => 255,
-                    'messages' => [
-                        Validator\StringLength::INVALID => _("Your email address must contain between %min% and %max% characters"),
-                        Validator\StringLength::TOO_LONG => _("Your email address must not contain more than %max% characters"),
-                        Validator\StringLength::TOO_SHORT => _("Your email address must contain more than %min% characters"),
-                    ],
-                ],
-            ],
-            [
-                'name' => Validator\EmailAddress::class,
-                'options' => [
-                    'deep' => true,
-                    'allow' => true,
-                    'mx' => true,
-                    'messages' => [
-                        Validator\EmailAddress::INVALID => _("Your email address is invalid"),
-                        Validator\EmailAddress::INVALID_FORMAT => _("Your email address is invalid"),
-                        Validator\EmailAddress::INVALID_HOSTNAME => _("Your email address is invalid"),
-                        Validator\EmailAddress::INVALID_LOCAL_PART => _("Your email address is invalid"),
-                        Validator\EmailAddress::INVALID_MX_RECORD => _("Your email address is invalid"),
-                        Validator\EmailAddress::INVALID_SEGMENT => _("Your email address is invalid"),
-                        Validator\EmailAddress::LENGTH_EXCEEDED => _("Your email address is invalid"),
-                        Validator\EmailAddress::QUOTED_STRING => _("Your email address is invalid"),
-                    ],
-                ],
-            ],
-        ];
+        ]));
+
+
 
         /* Register form */
         if ($this instanceof RegisterForm) {
@@ -192,18 +182,15 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
                 throw new DoctrineAuthException('identity_class not found in config');
             }
             /* Add no object exists validator to identity validators */
-            $validators[] = [
-                'name' => DoctrineModuleValidator\NoObjectExists::class,
+            $validatorChain->attach(new DoctrineModuleValidator\NoObjectExists([
                 'break_chain_on_failure' => true,
-                'options' => [
-                    'target_class' => $identityClass,
-                    'object_repository' => $this->entityManager->getRepository($identityClass),
-                    'fields' => [$this->identityProperty],
-                    'messages' => [
-                        DoctrineModuleValidator\NoObjectExists::ERROR_OBJECT_FOUND => _("This email address is already registered"),
-                    ],
+                'target_class' => $identityClass,
+                'object_repository' => $this->entityManager->getRepository($identityClass),
+                'fields' => [$this->identityProperty],
+                'messages' => [
+                    DoctrineModuleValidator\NoObjectExists::ERROR_OBJECT_FOUND => _("This email address is already registered"),
                 ],
-            ];
+            ]));
         }
 
         $filter = [];
@@ -221,7 +208,7 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
                     ['name' => Filter\StripTags::class],
                     ['name' => Filter\StringTrim::class],
                 ],
-                'validators' => $validators
+                'validators' => $validatorChain,
             ],
             $this->credentialProperty => [
                 'required' => true,

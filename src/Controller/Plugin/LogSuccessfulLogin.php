@@ -8,9 +8,10 @@ use FwsDoctrineAuth\Entity\BaseUser;
 use FwsDoctrineAuth\Entity\LoginLog;
 use FwsDoctrineAuth\Model\EntityManagerTrait;
 use Laminas\Authentication\AuthenticationService;
+use Laminas\Mvc\Controller\Plugin\AbstractPlugin;
 use Laminas\Stdlib\ParametersInterface;
 
-class LogSuccessfulLogin extends \Laminas\Mvc\Controller\Plugin\AbstractPlugin
+class LogSuccessfulLogin extends AbstractPlugin
 {
     use EntityManagerTrait;
 
@@ -24,20 +25,28 @@ class LogSuccessfulLogin extends \Laminas\Mvc\Controller\Plugin\AbstractPlugin
 
     /**
      *
-     * @param AuthUserInterface $identity
+     * @param AuthUserInterface|null $identity
      * @param bool $used2fa
      * @return void
      */
-    public function __invoke(AuthUserInterface $identity, bool $used2fa): void
+    public function __invoke(AuthUserInterface|null $identity, bool $used2fa): void
     {
+        if (!$identity) {
+            return;
+        }
+
         $loginLog = new LoginLog();
         $loginLog
-            ->setUser($this->entityManager->getRepository(BaseUser::class)->findOneBy(['userId' => $identity->getUserId()]))
+            ->setUser($identity)
             ->setUsed2fa($used2fa);
-        $this->persistEntity($this->entityManager, $loginLog);
-        $this->flushEntityManager($this->entityManager);
 
-        $identity->addLogin($loginLog);
-        $this->authService->getStorage()->write($identity);
+        if (!$this->persistEntity($this->entityManager, $loginLog)) {
+            return;
+        }
+
+        if ($this->flushEntityManager($this->entityManager)) {
+            $identity->addLogin($loginLog);
+            $this->authService->getStorage()->write($identity);
+        }
     }
 }

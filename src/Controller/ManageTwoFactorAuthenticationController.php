@@ -19,6 +19,8 @@ use Laminas\View\Model\ViewModel;
 class ManageTwoFactorAuthenticationController extends AbstractActionController
 {
 
+    use CheckHashTrait;
+
     /**
      * @param ManageTwoFactorAuthenticationModel $manage2FAMethodsModel
      */
@@ -93,22 +95,5 @@ class ManageTwoFactorAuthenticationController extends AbstractActionController
 
         $this->flashMessenger()->addErrorMessage(_('Unable to remove authentication method'));
         return $this->redirect()->toRoute('doctrine-auth/2fa/list-methods');
-    }
-
-    private function checkHash(): bool
-    {
-        $errorMessage = _('The request could not be validated, please try again');
-        $hash = (string) $this->params()->fromRoute('hash', null);
-        if (!$hash) {
-            $this->flashMessenger()->addErrorMessage($errorMessage);
-            return false;
-        }
-
-        if (!$this->validateHash($hash)) {
-            $this->flashMessenger()->addErrorMessage($errorMessage);
-            return false;
-        }
-
-        return true;
     }
 }

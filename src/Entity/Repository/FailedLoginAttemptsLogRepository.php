@@ -6,7 +6,6 @@ use Doctrine\ORM\EntityRepository;
 use DateTimeInterface;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\NoResultException;
-use FwsDoctrineAuth\Entity\FailedLoginAttemptsLog;
 
 /**
  * FailedLoginAttemptsLogRepository
@@ -24,9 +23,8 @@ class FailedLoginAttemptsLogRepository extends EntityRepository
      */
     public function countFailedAttempts(string $ipAddress, DateTimeInterface $date): ?int
     {
-        $builder = $this->getEntityManager()->createQueryBuilder();
+        $builder = $this->createQueryBuilder('la');
         $builder->select($builder->expr()->count('la'))
-                ->from(FailedLoginAttemptsLog::class, 'la')
                 ->where($builder->expr()->eq('la.ipAddress', ':ipAddress'))
                 ->setParameter('ipAddress', $ipAddress)
                 ->andWhere($builder->expr()->gt('la.dateLogged', ':date'))

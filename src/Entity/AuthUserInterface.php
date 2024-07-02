@@ -135,9 +135,9 @@ interface AuthUserInterface extends EntityInterface
 
     /**
      *
-     * @return Collection
+     * @return Collection|null
      */
-    public function getLogins(): Collection;
+    public function getLogins(): ?Collection;
 
     /**
      * Add logins collection

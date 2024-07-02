@@ -75,7 +75,6 @@ Changed Doctrine entity names from plural to singular
 TwoFactorAuthMethod::getGoogleAuth() has been deprecated
 TwoFactorAuthMethod::setGoogleAuth() has been deprecated
 Now using [Doctrine Module version 6](https://github.com/doctrine/DoctrineModule)
-Added unit tests
 
 #### Configuration
 **Added**
@@ -185,3 +184,5 @@ to
 **TODO**
 - document how to change the name of the users table
 - Add routes to documentation
+- Document CheckHashTrait
+- Add Doctrine Auth PWA push authentication app

@@ -65,7 +65,7 @@ class GetRedirect extends AbstractPlugin
      */
     private function hasRedirect(): bool
     {
-        return (isset($this->authContainerStorage->redirect) && is_array($this->authContainerStorage->redirect));
+        return (is_array($this->authContainerStorage->redirect ?? false));
     }
 
     /**
@@ -75,7 +75,11 @@ class GetRedirect extends AbstractPlugin
      */
     private function canRedirect(AuthUserInterface $identity): bool
     {
-        return $this->acl->isAllowed($identity->getUserRole()->getRole(), $this->authContainerStorage->redirect['controller'], $this->authContainerStorage->redirect['action']);
+        return $this->acl->isAllowed(
+            $identity->getUserRole()->getRole(),
+            $this->authContainerStorage->redirect['controller'],
+            $this->authContainerStorage->redirect['action']
+        );
     }
 
     /**

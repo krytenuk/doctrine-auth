@@ -8,19 +8,26 @@ use Laminas\Validator\Csrf;
 
 class ValidateHash extends AbstractPlugin
 {
-    private Csrf $csrfValidator;
+    public function __construct(protected Csrf $csrfValidator)
+    {}
 
-    public function __construct(protected AuthContainerStorage $authContainerStorage)
+
+    public function __invoke(): ValidateHash
     {
-        $this->csrfValidator = new Csrf(['session' => $this->authContainerStorage]);
+        return $this;
     }
 
-
-    public function __invoke(?string $hash = null): ValidateHash|bool
+    /**
+     * Check if specified hash is valid
+     * @param string $hash
+     * @return bool
+     */
+    public function isValid(string $hash): bool
     {
-        if ($hash === null) {
-            return $this;
+        if (!$hash) {
+            return false;
         }
+
         return $this->csrfValidator->isValid($hash);
     }
 

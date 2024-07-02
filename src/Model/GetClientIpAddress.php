@@ -17,26 +17,25 @@ class GetClientIpAddress
         if ($proxyHeader) {
             $this->remoteAddress->setProxyHeader($proxyHeader);
         }
-
     }
 
     /**
      * Retrieve and filter the clients IP address
      *
-     * @return bool|string
+     * @return string|null
      */
-    public function getClientIP(): bool|string
+    public function getClientIP(): string|null
     {
         $ipAddress = $this->remoteAddress->getIpAddress();
         if (!$ipAddress) {
-            return false;
+            return null;
         }
 
         if (filter_var($ipAddress, FILTER_VALIDATE_IP) !== false) {
             return $ipAddress;
         }
 
-        return false;
+        return null;
     }
 
 

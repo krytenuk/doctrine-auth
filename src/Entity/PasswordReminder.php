@@ -30,20 +30,20 @@ class PasswordReminder implements EntityInterface
     
     /**
      *
-     * @var string
+     * @var string|null
      * @ORM\Column(name="code", type="string", length=13, nullable=false, unique=true)
      */
-    private string $code;
+    private ?string $code = null;
     
     /**
-     * @var BaseUser
+     * @var BaseUser|null
      *
      * @ORM\OneToOne(targetEntity="FwsDoctrineAuth\Entity\BaseUser", inversedBy="passwordReminder")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="user_id", referencedColumnName="user_id", onDelete="cascade")
      * })
      */
-    private BaseUser $user;
+    private ?BaseUser $user = null;
 
     /**
      * @var DateTimeInterface

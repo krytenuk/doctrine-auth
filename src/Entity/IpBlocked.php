@@ -24,45 +24,45 @@ class IpBlocked implements EntityInterface
     private ?int $blockId = null;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="ip_address", type="string", length=16, nullable=false)
      */
-    private string $ipAddress;
+    private ?string $ipAddress = null;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="email_address", type="string", length=100, nullable=false)
      */
-    private string $emailAddress;
+    private ?string $emailAddress = null;
 
     /**
-     * @var DateTimeInterface
+     * @var DateTimeInterface|null
      *
      * @ORM\Column(name="date_blocked", type="datetime", nullable=false)
      */
-    private DateTimeInterface $dateBlocked;
+    private ?DateTimeInterface $dateBlocked = null;
     
     public function __construct()
     {
         $this->dateBlocked = new DateTimeImmutable('now');
     }
-    
+
     /**
-     * 
-     * @return int
+     *
+     * @return int|null
      */
-    public function getBlockId(): int
+    public function getBlockId(): ?int
     {
         return $this->blockId;
     }
-    
+
     /**
-     * 
-     * @return string
+     *
+     * @return string|null
      */
-    public function getIpAddress(): string
+    public function getIpAddress(): ?string
     {
         return $this->ipAddress;
     }
@@ -77,12 +77,12 @@ class IpBlocked implements EntityInterface
         $this->ipAddress = $ipAddress;
         return $this;
     }
-    
+
     /**
-     * 
-     * @return string
+     *
+     * @return string|null
      */
-    public function getEmailAddress(): string
+    public function getEmailAddress(): ?string
     {
         return $this->emailAddress;
     }
@@ -99,10 +99,10 @@ class IpBlocked implements EntityInterface
     }
 
     /**
-     * 
-     * @return DateTimeInterface
+     *
+     * @return DateTimeInterface|null
      */
-    public function getDateBlocked(): DateTimeInterface
+    public function getDateBlocked(): ?DateTimeInterface
     {
         return $this->dateBlocked;
     }

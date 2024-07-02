@@ -20,15 +20,18 @@ use Laminas\Authentication\AuthenticationService;
 use Laminas\Mvc\MvcEvent;
 use Laminas\Router\Http\Literal;
 use Laminas\Router\Http\Segment;
+use Laminas\ServiceManager\AbstractFactory\ConfigAbstractFactory;
 use Laminas\ServiceManager\Factory\InvokableFactory;
+use Laminas\Validator\Csrf;
+use Psr\Container\ContainerInterface;
 
 return [
     'controllers' => [
         'factories' => [
-            Controller\LoginController::class => Controller\Service\LoginControllerFactory::class,
-            Controller\TwoFactorAuthenticationController::class => Controller\Service\TwoFactorAuthenticationControllerFactory::class,
-            Controller\ManageTwoFactorAuthenticationController::class => Controller\Service\ManageTwoFactorAuthenticationControllerFactory::class,
-            Controller\AppAuthenticationController::class => Controller\Service\AppAuthenticationControllerFactory::class,
+            Controller\LoginController::class => ConfigAbstractFactory::class,
+            Controller\TwoFactorAuthenticationController::class => ConfigAbstractFactory::class,
+            Controller\ManageTwoFactorAuthenticationController::class => ConfigAbstractFactory::class,
+            Controller\AppAuthenticationController::class => ConfigAbstractFactory::class,
         ],
     ],
     'router' => [
@@ -251,7 +254,6 @@ return [
             Model\TwoFactorAuthentication\AppAuthenticationMethodModel::class => Model\TwoFactorAuthentication\Service\AppAuthenticationMethodModelFactory::class,
             Model\RegisterModel::class => Model\Service\RegisterModelFactory::class,
             Model\ForgotPasswordModel::class => Model\Service\ForgotPasswordModelFactory::class,
-//            Model\LoggingModel::class => Model\Service\LoggingModelFactory::class,
             Model\TwoFactorAuthentication\AdaptorPluginManager::class => Model\TwoFactorAuthentication\Service\AdaptorPluginManagerFactory::class,
             Model\TwoFactorAuthentication\Adapter\EmailAdapter::class => Model\TwoFactorAuthentication\Adapter\Service\EmailAdapterFactory::class,
             Model\TwoFactorAuthentication\Adapter\BulkSmsAdapter::class => Model\TwoFactorAuthentication\Adapter\Service\BulkSmsAdapterFactory::class,
@@ -301,10 +303,11 @@ return [
     'form_elements' => [
         'factories' => [
             // Default Doctrine Auth Forms
-            Form\RegisterForm::class => Form\Service\RegisterFormFactory::class,
-            Form\ResetPasswordForm::class => Form\Service\ResetPasswordFormFactory::class,
-            Form\ForgottenPasswordForm::class => Form\Service\ForgottenPasswordFormFactory::class,
-            Form\SelectTwoFactorAuthMethodForm::class => Form\Service\SelectTwoFactorAuthMethodFormFactory::class,
+            Form\LoginForm::class => ConfigAbstractFactory::class,
+            Form\RegisterForm::class => ConfigAbstractFactory::class,
+            Form\ResetPasswordForm::class => ConfigAbstractFactory::class,
+            Form\ForgottenPasswordForm::class => ConfigAbstractFactory::class,
+            Form\SelectTwoFactorAuthMethodForm::class => ConfigAbstractFactory::class,
             Form\TwoFactorAuthenticationCodeForm::class => InvokableFactory::class,
             // Load forms using configuration values
             Form\Service\DoctrineAuthFormFactory::REGISTRATION_FORM => Form\Service\DoctrineAuthFormFactory::class,
@@ -329,12 +332,14 @@ return [
     ],
     'controller_plugins' => [
         'factories' => [
-            ControllerPlugin\GetRedirect::class => ControllerPlugin\Service\GetRedirectFactory::class,
-            ControllerPlugin\IsIpBlocked::class => ControllerPlugin\Service\IsIpBlockedFactory::class,
-            ControllerPlugin\BlockIP::class => ControllerPlugin\Service\BlockIpFactory::class,
-            ControllerPlugin\LogFailedAttempt::class => ControllerPlugin\Service\LogFailedAttemptFactory::class,
-            ControllerPlugin\LogSuccessfulLogin::class => ControllerPlugin\Service\LogSuccessfulLoginFactory::class,
-            ControllerPlugin\ValidateHash::class => ControllerPlugin\Service\ValidateHashFactory::class,
+            ControllerPlugin\GetRedirect::class => ConfigAbstractFactory::class,
+            ControllerPlugin\IsIpBlocked::class => ConfigAbstractFactory::class,
+            ControllerPlugin\BlockIP::class => ConfigAbstractFactory::class,
+            ControllerPlugin\LogFailedAttempt::class => ConfigAbstractFactory::class,
+            ControllerPlugin\LogSuccessfulLogin::class => ConfigAbstractFactory::class,
+            ControllerPlugin\ValidateHash::class => function(ContainerInterface $container, $requestedName) {
+                new Csrf(['session' => $container->get(Model\AuthContainerStorage::class)]);
+            },
         ],
         'aliases' => [
             'getAuthRedirect' => ControllerPlugin\GetRedirect::class,
@@ -343,6 +348,72 @@ return [
             'logFailedLoginAttempt' => ControllerPlugin\LogFailedAttempt::class,
             'logSuccessfulLogin' => ControllerPlugin\LogSuccessfulLogin::class,
             'validateHash' => ControllerPlugin\ValidateHash::class,
+        ],
+    ],
+
+    ConfigAbstractFactory::class => [
+        /* Controllers */
+        Controller\LoginController::class => [
+            Model\LoginModel::class,
+            Model\RegisterModel::class,
+            Model\ForgotPasswordModel::class,
+            Model\TwoFactorAuthentication\ManageTwoFactorAuthenticationModel::class,
+            Model\TwoFactorAuthentication\TwoFactorAuthenticationModel::class,
+        ],
+        Controller\TwoFactorAuthenticationController::class => [
+            Model\TwoFactorAuthentication\TwoFactorAuthenticationModel::class,
+        ],
+        Controller\ManageTwoFactorAuthenticationController::class => [
+            Model\TwoFactorAuthentication\ManageTwoFactorAuthenticationModel::class,
+        ],
+        Controller\AppAuthenticationController::class => [
+            Model\TwoFactorAuthentication\AppAuthenticationMethodModel::class
+        ],
+
+        /* Controller Plugins */
+            ControllerPlugin\GetRedirect::class => [
+            Model\Acl::class,
+            Model\AuthContainerStorage::class
+        ],
+        ControllerPlugin\IsIpBlocked::class => [
+            EntityManager::class,
+            Model\GetClientIpAddress::class,
+            'config',
+        ],
+        ControllerPlugin\BlockIP::class => [
+            EntityManager::class,
+            Model\GetClientIpAddress::class,
+            'config',
+        ],
+        ControllerPlugin\LogFailedAttempt::class => [
+            EntityManager::class,
+            Model\GetClientIpAddress::class,
+        ],
+        ControllerPlugin\LogSuccessfulLogin::class => [
+            EntityManager::class,
+            AuthenticationService::class,
+        ],
+
+        /* Forms */
+        /* Default Auth Forms */
+        Form\LoginForm::class => [
+            EntityManager::class,
+            'config',
+        ],
+        Form\RegisterForm::class => [
+            EntityManager::class,
+            'config',
+        ],
+        Form\ResetPasswordForm::class => [
+            'config',
+        ],
+        Form\ForgottenPasswordForm::class => [
+            EntityManager::class,
+            'config',
+        ],
+        Form\SelectTwoFactorAuthMethodForm::class => [
+            'authContainerStorage',
+            'config',
         ],
     ],
 ];

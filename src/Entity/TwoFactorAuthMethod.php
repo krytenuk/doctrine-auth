@@ -5,7 +5,7 @@ namespace FwsDoctrineAuth\Entity;
 use Doctrine\ORM\Mapping as ORM;
 use DateTimeImmutable;
 use DateTimeInterface;
-use FwsDoctrineAuth\Model\TwoFactorAuthentication\TwoFactorAuthenticationModel;
+use FwsDoctrineAuth\Model\TwoFactorAuthentication\Adapter\AuthenticationAppAdapter;
 
 /**
  * TwoFactorAuthMethod
@@ -26,20 +26,20 @@ class TwoFactorAuthMethod implements EntityInterface
 
     /**
      *
-     * @var string
+     * @var string|null
      * @ORM\Column(name="method", type="string", length=30, nullable=false)
      */
-    private string $method;
+    private ?string $method = null;
 
     /**
-     * @var BaseUser
+     * @var BaseUser|null
      *
      * @ORM\ManyToOne(targetEntity="FwsDoctrineAuth\Entity\BaseUser", inversedBy="authMethods")
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="user_id", referencedColumnName="user_id", onDelete="cascade")
      * })
      */
-    private BaseUser $user;
+    private ?BaseUser $user = null;
 
     /**
      * @var DateTimeInterface
@@ -61,7 +61,7 @@ class TwoFactorAuthMethod implements EntityInterface
      *
      * @ORM\Column(name="settings", type="json", nullable=true)
      */
-    private ?array $settings = null;
+    private array $settings = [];
 
     public function __construct()
     {
@@ -72,25 +72,25 @@ class TwoFactorAuthMethod implements EntityInterface
      * Get 2FA authentication method id
      * @return int
      */
-    public function getAuthMethodId(): int
+    public function getAuthMethodId(): ?int
     {
         return $this->authMethodId;
     }
 
     /**
      * Get 2FA authentication method
-     * @return string
+     * @return string|null
      */
-    public function getMethod(): string
+    public function getMethod(): ?string
     {
         return $this->method;
     }
 
     /**
      * Get user
-     * @return BaseUser
+     * @return BaseUser|null
      */
-    public function getUser(): BaseUser
+    public function getUser(): ?BaseUser
     {
         return $this->user;
     }
@@ -105,9 +105,9 @@ class TwoFactorAuthMethod implements EntityInterface
     }
 
     /**
-     * @return array|null
+     * @return array
      */
-    public function getSettings(): ?array
+    public function getSettings(): array
     {
         return $this->settings;
     }
@@ -156,10 +156,10 @@ class TwoFactorAuthMethod implements EntityInterface
     }
 
     /**
-     * @param array|null $settings
+     * @param array $settings
      * @return TwoFactorAuthMethod
      */
-    public function setSettings(?array $settings): TwoFactorAuthMethod
+    public function setSettings(array $settings): TwoFactorAuthMethod
     {
         $this->settings = $settings;
         return $this;
@@ -173,7 +173,9 @@ class TwoFactorAuthMethod implements EntityInterface
      */
     public function setGoogleAuth(?GoogleAuth $googleAuth): TwoFactorAuthMethod
     {
-        if ($this->method === TwoFactorAuthenticationModel::AUTHENTICATOR_APP) {
+        trigger_deprecation(self::class, '1.0', 'Use TwoFactorAuthMethod::settings instead to store auth app secret');
+
+        if ($this->method === AuthenticationAppAdapter::getName()) {
             $this->googleAuth = $googleAuth;
         }
         return $this;
