@@ -22,6 +22,7 @@ use Doctrine\ORM\Mapping as ORM;
         "engine" => "InnoDB",
     ]
 )]
+#[ORM\Index(columns: ["user_id"], name: "user_id")]
 class LoginLog implements EntityInterface
 {
     #[ORM\Id,

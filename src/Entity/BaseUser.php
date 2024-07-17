@@ -42,6 +42,7 @@ use Doctrine\ORM\Mapping as ORM;
         type: "string"
     )
 ]
+#[ORM\Index(columns: ["user_id"], name: "user_id")]
 class BaseUser implements AuthUserInterface
 {
     #[ORM\Id,

@@ -22,6 +22,7 @@ use function trigger_deprecation;
         "engine" => "InnoDB",
     ]
 )]
+#[ORM\Index(columns: ["user_id"], name: "user_id")]
 class TwoFactorAuthMethod implements EntityInterface
 {
     #[ORM\Id,

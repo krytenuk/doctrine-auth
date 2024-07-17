@@ -31,6 +31,7 @@ use function trigger_deprecation;
         "engine" => "InnoDB",
     ]
 )]
+#[ORM\Index(columns: ["auth_method_id"], name: "auth_method_id")]
 class GoogleAuth implements EntityInterface
 {
     #[ORM\Id,
