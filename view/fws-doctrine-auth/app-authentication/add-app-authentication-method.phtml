@@ -1,0 +1,38 @@
+<?php
+/**
+ * @var PhpRenderer|ViewHelperTrait|HelperTrait|I18nHelperTrait $this
+ * @var string $qrCode
+ * @var TwoFactorAuthenticationCodeForm $authCodeForm
+ * @var string $siteName
+ **/
+
+use FwsDoctrineAuth\Form\TwoFactorAuthenticationCodeForm;
+use FwsDoctrineAuth\View\Helper\ViewHelperTrait;
+use Laminas\Form\View\HelperTrait;
+use Laminas\I18n\View\HelperTrait as I18nHelperTrait;
+use Laminas\View\Renderer\PhpRenderer;
+
+?>
+<h3><?= $this->translate('Pair with Authenticator App'); ?></h3>
+<?php if ($qrCode === null): ?>
+    <p><?= $this->translate('Error: Unable to generate QR code'); ?></p>
+<?php else: ?>
+    <p><?= $this->translate('Please scan the QR code with your Authenticator app then enter the code generated below'); ?></p>
+    <img src="data:image/png;base64, <?= base64_encode($qrCode); ?>" alt="QR Code" />
+    <?php
+    $authCodeForm->setAttribute('action', $this->url('doctrine-auth/2fa/add-app-method'));
+    $this->formElementErrors()->setAttributes(['class' => 'errors']);
+    $authCodeForm->prepare();
+    echo $this->form()->openTag($authCodeForm);
+    ?>
+    <dl class="auth-methods">
+        <dt><?= $this->formLabel($authCodeForm->get('code')); ?></dt>
+        <dd><?= $this->formText($authCodeForm->get('code')) ?>
+            <?= $this->formElementErrors($authCodeForm->get('code')); ?></dd>
+        <dd><?= $this->formElement($authCodeForm->get('csrf')) ?>
+            <?= $this->formElementErrors($authCodeForm->get('csrf')); ?>
+            <?= $this->formSubmit($authCodeForm->get('submit')) ?></dd>
+    </dl>
+    <?= $this->form()->closeTag(); ?>
+    <p><?= $this->translate('Not working?'); ?> <a href="<?= $this->url('doctrine-auth/2fa/regenerate-app-secret'); ?>"><?= $this->translate('Regenerate code'); ?></a></p>
+<?php endif; ?>
