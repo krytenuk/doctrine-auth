@@ -1,17 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Model;
 
 use Laminas\Http\PhpEnvironment\RemoteAddress;
+
+use function filter_var;
+
+use const FILTER_VALIDATE_IP;
 
 class GetClientIpAddress
 {
     private RemoteAddress $remoteAddress;
 
-    public function __construct(private array $config)
+    public function __construct(private readonly array $config)
     {
         $this->remoteAddress = new RemoteAddress();
-        $proxyHeader = (string) ($this->config['doctrineAuth']['proxyHeader'] ?? '');
+        $proxyHeader         = (string) ($this->config['doctrineAuth']['proxyHeader'] ?? '');
 
         $this->remoteAddress->setUseProxy((bool) ($this->config['doctrineAuth']['useHttpProxy'] ?? $this->remoteAddress->getUseProxy()));
         if ($proxyHeader) {
@@ -21,13 +27,11 @@ class GetClientIpAddress
 
     /**
      * Retrieve and filter the clients IP address
-     *
-     * @return string|null
      */
     public function getClientIP(): string|null
     {
         $ipAddress = $this->remoteAddress->getIpAddress();
-        if (!$ipAddress) {
+        if (! $ipAddress) {
             return null;
         }
 
@@ -37,6 +41,4 @@ class GetClientIpAddress
 
         return null;
     }
-
-
 }

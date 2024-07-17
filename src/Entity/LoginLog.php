@@ -1,97 +1,95 @@
 <?php
 
-namespace FwsDoctrineAuth\Entity;
-
-use Doctrine\ORM\Mapping as ORM;
-use DateTimeInterface;
-use DateTimeImmutable;
+declare(strict_types=1);
 
 /**
  * LoginLog
- * @ORM\Entity
- * @ORM\Table(name="login_log", options={"collate"="latin1_swedish_ci", "charset"="latin1", "engine"="InnoDB"})
- * @author Garry Childs <info@freedomwebservices.net>
  */
+
+namespace FwsDoctrineAuth\Entity;
+
+use DateTime;
+use DateTimeInterface;
+use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\Mapping as ORM;
+
+#[ORM\Entity(readOnly: false)]
+#[ORM\Table(
+    name: "login_log",
+    options: [
+        "collate" => "latin1_swedish_ci",
+        "charset" => "latin1",
+        "engine" => "InnoDB",
+    ]
+)]
 class LoginLog implements EntityInterface
 {
+    #[ORM\Id,
+        ORM\Column(
+            name: "log_id",
+            type: Types::INTEGER,
+            nullable: false,
+            options: ["unsigned" => true]
+        ),
+        ORM\GeneratedValue(strategy: "IDENTITY")
+    ]
+    private int|null $logId = null;
 
-    /**
-     * @var int|null
-     * @ORM\Column(name="log_id", type="integer", options={"unsigned"=true}, nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private ?int $logId = null;
+    #[ORM\ManyToOne(
+        targetEntity: BaseUser::class,
+        cascade: ["persist"],
+        inversedBy: "logins"
+    )]
+    #[ORM\JoinColumn(
+        name: "user_id",
+        referencedColumnName: "user_id",
+        nullable: false,
+        onDelete: "CASCADE"
+    )]
+    private AuthUserInterface|null $user;
 
-    /**
-     * @var AuthUserInterface|null
-     *
-     * @ORM\ManyToOne(targetEntity="FwsDoctrineAuth\Entity\BaseUser", inversedBy="logins")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="user_id", referencedColumnName="user_id", onDelete="cascade")
-     * })
-     */
-    private ?AuthUserInterface $user = null;
-
-    /**
-     * @var bool
-     *
-     * @ORM\Column(name="used_2fa", type="boolean", nullable=false, options={"default":0})
-     */
+    #[ORM\Column(
+        name: "used_2fa",
+        type: Types::BOOLEAN,
+        nullable: false,
+        options: ["default" => false]
+    )]
     private bool $used2fa = false;
 
-    /**
-     * @var DateTimeInterface
-     *
-     * @ORM\Column(name="date_logged", type="datetime", nullable=false)
-     */
-    private DateTimeInterface $dateLogged;
-    
+    #[ORM\Column(
+        name: "date_logged",
+        type: Types::DATETIME_MUTABLE,
+        nullable: false,
+    )]
+    private DateTimeInterface|null $dateLogged;
+
     public function __construct()
     {
-        $this->dateLogged = new DateTimeImmutable();
+        $this->dateLogged = new DateTime();
     }
 
-    /**
-     *
-     * @return int|null
-     */
-    public function getLogId(): ?int
+    public function getLogId(): int|null
     {
         return $this->logId;
     }
 
-    /**
-     *
-     * @return AuthUserInterface|null
-     */
-    public function getUser(): ?AuthUserInterface
+    public function getUser(): AuthUserInterface|null
     {
         return $this->user;
     }
 
-    /**
-     * 
-     * @return bool
-     */
     public function getUsed2fa(): bool
     {
         return $this->used2fa;
     }
 
-    /**
-     * 
-     * @return DateTimeInterface
-     */
-    public function getDateLogged(): DateTimeInterface
+    public function getDateLogged(): DateTimeInterface|null
     {
         return $this->dateLogged;
     }
 
     /**
-     * 
-     * @param AuthUserInterface $user
-     * @return LoginLog
+     * @return $this
      */
     public function setUser(AuthUserInterface $user): LoginLog
     {
@@ -100,9 +98,7 @@ class LoginLog implements EntityInterface
     }
 
     /**
-     * 
-     * @param bool $used2fa
-     * @return LoginLog
+     * @return $this
      */
     public function setUsed2fa(bool $used2fa): LoginLog
     {
@@ -111,14 +107,11 @@ class LoginLog implements EntityInterface
     }
 
     /**
-     *
-     * @param DateTimeInterface $dateLogged
-     * @return LoginLog
+     * @return $this
      */
     public function setDateLogged(DateTimeInterface $dateLogged): LoginLog
     {
         $this->dateLogged = $dateLogged;
         return $this;
     }
-
 }

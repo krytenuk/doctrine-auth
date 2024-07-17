@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\View\Helper;
 
 use FwsDoctrineAuth\Entity\AuthUserInterface;
@@ -7,37 +9,36 @@ use FwsDoctrineAuth\Entity\EntityInterface;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use Laminas\View\Helper\AbstractHelper;
 
+use function method_exists;
+use function sprintf;
+use function ucfirst;
+
 class RequiredFieldsCheck extends AbstractHelper
 {
-    public function __invoke(?AuthUserInterface $identity, ?string $adaptor = null)
+    public function __invoke(AuthUserInterface|null $identity, string|null $adaptor = null)
     {
-
     }
-
-
 
     /**
      * Check the adapters required fields are not falsy
-     * @param AuthUserInterface $authUserEntity
-     * @param string $adaptor
-     * @return bool
+     *
      * @throws DoctrineAuthException
+     *
+     * @todo Figure out what this is!!
      */
     private function checkAdaptorRequiredFields(AuthUserInterface $authUserEntity, string $adaptor): bool
     {
-        $found = true;
+        $found          = true;
         $requiredFields = $adaptor::getRequiredFields();
         foreach ($requiredFields as $field) {
-            $found = $found & $this->hasValue($authUserEntity, $field);
+            $found &= $this->hasValue($authUserEntity, $field);
         }
         return $found;
     }
 
     /**
      * Get property value of the given entity
-     * @param EntityInterface $entity
-     * @param string $propertyName
-     * @return bool
+     *
      * @throws DoctrineAuthException
      */
     private function hasValue(EntityInterface $entity, string $propertyName): bool
@@ -56,13 +57,12 @@ class RequiredFieldsCheck extends AbstractHelper
             sprintf(
                 'Property (%s) in (%s) is not accessible. You should implement %s::%s() or %s::%s()',
                 $propertyName,
-                get_class($entity),
-                get_class($entity),
+                $entity::class,
+                $entity::class,
                 $getter,
-                get_class($entity),
+                $entity::class,
                 $isser
             )
         );
     }
-
 }

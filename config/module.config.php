@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * To override settings here, ensure your module is defined after FwsDoctrineAuth module.
  */
@@ -7,14 +9,17 @@
 namespace FwsDoctrineAuth;
 
 use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\Mapping\Driver\AnnotationDriver;
+use Doctrine\ORM\Mapping\Driver\AttributeDriver;
+use FwsDoctrineAuth\Command;
 use FwsDoctrineAuth\Controller;
 use FwsDoctrineAuth\Controller\Plugin as ControllerPlugin;
 use FwsDoctrineAuth\Form;
 use FwsDoctrineAuth\Listener\AuthListener;
 use FwsDoctrineAuth\Listener\NavigationListener;
 use FwsDoctrineAuth\Model;
-use FwsDoctrineAuth\Model\Service\AuthContainerStorageFactory;
+use FwsDoctrineAuth\Model\TwoFactorAuthentication\AdaptorPluginManager;
+use FwsDoctrineAuth\Model\TwoFactorAuthentication\ManageTwoFactorAuthenticationModel;
+use FwsDoctrineAuth\Model\TwoFactorAuthentication\TwoFactorAuthenticationModel;
 use FwsDoctrineAuth\View\Helper as ViewHelper;
 use Laminas\Authentication\AuthenticationService;
 use Laminas\Mvc\MvcEvent;
@@ -22,7 +27,9 @@ use Laminas\Router\Http\Literal;
 use Laminas\Router\Http\Segment;
 use Laminas\ServiceManager\AbstractFactory\ConfigAbstractFactory;
 use Laminas\ServiceManager\Factory\InvokableFactory;
-use Laminas\Validator\Csrf;
+use Laminas\Session\SessionManager;
+use Laminas\Session\Validator\Csrf;
+use Laminas\View\Renderer\PhpRenderer;
 use Psr\Container\ContainerInterface;
 
 return [
@@ -238,26 +245,39 @@ return [
     ],
     'view_manager' => [
         'template_path_stack' => [
-            'fws-doctrine-auth' => __DIR__ . '/../view'
+            'fws-doctrine-auth' => __DIR__ . '/../view',
         ],
         'display_exceptions' => false,
     ],
     'service_manager' => [
+        'abstract_factories' => [
+            ConfigAbstractFactory::class,
+        ],
         'factories' => [
             AuthListener::class => InvokableFactory::class,
             NavigationListener::class => InvokableFactory::class,
-            Model\Acl::class => Model\Service\AclFactory::class,
-            Model\AuthContainerStorage::class => AuthContainerStorageFactory::class,
-            Model\LoginModel::class => Model\Service\LoginModelFactory::class,
-            Model\TwoFactorAuthentication\TwoFactorAuthenticationModel::class => Model\TwoFactorAuthentication\Service\TwoFactorAuthenticationModelFactory::class,
-            Model\TwoFactorAuthentication\ManageTwoFactorAuthenticationModel::class => Model\TwoFactorAuthentication\Service\ManageTwoFactorAuthenticationModelFactory::class,
-            Model\TwoFactorAuthentication\AppAuthenticationMethodModel::class => Model\TwoFactorAuthentication\Service\AppAuthenticationMethodModelFactory::class,
-            Model\RegisterModel::class => Model\Service\RegisterModelFactory::class,
-            Model\ForgotPasswordModel::class => Model\Service\ForgotPasswordModelFactory::class,
+            Model\Acl::class => ConfigAbstractFactory::class,
+            Model\AuthContainerStorage::class => function () {
+                return new Model\AuthContainerStorage('auth');
+            },
+            Model\LoginModel::class => ConfigAbstractFactory::class,
+            Model\TwoFactorAuthentication\TwoFactorAuthenticationModel::class => ConfigAbstractFactory::class,
+            Model\TwoFactorAuthentication\ManageTwoFactorAuthenticationModel::class => ConfigAbstractFactory::class,
+            Model\TwoFactorAuthentication\AppAuthenticationMethodModel::class => ConfigAbstractFactory::class,
+            Model\RegisterModel::class => ConfigAbstractFactory::class,
+            Model\ForgotPasswordModel::class => ConfigAbstractFactory::class,
+            Model\GetClientIpAddress::class => ConfigAbstractFactory::class,
+
             Model\TwoFactorAuthentication\AdaptorPluginManager::class => Model\TwoFactorAuthentication\Service\AdaptorPluginManagerFactory::class,
-            Model\TwoFactorAuthentication\Adapter\EmailAdapter::class => Model\TwoFactorAuthentication\Adapter\Service\EmailAdapterFactory::class,
-            Model\TwoFactorAuthentication\Adapter\BulkSmsAdapter::class => Model\TwoFactorAuthentication\Adapter\Service\BulkSmsAdapterFactory::class,
-            Model\TwoFactorAuthentication\Adapter\AuthenticationAppAdapter::class => Model\TwoFactorAuthentication\Adapter\Service\AuthenticationAppAdapterFactory::class
+            Model\TwoFactorAuthentication\Adapter\EmailAdapter::class => ConfigAbstractFactory::class,
+            Model\TwoFactorAuthentication\Adapter\BulkSmsAdapter::class => ConfigAbstractFactory::class,
+            Model\TwoFactorAuthentication\Adapter\AuthenticationAppAdapter::class => InvokableFactory::class,
+
+            Command\InitCommand::class => ConfigAbstractFactory::class,
+            
+            AuthenticationService::class => function ($serviceManager) {
+                return $serviceManager->get('doctrine.authenticationservice.orm_default');
+            },
         ],
         'aliases' => [
             'acl' => Model\Acl::class,
@@ -268,19 +288,19 @@ return [
     'doctrine' => [
         'driver' => [
             __NAMESPACE__ . '_driver' => [
-                'class' => AnnotationDriver::class,
-                'paths' => [__DIR__ . '/../src/Entity']
+                'class' => AttributeDriver::class,
+                'paths' => [__DIR__ . '/../src/Entity'],
             ],
             'orm_default' => [
                 'drivers' => [
-                    __NAMESPACE__ . '\Entity' => __NAMESPACE__ . '_driver'
+                    __NAMESPACE__ . '\Entity' => __NAMESPACE__ . '_driver',
                 ],
             ],
         ],
         'authentication' => [
             'orm_default' => [
                 'object_manager' => EntityManager::class,
-                'credential_callable' => 'FwsDoctrineAuth\Model\HashPassword::verifyCredential'
+                'credential_callable' => 'FwsDoctrineAuth\Model\HashPassword::verifyCredential',
             ],
         ],
     ],
@@ -322,7 +342,7 @@ return [
         'factories' => [
             ViewHelper\ObfuscateEmail::class => InvokableFactory::class,
             ViewHelper\ObfuscatePhoneNumber::class => InvokableFactory::class,
-            ViewHelper\RequiredFieldsCheck::class => InvokableFactory::class
+            ViewHelper\RequiredFieldsCheck::class => InvokableFactory::class,
         ],
         'aliases' => [
             'obfuscateEmail' => ViewHelper\ObfuscateEmail::class,
@@ -337,8 +357,8 @@ return [
             ControllerPlugin\BlockIP::class => ConfigAbstractFactory::class,
             ControllerPlugin\LogFailedAttempt::class => ConfigAbstractFactory::class,
             ControllerPlugin\LogSuccessfulLogin::class => ConfigAbstractFactory::class,
-            ControllerPlugin\ValidateHash::class => function(ContainerInterface $container, $requestedName) {
-                new Csrf(['session' => $container->get(Model\AuthContainerStorage::class)]);
+            ControllerPlugin\ValidateHash::class => function (ContainerInterface $container, $requestedName) {
+                return new ControllerPlugin\ValidateHash(new Csrf(['session' => $container->get(Model\AuthContainerStorage::class)]));
             },
         ],
         'aliases' => [
@@ -350,7 +370,6 @@ return [
             'validateHash' => ControllerPlugin\ValidateHash::class,
         ],
     ],
-
     ConfigAbstractFactory::class => [
         /* Controllers */
         Controller\LoginController::class => [
@@ -367,13 +386,13 @@ return [
             Model\TwoFactorAuthentication\ManageTwoFactorAuthenticationModel::class,
         ],
         Controller\AppAuthenticationController::class => [
-            Model\TwoFactorAuthentication\AppAuthenticationMethodModel::class
+            Model\TwoFactorAuthentication\AppAuthenticationMethodModel::class,
         ],
 
         /* Controller Plugins */
-            ControllerPlugin\GetRedirect::class => [
+        ControllerPlugin\GetRedirect::class => [
             Model\Acl::class,
-            Model\AuthContainerStorage::class
+            Model\AuthContainerStorage::class,
         ],
         ControllerPlugin\IsIpBlocked::class => [
             EntityManager::class,
@@ -413,6 +432,66 @@ return [
         ],
         Form\SelectTwoFactorAuthMethodForm::class => [
             'authContainerStorage',
+            'config',
+        ],
+
+        /* Models */
+        Model\Acl::class => [
+            'config',
+        ],
+        Model\LoginModel::class => [
+            'FormElementManager',
+            AuthenticationService::class,
+            EntityManager::class,
+            'authContainerStorage',
+            SessionManager::class,
+            Model\Acl::class,
+            'config',
+        ],
+        Model\TwoFactorAuthentication\TwoFactorAuthenticationModel::class => [
+            AdaptorPluginManager::class,
+            'FormElementManager',
+            'authContainerStorage',
+            AuthenticationService::class,
+            'config',
+        ],
+        Model\TwoFactorAuthentication\ManageTwoFactorAuthenticationModel::class => [
+            EntityManager::class,
+            AuthenticationService::class,
+            'authContainerStorage',
+            'config',
+        ],
+        Model\TwoFactorAuthentication\AppAuthenticationMethodModel::class => [
+            ManageTwoFactorAuthenticationModel::class,
+            TwoFactorAuthenticationModel::class,
+            'config',
+        ],
+        Model\RegisterModel::class => [
+            'FormElementManager',
+            EntityManager::class,
+            Model\Acl::class,
+            Model\LoginModel::class,
+            'config',
+        ],
+        Model\ForgotPasswordModel::class => [
+            'FormElementManager',
+            EntityManager::class,
+            PhpRenderer::class,
+            'config',
+        ],
+        Model\GetClientIpAddress::class => [
+            'config',
+        ],
+        Model\TwoFactorAuthentication\Adapter\EmailAdapter::class => [
+            PhpRenderer::class,
+        ],
+        Model\TwoFactorAuthentication\Adapter\BulkSmsAdapter::class => [
+            PhpRenderer::class,
+        ],
+
+        /* Commands */
+        Command\InitCommand::class => [
+            EntityManager::class,
             'config',
         ],
     ],

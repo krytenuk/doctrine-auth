@@ -1,35 +1,38 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Model;
 
-use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use FwsDoctrineAuth\Entity\BaseUser;
+use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use Laminas\Crypt\Password\Bcrypt;
+
+use function method_exists;
+use function sprintf;
+use function ucfirst;
 
 class HashPassword
 {
-
     private static array $config;
 
-    static public function setConfig(array $config): void
+    public static function setConfig(array $config): void
     {
         self::$config = $config;
     }
 
     /**
      * Check credentials (passwords) match
-     * @param BaseUser $identity
-     * @param string $password
-     * @return boolean
+     *
      * @throws DoctrineAuthException
      */
-    static public function verifyCredential(BaseUser $identity, string $password): bool
+    public static function verifyCredential(BaseUser $identity, string $password): bool
     {
         /* get credential getter if exists */
         $credential = self::$config['doctrine']['authentication']['orm_default']['credential_property']; // get credential
-        $getter = 'get' . ucfirst($credential);
-        if (!method_exists($identity, $getter)) {
-            throw new DoctrineAuthException(sprintf('No getter "%s" found in %s', $getter, get_class($identity)));
+        $getter     = 'get' . ucfirst($credential);
+        if (! method_exists($identity, $getter)) {
+            throw new DoctrineAuthException(sprintf('No getter "%s" found in %s', $getter, $identity::class));
         }
 
         /* Using raw password, registration login */
@@ -41,5 +44,4 @@ class HashPassword
         $bcrypt = new Bcrypt();
         return $bcrypt->verify($password, $identity->$getter());
     }
-
 }

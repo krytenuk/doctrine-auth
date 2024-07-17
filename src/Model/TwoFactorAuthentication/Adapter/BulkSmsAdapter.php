@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Model\TwoFactorAuthentication\Adapter;
 
 use Exception;
@@ -12,63 +14,64 @@ use Laminas\Json\Json;
 use Laminas\View\Model\ViewModel;
 use Laminas\View\Renderer\PhpRenderer;
 
+use function json_decode;
+use function property_exists;
+use function substr;
+
+use const CURLOPT_CONNECTTIMEOUT;
+use const CURLOPT_RETURNTRANSFER;
+use const CURLOPT_TIMEOUT;
+
 class BulkSmsAdapter extends AbstractAdapter
 {
-
-    const BULKSMS_API_BASE_URL = 'https://api.bulksms.com/v1/';
+    const BULKSMS_API_BASE_URL            = 'https://api.bulksms.com/v1/';
     const BULKSMS_API_SUCCESS_STATUS_CODE = 201;
-    const ENC_JSON = 'application/json';
+    const ENC_JSON                        = 'application/json';
 
-    /**
-     * @inheritdoc
-     */
+    /** @inheritDoc */
     protected static string $name = 'sms';
 
-    /**
-     * @inheritdoc
-     */
+    /** @inheritDoc */
     protected static string $title = 'Text message';
 
-    /**
-     * @inheritdoc
-     */
+    /** @inheritDoc */
     protected static array $requiredProperties = ['mobileNumber'];
 
     /**
      * Template to render the authentication 2FA code page during the login process
-     * @var string
      */
     protected string $template = 'fws-doctrine-auth/2FA-templates/sms-2fa';
 
     public function __construct(
         private PhpRenderer $phpRenderer
-    )
-    {}
+    ) {
+    }
 
     /**
      * Get the bulk sms token id
+     *
      * @return mixed
      * @throws DoctrineAuthException
      */
     public function getBulkSmsApiTokenId(): string
     {
         $bulkSmsApiTokenId = (string) $this->config['doctrineAuth']['bulkSmsApiTokenId'] ?? '';
-        if (!$bulkSmsApiTokenId) {
+        if (! $bulkSmsApiTokenId) {
             throw new DoctrineAuthException('bulkSmsApiTokenId config key not set');
         }
 
-        return$bulkSmsApiTokenId;
+        return $bulkSmsApiTokenId;
     }
 
     /**
      * Get the bulk sms token secret
-     * @return string
+     *
      * @throws DoctrineAuthException
      */
     public function getBulkSmsApiTokenSecret(): string
     {
         $bulkSmsApiTokenSecret = (string) $this->config['doctrineAuth']['bulkSmsApiTokenSecret'] ?? null;
-        if (!$bulkSmsApiTokenSecret) {
+        if (! $bulkSmsApiTokenSecret) {
             throw new DoctrineAuthException('bulkSmsApiTokenSecret config key not set');
         }
 
@@ -78,13 +81,13 @@ class BulkSmsAdapter extends AbstractAdapter
     /**
      * Get the SMS from text
      * Shows who sent the text to the user, max 11 characters
-     * @return string
+     *
      * @throws DoctrineAuthException
      */
     public function getSmsFrom(): string
     {
         $smsFromName = (string) $this->config['doctrineAuth']['smsFrom'];
-        if (!$smsFromName) {
+        if (! $smsFromName) {
             throw new DoctrineAuthException('siteName config key not set');
         }
 
@@ -103,28 +106,28 @@ class BulkSmsAdapter extends AbstractAdapter
         $viewModel = new ViewModel();
         $viewModel->setTemplate('fws-doctrine-auth/sms/text-code');
         $viewModel->siteName = $siteName;
-        $viewModel->code = $this->authContainerStorage->getCode();
-        $viewModel->expires = $this->getCodeActiveFor();
-        $smsBody = $this->phpRenderer->render($viewModel);
+        $viewModel->code     = $this->authContainerStorage->getCode();
+        $viewModel->expires  = $this->getCodeActiveFor();
+        $smsBody             = $this->phpRenderer->render($viewModel);
 
         $pregReplace = new PregReplace([
-            'pattern' => '/\\n/',
+            'pattern'     => '/\\n/',
             'replacement' => ' ',
         ]);
         $filterChain = new FilterChain();
         $filterChain->attach(new StripTags())
             ->attach($pregReplace);
         $message = [
-            'to' => $this->authContainerStorage->getIdentity()->getMobileNumber(),
+            'to'   => $this->authContainerStorage->getIdentity()->getMobileNumber(),
             'from' => $this->getSmsFrom(),
             'body' => $filterChain->filter($smsBody),
         ];
 
         $client = new Client(self::BULKSMS_API_BASE_URL . 'messages', [
-            'adapter' => Client\Adapter\Curl::class,
+            'adapter'     => Client\Adapter\Curl::class,
             'curloptions' => [
                 CURLOPT_RETURNTRANSFER => 1,
-                CURLOPT_TIMEOUT => 20,
+                CURLOPT_TIMEOUT        => 20,
                 CURLOPT_CONNECTTIMEOUT => 10,
             ],
         ]);

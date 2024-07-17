@@ -1,12 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Exception;
 
-/**
- *
- * @author Garry Childs <info@freedomwebservices.net>
- */
 interface DoctrineAuthExceptionInterface
 {
-    
 }

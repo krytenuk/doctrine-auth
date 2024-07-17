@@ -1,15 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Form\Service;
 
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
-use FwsDoctrineAuth\Form\LoginForm;
 use Laminas\Form\FormElementManager;
 use Laminas\Form\FormInterface;
 use Laminas\ServiceManager\Factory\FactoryInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
+
+use function class_exists;
+use function sprintf;
 
 /**
  * Return a Doctrine Auth form by the configuration key ($requestedName)
@@ -22,11 +26,10 @@ class DoctrineAuthFormFactory implements FactoryInterface
     const RESET_PASSWORD_FORM = 'resetPasswordForm';
     const SELECT_2FA_METHODS_FORM = 'selectTwoFactorAuthMethodForm';
     const TWO_FACTOR_AUTHENTICATION_CODE_FORM = 'twoFactorAuthenticationCodeForm';
+
     /**
-     * @param ContainerInterface $container
      * @param $requestedName
      * @param array|null $options
-     * @return FormInterface
      * @throws DoctrineAuthException
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface

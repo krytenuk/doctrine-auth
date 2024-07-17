@@ -1,14 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Model;
 
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\EntityRepository;
-use Doctrine\ORM\Exception\NotSupported;
 use Doctrine\ORM\Exception\ORMException;
 use Doctrine\Persistence\Mapping\MappingException;
-use Doctrine\Persistence\ObjectRepository;
 use Exception;
 use FwsDoctrineAuth\Entity\EntityInterface;
 
@@ -16,16 +15,12 @@ trait EntityManagerTrait
 {
     protected EntityManagerInterface $entityManager;
 
-    /**
-     * @return EntityManagerInterface
-     */
     public function getEntityManager(): EntityManagerInterface
     {
         return $this->entityManager;
     }
 
     /**
-     * @param EntityManagerInterface $entityManager
      * @return EntityManagerTrait
      */
     public function setEntityManager(EntityManagerInterface $entityManager): static
@@ -36,8 +31,8 @@ trait EntityManagerTrait
 
     /**
      * Flush Doctrine Entity Manager
+     *
      * @param EntityManager $entityManager
-     * @return boolean
      */
     protected function flushEntityManager(EntityManagerInterface $entityManager): bool
     {
@@ -52,8 +47,8 @@ trait EntityManagerTrait
 
     /**
      * Clear Doctrine entity manager
+     *
      * @param EntityManager $entityManager
-     * @return bool
      */
     public function clearEntityManager(EntityManagerInterface $entityManager): bool
     {
@@ -67,9 +62,8 @@ trait EntityManagerTrait
 
     /**
      * Set entity for removal from database in entity manager
+     *
      * @param EntityManager $entityManager
-     * @param EntityInterface $entity
-     * @return bool
      */
     public function removeEntity(EntityManagerInterface $entityManager, EntityInterface $entity): bool
     {
@@ -83,9 +77,8 @@ trait EntityManagerTrait
 
     /**
      * Add entity to entity manager
+     *
      * @param EntityManager $entityManager
-     * @param EntityInterface $entity
-     * @return bool
      */
     public function persistEntity(EntityManagerInterface $entityManager, EntityInterface $entity): bool
     {

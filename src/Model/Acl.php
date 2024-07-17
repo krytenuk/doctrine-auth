@@ -1,26 +1,30 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Model;
 
-use Laminas\Permissions\Acl\Acl as LaminasAcl;
-use FwsDoctrineAuth\Permissions\DoctrineAuthRole as Role;
-use Laminas\Permissions\Acl\Resource\GenericResource as Resource;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
+use FwsDoctrineAuth\Permissions\DoctrineAuthRole as Role;
+use Laminas\Permissions\Acl\Acl as LaminasAcl;
+use Laminas\Permissions\Acl\Resource\GenericResource as Resource;
 use Laminas\Permissions\Acl\Role\RoleInterface;
+
+use function array_key_exists;
+use function is_array;
+use function sprintf;
 
 /**
  * Build Access Control List from config array
- *
- * @author Garry Childs <info@freedomwebservices.net>
  */
 class Acl extends LaminasAcl
 {
-
-    private ?string $defaultRole = null;
+    private ?string $defaultRole                    = null;
     private ?RoleInterface $defaultRegistrationRole = null;
 
     /**
      * Setup access control list
+     *
      * @param array $config
      * @throws DoctrineAuthException
      */
@@ -37,14 +41,14 @@ class Acl extends LaminasAcl
 
     /**
      * Add ACL roles
+     *
      * @param array $config
      * @throws DoctrineAuthException
-     * @return void
      */
     private function addRoles(array $config): void
     {
         /* Check roles exist in config */
-        if (!array_key_exists('roles', $config['doctrineAuthAcl'])) {
+        if (! array_key_exists('roles', $config['doctrineAuthAcl'])) {
             throw new DoctrineAuthException('No roles found in config');
         }
 
@@ -73,22 +77,22 @@ class Acl extends LaminasAcl
 
         $this->setDefaultRegisterRole($config);
     }
-    
+
     /**
      * Set default registration role
+     *
      * @param array $config
      * @throws DoctrineAuthException
-     * @return void
      */
     private function setDefaultRegisterRole(array $config): void
     {
         /* Allow registration not set in config */
-        if (isset($config['doctrineAuth']['allowRegistration']) && !$config['doctrineAuth']['allowRegistration']) {
+        if (isset($config['doctrineAuth']['allowRegistration']) && ! $config['doctrineAuth']['allowRegistration']) {
             return;
         }
 
         /* Default registration role not defined in config */
-        if (!array_key_exists('defaultRegisterRole', $config['doctrineAuthAcl'])) {
+        if (! array_key_exists('defaultRegisterRole', $config['doctrineAuthAcl'])) {
             throw new DoctrineAuthException('No registration role found in config');
         }
 
@@ -102,14 +106,14 @@ class Acl extends LaminasAcl
 
     /**
      * Add ACL resources
+     *
      * @param array $config
      * @throws DoctrineAuthException
-     * @return void
      */
     private function addResources(array $config): void
     {
         /* No resources found in config */
-        if (!array_key_exists('resources', $config['doctrineAuthAcl'])) {
+        if (! array_key_exists('resources', $config['doctrineAuthAcl'])) {
             throw new DoctrineAuthException('No resources found in config');
         }
 
@@ -121,15 +125,15 @@ class Acl extends LaminasAcl
 
     /**
      * Add module resource to ACL
+     *
      * @param array $resource
-     * @return void
      */
     private function addModuleResource(array $resource): void
     {
         /* Add module resource */
         $this->addResource(new Resource($resource['module']));
         /* Module resource has controllers */
-        if (array_key_exists('controllers', $resource) && is_array($resource['controllers']) && !empty($resource['controllers'])) {
+        if (array_key_exists('controllers', $resource) && is_array($resource['controllers']) && ! empty($resource['controllers'])) {
             /* Add module controllers as children of module resource */
             foreach ($resource['controllers'] as $controller) {
                 $this->addResource(new Resource($controller), $resource['module']);
@@ -139,14 +143,14 @@ class Acl extends LaminasAcl
 
     /**
      * Add ACL permissions
+     *
      * @param array $config
      * @throws DoctrineAuthException
-     * @return void
      */
     private function addPermissions(array $config): void
     {
         /* No permissions set in config */
-        if (!array_key_exists('permissions', $config['doctrineAuthAcl'])) {
+        if (! array_key_exists('permissions', $config['doctrineAuthAcl'])) {
             throw new DoctrineAuthException('No permissions found in config');
         }
 
@@ -159,7 +163,6 @@ class Acl extends LaminasAcl
     /**
      * Get the default role
      * This is the role of a user not logged in
-     * @return string
      */
     public function getDefaultRole(): string
     {
@@ -168,7 +171,6 @@ class Acl extends LaminasAcl
 
     /**
      * Get registration role
-     * @return RoleInterface|null
      */
     public function getDefaultRegistrationRole(): ?RoleInterface
     {
@@ -177,12 +179,11 @@ class Acl extends LaminasAcl
 
     /**
      * Get stored redirect for given role
-     * @param string $role
+     *
      * @return array
      */
     public function getRedirect(string $role): array
     {
         return $this->getRole($role)->getRoute();
     }
-
 }

@@ -1,46 +1,51 @@
 <?php
-namespace FwsDoctrineAuth\Entity;
-
-use Doctrine\ORM\Mapping as ORM;
 
 /**
  * UserRole
- * @ORM\Entity(repositoryClass="FwsDoctrineAuth\Entity\Repository\UserRoleRepository")
- * @ORM\Table(name="user_roles", 
- *    options={
- *        "collate"="latin1_swedish_ci", 
- *        "charset"="latin1", 
- *        "engine"="InnoDB"
- *    }, 
- *    uniqueConstraints={
- *        @ORM\UniqueConstraint(name="role", columns={"role"})
- *    }
- * )
- * @author Garry Childs <info@freedomwebservices.net>
  */
+
+declare(strict_types=1);
+
+namespace FwsDoctrineAuth\Entity;
+
+use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\Mapping as ORM;
+use FwsDoctrineAuth\Entity\Repository\UserRoleRepository;
+
+#[ORM\Entity(repositoryClass: UserRoleRepository::class, readOnly: false)]
+#[ORM\Table(
+    name: "user_roles",
+    options: [
+        "collate" => "latin1_swedish_ci",
+        "charset" => "latin1",
+        "engine" => "InnoDB",
+    ]
+)]
+#[ORM\UniqueConstraint(name: "role", columns: ["role"])]
 class UserRole implements EntityInterface
 {
+    #[ORM\Id,
+        ORM\Column(
+            name: "user_role_id",
+            type: Types::INTEGER,
+            nullable: false,
+            options: ["unsigned" => true]
+        ),
+        ORM\GeneratedValue(strategy: "IDENTITY")
+    ]
+    private int|null $userRoleId;
 
-    /**
-     * @var int|null
-     *
-     * @ORM\Column(name="user_role_id", type="integer", options={"unsigned"=true}, nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private ?int $userRoleId = null;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="role", type="string", length=100, nullable=false)
-     */
-    private string $role;
+    #[ORM\Column(
+        name: "role",
+        type: Types::STRING,
+        length: 100,
+        unique: true,
+        nullable: false
+    )]
+    private string|null $role;
 
     /**
      * Set user role id
-     * @param int $userRoleId
-     * @return UserRole
      */
     public function setUserRoleId(int $userRoleId): UserRole
     {
@@ -50,19 +55,14 @@ class UserRole implements EntityInterface
 
     /**
      * Get user role id
-     *
-     * @return int|null
      */
-    public function getUserRoleId(): ?int
+    public function getUserRoleId(): int|null
     {
         return $this->userRoleId;
     }
 
     /**
-     * Set role
-     *
-     * @param string $role
-     * @return UserRole
+     * Set user role
      */
     public function setRole(string $role): UserRole
     {
@@ -71,13 +71,10 @@ class UserRole implements EntityInterface
     }
 
     /**
-     * Get role
-     *
-     * @return string|null
+     * Get user role
      */
-    public function getRole(): ?string
+    public function getRole(): string|null
     {
         return $this->role;
     }
-    
 }

@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Model\TwoFactorAuthentication;
 
-use DateTimeImmutable;
+use DateTime;
 use DateTimeInterface;
 use DateTimeZone;
 use Exception;
@@ -10,46 +12,48 @@ use FwsDoctrineAuth\Entity\AuthUserInterface;
 use FwsDoctrineAuth\Entity\TwoFactorAuthMethod;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use FwsDoctrineAuth\Form\SelectTwoFactorAuthMethodForm;
+use FwsDoctrineAuth\Form\Service\DoctrineAuthFormFactory;
 use FwsDoctrineAuth\Form\TwoFactorAuthenticationCodeForm;
 use FwsDoctrineAuth\Model\AuthContainerStorage;
 use Laminas\Authentication\AuthenticationService;
+use Laminas\Form\FormElementManager;
 use Laminas\Stdlib\ParametersInterface;
+
+use function array_key_exists;
 
 /**
  * TwoFactorAuth
- *
- * @author Garry Childs <info@freedomwebservices.net>
  */
 class TwoFactorAuthenticationModel
 {
-
     use AdaptorTrait;
 
     private DateTimeInterface $currentDateTime;
+    private SelectTwoFactorAuthMethodForm $selectAuthMethodForm;
+    private TwoFactorAuthenticationCodeForm $authCodeForm;
 
     /**
-     *
      * @param AdaptorPluginManager $adaptorPluginManager
-     * @param SelectTwoFactorAuthMethodForm $selectAuthMethodForm
-     * @param TwoFactorAuthenticationCodeForm $authCodeForm
+     * @param FormElementManager $formElementManager
      * @param AuthContainerStorage $authContainerStorage
      * @param AuthenticationService $authService
      * @param array $config
      * @throws DoctrineAuthException
      */
     public function __construct(
-        protected AdaptorPluginManager            $adaptorPluginManager,
-        protected SelectTwoFactorAuthMethodForm   $selectAuthMethodForm,
-        protected TwoFactorAuthenticationCodeForm $authCodeForm,
-        protected AuthContainerStorage            $authContainerStorage,
-        protected AuthenticationService           $authService,
-        protected array                           $config,
-    )
-    {
+        protected AdaptorPluginManager $adaptorPluginManager,
+        FormElementManager $formElementManager,
+        protected AuthContainerStorage $authContainerStorage,
+        protected AuthenticationService $authService,
+        protected array $config,
+    ) {
+        $this->selectAuthMethodForm = $formElementManager->get(DoctrineAuthFormFactory::SELECT_2FA_METHODS_FORM);
+        $this->authCodeForm = $formElementManager->get(DoctrineAuthFormFactory::TWO_FACTOR_AUTHENTICATION_CODE_FORM);
+
         $this->initAdaptors();
         $this->selectAuthMethodForm->setAllowedMethods($this->allowedMethods);
 
-        $this->currentDateTime = $datetime = new DateTimeImmutable('now');
+        $this->currentDateTime = $datetime = new DateTime('now');
         if (array_key_exists('timezone', $config)) {
             try {
                 $this->currentDateTime->setTimezone(new DateTimeZone($config['timezone']));
@@ -58,17 +62,11 @@ class TwoFactorAuthenticationModel
         }
     }
 
-    /**
-     * @return AuthContainerStorage
-     */
     public function getAuthContainerStorage(): AuthContainerStorage
     {
         return $this->authContainerStorage;
     }
 
-    /**
-     * @return AuthenticationService
-     */
     public function getAuthService(): AuthenticationService
     {
         return $this->authService;
@@ -76,7 +74,6 @@ class TwoFactorAuthenticationModel
 
     /**
      * Get user attempting authentication
-     * @return AuthUserInterface|null
      */
     public function getIdentity(): ?AuthUserInterface
     {
@@ -85,8 +82,6 @@ class TwoFactorAuthenticationModel
 
     /**
      * Set identity
-     * @param AuthUserInterface $identity
-     * @return TwoFactorAuthenticationModel
      */
     public function storeIdentity(AuthUserInterface $identity): TwoFactorAuthenticationModel
     {
@@ -96,12 +91,10 @@ class TwoFactorAuthenticationModel
 
     /**
      * Determine if the give authentication method is allowed
-     * @param string|null $selectedAuthMethod
-     * @return bool
      */
     public function isValidAuthMethod(?string $selectedAuthMethod): bool
     {
-        if (!$selectedAuthMethod) {
+        if (! $selectedAuthMethod) {
             return false;
         }
 
@@ -111,19 +104,11 @@ class TwoFactorAuthenticationModel
         return false;
     }
 
-    /**
-     *
-     * @return SelectTwoFactorAuthMethodForm
-     */
     public function getSelectAuthMethodForm(): SelectTwoFactorAuthMethodForm
     {
         return $this->selectAuthMethodForm;
     }
 
-    /**
-     *
-     * @return TwoFactorAuthenticationCodeForm
-     */
     public function getAuthCodeForm(): TwoFactorAuthenticationCodeForm
     {
         return $this->authCodeForm;
@@ -131,8 +116,6 @@ class TwoFactorAuthenticationModel
 
     /**
      * Process select authentication form
-     * @param ParametersInterface $postData
-     * @return bool
      */
     public function processSelectForm(ParametersInterface $postData): bool
     {
@@ -146,8 +129,6 @@ class TwoFactorAuthenticationModel
 
     /**
      * Process authenticate code form
-     * @param ParametersInterface $postData
-     * @return bool
      */
     public function processAuthForm(ParametersInterface $postData): bool
     {
@@ -157,7 +138,7 @@ class TwoFactorAuthenticationModel
 
     /**
      * Generate the 2FA code to send to the user
-     * @return TwoFactorAuthenticationModel
+     *
      * @throws DoctrineAuthException
      */
     public function generateCode(): TwoFactorAuthenticationModel
@@ -168,17 +149,17 @@ class TwoFactorAuthenticationModel
 
     /**
      * Send 2FA code to user
+     *
      * @param bool $force force sending of code
-     * @return bool
      * @throws DoctrineAuthException
      */
     public function sendCode(bool $force = false): bool
     {
-        if (!$this->authContainerStorage->getIdentity() instanceof AuthUserInterface) {
+        if (! $this->authContainerStorage->getIdentity() instanceof AuthUserInterface) {
             return false;
         }
 
-        if (!$this->getAdaptor()->sendCode()) {
+        if (! $this->getAdaptor()->sendCode()) {
             return false;
         }
 
@@ -188,7 +169,7 @@ class TwoFactorAuthenticationModel
 
     /**
      * Has code been sent?
-     * @return bool
+     *
      * @throws DoctrineAuthException
      */
     public function codeSent(): bool
@@ -198,7 +179,7 @@ class TwoFactorAuthenticationModel
 
     /**
      * Has the code expired
-     * @return bool
+     *
      * @throws DoctrineAuthException
      */
     public function codeExpired(): bool
@@ -208,7 +189,7 @@ class TwoFactorAuthenticationModel
 
     /**
      * Get the template to render on the authentication 2FA code page during the login process
-     * @return string
+     *
      * @throws DoctrineAuthException
      */
     public function getAuthenticateTemplate(): string
@@ -218,7 +199,7 @@ class TwoFactorAuthenticationModel
 
     /**
      * Authenticate using 2FA code
-     * @return bool
+     *
      * @throws DoctrineAuthException
      */
     public function authenticate(): bool
@@ -228,7 +209,6 @@ class TwoFactorAuthenticationModel
 
     /**
      * Count number of user 2FA methods
-     * @return int
      */
     public function countUserAuthMethods(): int
     {
@@ -241,7 +221,6 @@ class TwoFactorAuthenticationModel
 
     /**
      * Return 2FA method if only one is set
-     * @return TwoFactorAuthMethod|null
      */
     public function getSingleAuthMethod(): ?TwoFactorAuthMethod
     {
@@ -253,12 +232,10 @@ class TwoFactorAuthenticationModel
 
     /**
      * Set selected authentication method
-     * @param string $method
-     * @return bool
      */
     public function setSelectedAuthMethod(string $method): bool
     {
-        if (!$this->isValidAuthMethod($method)) {
+        if (! $this->isValidAuthMethod($method)) {
             return false;
         }
 
@@ -270,5 +247,4 @@ class TwoFactorAuthenticationModel
     {
         return $this->authContainerStorage->getSelectedAuthMethod();
     }
-
 }

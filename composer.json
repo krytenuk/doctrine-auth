@@ -25,9 +25,11 @@
     "pragmarx/google2fa": "^8.0",
     "laminas/laminas-crypt": "^3.10",
     "laminas/laminas-mvc-plugin-flashmessenger": "^1.9",
+    "laminas/laminas-cli": "^1.10",
     "ext-gettext": "*",
     "ext-curl": "*",
-    "ext-http": "*"
+    "ext-http": "*",
+    "laminas/laminas-navigation": "^2.19"
   },
   "authors": [
     {
@@ -69,6 +71,16 @@
   ],
   "require-dev": {
     "laminas/laminas-test": "^4.8",
-    "phpunit/phpunit": "^10.3"
+    "phpunit/phpunit": "^10.3",
+    "laminas/laminas-coding-standard": "^2.5"
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true
+    }
+  },
+  "scripts": {
+    "cs-check": "phpcs",
+    "cs-fix": "phpcbf"
   }
 }

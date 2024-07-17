@@ -58,7 +58,7 @@ Changed email/sms code type to string
 Changed auto generated id's to unsigned int (may break database)
 
 ### 1.0.0
-Changed minimum PHP version to 8.0  
+Changed minimum PHP version to 8.1
 Removed support for Doctrine Module v4  
 Updated to first major release, about time! :)  
 Moved database encryption to separate module  

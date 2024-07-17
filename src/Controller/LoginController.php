@@ -1,25 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Controller;
 
 use Exception;
 use FwsDoctrineAuth\Entity\AuthUserInterface;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
+use FwsDoctrineAuth\Form\LoginForm;
 use FwsDoctrineAuth\Model;
-use FwsDoctrineAuth\Model\ForgotPasswordModel;
-use FwsDoctrineAuth\Model\LoginModel;
-use FwsDoctrineAuth\Model\RegisterModel;
-use FwsDoctrineAuth\Model\TwoFactorAuthentication\ManageTwoFactorAuthenticationModel;
-use FwsDoctrineAuth\Model\TwoFactorAuthentication\TwoFactorAuthenticationModel;
 use Laminas\Http\Response;
 use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\Stdlib\Parameters;
 use Laminas\View\Model\ViewModel;
 
+use function _;
+
 /**
  * IndexController
- *
- * @author Garry Childs <info@freedomwebservices.net>
  *
  * @method string translate($message, $textDomain = null, $locale = null)
  * @method Response getAuthRedirect(AuthUserInterface $identity, bool $getDefault = false)
@@ -30,26 +28,17 @@ use Laminas\View\Model\ViewModel;
  */
 class LoginController extends AbstractActionController
 {
-    /**
-     * @param LoginModel $loginModel
-     * @param RegisterModel $registerModel
-     * @param ForgotPasswordModel $forgotPasswordModel
-     * @param ManageTwoFactorAuthenticationModel $select2faModel
-     * @param TwoFactorAuthenticationModel $twoFactorAuthModel
-     */
     public function __construct(
-        protected Model\LoginModel                                                 $loginModel,
-        protected Model\RegisterModel                                              $registerModel,
-        protected Model\ForgotPasswordModel                                        $forgotPasswordModel,
+        protected Model\LoginModel $loginModel,
+        protected Model\RegisterModel $registerModel,
+        protected Model\ForgotPasswordModel $forgotPasswordModel,
         protected Model\TwoFactorAuthentication\ManageTwoFactorAuthenticationModel $select2faModel,
-        protected Model\TwoFactorAuthentication\TwoFactorAuthenticationModel       $twoFactorAuthModel
-    )
-    {}
+        protected Model\TwoFactorAuthentication\TwoFactorAuthenticationModel $twoFactorAuthModel
+    ) {
+    }
 
     /**
      * Redirect to login
-     *
-     * @return Response
      */
     public function indexAction(): Response
     {
@@ -59,26 +48,27 @@ class LoginController extends AbstractActionController
     /**
      * Login user
      *
-     * @return ViewModel|Response
      * @throws DoctrineAuthException
      */
     public function loginAction(): Response|ViewModel
     {
         /* Create view model */
-        $viewModel = new ViewModel();
-        $viewModel->config = $this->loginModel->getConfig();
-        $viewModel->form = $this->loginModel->getLoginForm();
-        $viewModel->useForgotPassword = $this->loginModel->useForgotPassword();
+        $viewModel = new ViewModel([
+            'config' => $this->loginModel->getConfig(),
+            'form' => $this->loginModel->getLoginForm(),
+            'useForgotPassword' => $this->loginModel->useForgotPassword(),
+            'errorMessage' => '',
+        ]);
 
         /* Form NOT submitted */
-        if (!$this->getRequest()->isPost()) {
+        if (! $this->getRequest()->isPost()) {
             return $viewModel;
         }
 
         $postData = $this->getRequest()->getPost();
 
         /* Login form validation failed */
-        if (!$this->loginModel->processForm($postData)) {
+        if (! $this->loginModel->processForm($postData)) {
             $this->getResponse()->setStatusCode(Response::STATUS_CODE_401);
             return $viewModel;
         }
@@ -86,17 +76,17 @@ class LoginController extends AbstractActionController
         /* IP address blocked */
         if ($this->isIpBlocked()) {
             $this->getResponse()->setStatusCode(Response::STATUS_CODE_401);
-            $this->loginModel->setFormIdentityMessage('Sorry your IP address is blocked');
+            $viewModel->setVariable('errorMessage', Model\LoginModel::$loginErrorMessages[Model\LoginModel::ERROR_IP_BLOCKED]);
             return $viewModel;
         }
 
         /* Login authentication failed */
-        if (!$this->loginModel->login(null)) {
-            $this->loginModel->setFormIdentityMessage(_('User not found'));
+        if (! $this->loginModel->login(null)) {
+            $viewModel->setVariable('errorMessage', Model\LoginModel::$loginErrorMessages[Model\LoginModel::ERROR_INVALID_CREDENTIALS]);
             $emailAddress = $viewModel->form->getData()['emailAddress'];
             if ($this->logFailedLoginAttempt($emailAddress)) {
                 if ($this->blockIpAddress($emailAddress)) {
-                    $this->loginModel->setFormIdentityMessage('Sorry your IP address is blocked');
+                    $viewModel->setVariable('errorMessage', Model\LoginModel::$loginErrorMessages[Model\LoginModel::ERROR_BLOCK_IP_ADDRESS]);
                 }
             }
             $this->getResponse()->setStatusCode(Response::STATUS_CODE_401);
@@ -115,8 +105,6 @@ class LoginController extends AbstractActionController
 
     /**
      * Logout
-     *
-     * @return Response
      */
     public function logoutAction(): Response
     {
@@ -127,32 +115,32 @@ class LoginController extends AbstractActionController
     /**
      * Register new user
      *
-     * @return ViewModel|Response
      * @throws DoctrineAuthException
      */
     public function registerAction(): Response|ViewModel
     {
         /* Registration NOT allowed tn config */
-        if (!$this->registerModel->allowRegistration()) {
+        if (! $this->registerModel->allowRegistration()) {
             return $this->redirect()->toRoute('doctrine-auth/login');
         }
 
-        $viewModel = new ViewModel();
-        $viewModel->config = $this->registerModel->getConfig();
-        $viewModel->form = $this->registerModel->getForm();
+        $viewModel = new ViewModel([
+            'config' => $this->registerModel->getConfig(),
+            'form' => $this->registerModel->getForm(),
+        ]);
 
         /* Form NOT submitted */
-        if (!$this->getRequest()->isPost()) {
+        if (! $this->getRequest()->isPost()) {
             return $viewModel;
         }
 
         /* registration failed */
-        if (!$this->registerModel->processForm($this->getRequest()->getPost())) {
+        if (! $this->registerModel->processForm($this->getRequest()->getPost())) {
             if ($this->registerModel->getForm()->isValid()) {
-                $viewModel->errorMessage = _('Unable to register you at this time, please try again later.');
+                $viewModel->setVariable('errorMessage', Model\RegisterModel::$loginErrorMessages[Model\RegisterModel::ERROR_REGISTRATION_FAILED]);
             } else {
                 $this->getResponse()->setStatusCode(Response::STATUS_CODE_400);
-                $viewModel->errorMessage = _('There is a problem with the form you submitted, please correct errors highlighted.');
+                $viewModel->setVariable('errorMessage', Model\RegisterModel::$loginErrorMessages[Model\RegisterModel::ERROR_FORM_INVALID]);
             }
             return $viewModel;
         }
@@ -170,13 +158,12 @@ class LoginController extends AbstractActionController
     /**
      * Reset password
      *
-     * @return ViewModel
      * @throws Exception
      */
     public function passwordResetAction(): ViewModel
     {
         /* Setup view model */
-        $viewModel = new ViewModel();
+        $viewModel         = new ViewModel();
         $viewModel->config = $this->forgotPasswordModel->getConfig();
 
         $request = $this->getRequest();
@@ -185,7 +172,7 @@ class LoginController extends AbstractActionController
         /* No code sent */
         if ($code === null) {
             /* Form not submitted, pass email address form to view */
-            if (!$request->isPost()) {
+            if (! $request->isPost()) {
                 $viewModel->emailForm = $this->forgotPasswordModel->getEmailForm();
                 return $viewModel;
             }
@@ -194,11 +181,11 @@ class LoginController extends AbstractActionController
         }
 
         /* Code sent */
-        $viewModel->code = $code;
+        $viewModel->code        = $code;
         $viewModel->invalidLink = false;
-        $user = $this->forgotPasswordModel->findUser($code);
+        $user                   = $this->forgotPasswordModel->findUser($code);
         /* New password form not submitted */
-        if (!$request->isPost()) {
+        if (! $request->isPost()) {
             if ($user) {
                 $viewModel->resetForm = $this->forgotPasswordModel->getResetPasswordForm();
             } else {
@@ -216,15 +203,9 @@ class LoginController extends AbstractActionController
         return $viewModel;
     }
 
-
-
-
     /**
      * Process forgot password email form
      *
-     * @param ViewModel $viewModel
-     * @param Parameters $postData
-     * @return ViewModel
      * @throws DoctrineAuthException
      */
     private function processEmailForm(ViewModel $viewModel, Parameters $postData): ViewModel
@@ -237,7 +218,7 @@ class LoginController extends AbstractActionController
             return $viewModel;
         }
 
-        if (!$this->forgotPasswordModel->isFormValid()) {
+        if (! $this->forgotPasswordModel->isFormValid()) {
             $this->getResponse()->setStatusCode(Response::STATUS_CODE_400);
             $viewModel->emailForm = $this->forgotPasswordModel->getEmailForm();
             return $viewModel;
@@ -249,9 +230,6 @@ class LoginController extends AbstractActionController
     /**
      * Process new password form
      *
-     * @param ViewModel $viewModel
-     * @param Parameters $postData
-     * @return ViewModel
      * @throws DoctrineAuthException
      */
     private function processPasswordResetForm(ViewModel $viewModel, Parameters $postData): ViewModel
@@ -262,7 +240,7 @@ class LoginController extends AbstractActionController
             return $viewModel;
         }
 
-        if (!$this->forgotPasswordModel->isFormValid()) {
+        if (! $this->forgotPasswordModel->isFormValid()) {
             $this->getResponse()->setStatusCode(Response::STATUS_CODE_400);
             $viewModel->resetForm = $this->forgotPasswordModel->getResetPasswordForm();
             return $viewModel;
@@ -270,5 +248,4 @@ class LoginController extends AbstractActionController
         $this->getResponse()->setStatusCode(Response::STATUS_CODE_500);
         return $viewModel;
     }
-
 }

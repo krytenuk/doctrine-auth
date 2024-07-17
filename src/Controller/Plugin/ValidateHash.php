@@ -1,16 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Controller\Plugin;
 
-use FwsDoctrineAuth\Model\AuthContainerStorage;
 use Laminas\Mvc\Controller\Plugin\AbstractPlugin;
-use Laminas\Validator\Csrf;
+use Laminas\Session\Validator\Csrf;
 
 class ValidateHash extends AbstractPlugin
 {
     public function __construct(protected Csrf $csrfValidator)
-    {}
-
+    {
+    }
 
     public function __invoke(): ValidateHash
     {
@@ -19,8 +20,6 @@ class ValidateHash extends AbstractPlugin
 
     /**
      * Check if specified hash is valid
-     * @param string $hash
-     * @return bool
      */
     public function isValid(string $hash): bool
     {
@@ -33,11 +32,9 @@ class ValidateHash extends AbstractPlugin
 
     /**
      * Return the generated hash value
-     * @return string
      */
     public function getHash(): string
     {
         return $this->csrfValidator->getHash();
     }
-
 }

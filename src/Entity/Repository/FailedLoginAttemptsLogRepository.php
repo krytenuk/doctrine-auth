@@ -1,27 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Entity\Repository;
 
-use Doctrine\ORM\EntityRepository;
 use DateTimeInterface;
+use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\NoResultException;
 
 /**
  * FailedLoginAttemptsLogRepository
- *
- * @author Garry Childs <info@freedomwebservices.net>
  */
 class FailedLoginAttemptsLogRepository extends EntityRepository
 {
-
     /**
      * Get number of login attempts for given IP address
-     * @param string $ipAddress
+     *
      * @param DateTimeInterface $date Get login attempts between $date and now
-     * @return int|null
      */
-    public function countFailedAttempts(string $ipAddress, DateTimeInterface $date): ?int
+    public function countFailedAttempts(string $ipAddress, DateTimeInterface $date): int|null
     {
         $builder = $this->createQueryBuilder('la');
         $builder->select($builder->expr()->count('la'))
@@ -32,9 +30,8 @@ class FailedLoginAttemptsLogRepository extends EntityRepository
 
         try {
             return $builder->getQuery()->getSingleScalarResult();
-        } catch (NoResultException|NonUniqueResultException) {
+        } catch (NoResultException | NonUniqueResultException) {
             return null;
         }
     }
-
 }

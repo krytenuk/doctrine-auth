@@ -6,6 +6,7 @@ use Laminas\Session\Validator as SessionValidator;
 use Laminas\Session\Storage\SessionArrayStorage;
 use FwsDoctrineAuth\Form;
 use FwsDoctrineAuth\Model\TwoFactorAuthentication\Adapter;
+use Doctrine\DBAL\Driver\PDO\MySQL\Driver;
 
 return [
     'doctrine' => [
@@ -14,7 +15,7 @@ return [
          */
         'connection' => [
             'orm_default' => [
-                'driverClass' => 'Doctrine\DBAL\Driver\PDOMySql\Driver',
+                'driverClass' => Driver::class, // change for your database engine, default MySQL
                 'params' => [
                     'host' => 'localhost',
                     'port' => '3306',
@@ -96,6 +97,10 @@ return [
         'bulkSmsApiTokenId' => 'yourApiToken', // <- Your BulkSMS API token id
         'bulkSmsApiTokenSecret' => 'yourApiTokenSecret', // <- Your BulkSMS API token secret
         'smsFrom' => 'Your Site', // Sms from text, max 11 characters
+        'smsNumberValidator' => [ // Validate the phone number before attempting to send SMS text validation, uses Laminas PhoneNumber validator. Set to null to disable. . @see https://docs.laminas.dev/laminas-i18n/validators/phone-number/
+            'country' => 'GB', // ISO 3166 country code, @see https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes. Can be specified in the adaptor.
+            'allowed_types' => ['mobile'], // Array of allowed phone number types, @see https://docs.laminas.dev/laminas-i18n/validators/phone-number/#using-allowed-phone-number-patterns
+        ],
         /** Email */
         'emailSubject' => 'Example Site login authentication request', // <- Subject line of 2FA email
         /** HTTP proxy settings */

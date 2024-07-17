@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Controller\Plugin;
 
 use DateInterval;
-use DateTimeImmutable;
+use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use FwsDoctrineAuth\Entity\IpBlocked;
 use FwsDoctrineAuth\Entity\Repository\IpBlockedRepository;
@@ -15,15 +17,12 @@ class IsIpBlocked extends AbstractPlugin
 {
     public function __construct(
         protected EntityManagerInterface $entityManager,
-        protected GetClientIpAddress     $clientIpAddress,
-        protected array                  $config
-    )
-    {
+        protected GetClientIpAddress $clientIpAddress,
+        protected array $config
+    ) {
     }
 
-
     /**
-     * @return bool
      * @throws DoctrineAuthException
      */
     public function __invoke(): bool
@@ -34,7 +33,7 @@ class IsIpBlocked extends AbstractPlugin
         }
 
         $clientIp = $this->clientIpAddress->getClientIP();
-        if (!$clientIp) {
+        if (! $clientIp) {
             throw new DoctrineAuthException('Client IP address not found');
         }
 
@@ -43,12 +42,11 @@ class IsIpBlocked extends AbstractPlugin
 
         $loginReleaseTime = (int) $loginReleaseTime;
         if ($loginReleaseTime > 0) {
-            $now = new DateTimeImmutable('now');
+            $now  = new DateTime('now');
             $date = $now->sub(new DateInterval("PT{$loginReleaseTime}M"));
             $repository->deleteBlockedIpAddress($clientIp, $date);
         }
 
         return (bool) $repository->count(['ipAddress' => $clientIp]);
     }
-
 }

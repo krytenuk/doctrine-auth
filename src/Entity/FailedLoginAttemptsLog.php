@@ -1,65 +1,79 @@
-<?php /** @noinspection ALL */
+<?php
+
+declare(strict_types=1);
+
+/**
+ * UserBlocked Entity
+ **/
 
 namespace FwsDoctrineAuth\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
+use DateTime;
 use DateTimeInterface;
-use DateTimeImmutable;
+use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\Mapping as ORM;
+use FwsDoctrineAuth\Entity\Repository\FailedLoginAttemptsLogRepository;
 
-/**
- * UserBlocked
- * @ORM\Entity(repositoryClass="FwsDoctrineAuth\Entity\Repository\FailedLoginAttemptsLogRepository")
- * @ORM\Table(name="login_attempts", options={"collate"="latin1_swedish_ci", "charset"="latin1", "engine"="InnoDB"})
- * @author Garry Childs <info@freedomwebservices.net>
- */
+#[ORM\Entity(repositoryClass: FailedLoginAttemptsLogRepository::class, readOnly: false)]
+#[ORM\Table(
+    name: "login_attempts",
+    options: [
+        "collate" => "latin1_swedish_ci",
+        "charset" => "latin1",
+        "engine" => "InnoDB",
+    ]
+)]
 class FailedLoginAttemptsLog implements EntityInterface
 {
-    /**
-     * @var int|null
-     * @ORM\Column(name="login_attempt_id", type="integer", options={"unsigned"=true}, nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private ?int $loginAttemptId = null;
+    #[ORM\Id,
+        ORM\Column(
+            name: "login_attempt_id",
+            type: Types::INTEGER,
+            nullable: false,
+            options: ["unsigned" => true]
+        ),
+        ORM\GeneratedValue(strategy: "IDENTITY")
+    ]
+    private int|null $loginAttemptId = null;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="email_address", type="string", length=100, nullable=false)
-     */
-    private string|null $emailAddress = null;
+    #[ORM\Column(
+        name: "email_address",
+        type: Types::STRING,
+        length: 256,
+        nullable: false
+    )]
+    private string|null $emailAddress;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="ip_address", type="string", length=16, nullable=false)
-     */
-    private string|null $ipAddress = null;
+    #[ORM\Column(
+        name: "ip_address",
+        type: Types::STRING,
+        length: 16,
+        nullable: false
+    )]
+    private string|null $ipAddress;
 
-    /**
-     * @var DateTimeInterface
-     *
-     * @ORM\Column(name="date_logged", type="datetime", nullable=false)
-     */
+    #[ORM\Column(
+        name: "date_logged",
+        type: Types::DATETIME_MUTABLE,
+        nullable: false,
+    )]
     private DateTimeInterface $dateLogged;
-    
+
     public function __construct()
     {
-        $this->dateLogged = new DateTimeImmutable();
+        $this->dateLogged = new DateTime();
     }
-    
+
     /**
-     * 
-     * @return int|null
+     * Get login attempt id
      */
-    public function getLoginAttemptId(): ?int
+    public function getLoginAttemptId(): int|null
     {
         return $this->loginAttemptId;
     }
 
     /**
      * Get email address entered
-     * @return string|null
      */
     public function getEmailAddress(): string|null
     {
@@ -68,7 +82,6 @@ class FailedLoginAttemptsLog implements EntityInterface
 
     /**
      * Get IP address of login attempt
-     * @return string|null
      */
     public function getIpAddress(): string|null
     {
@@ -77,7 +90,6 @@ class FailedLoginAttemptsLog implements EntityInterface
 
     /**
      * Get date logged
-     * @return DateTimeInterface
      */
     public function getDateLogged(): DateTimeInterface
     {
@@ -86,8 +98,6 @@ class FailedLoginAttemptsLog implements EntityInterface
 
     /**
      * Set the email address entered
-     * @param string $emailAddress
-     * @return FailedLoginAttemptsLog
      */
     public function setEmailAddress(string $emailAddress): FailedLoginAttemptsLog
     {
@@ -97,8 +107,6 @@ class FailedLoginAttemptsLog implements EntityInterface
 
     /**
      * Set the IP address of user
-     * @param string $ipAddress
-     * @return FailedLoginAttemptsLog
      */
     public function setIpAddress(string $ipAddress): FailedLoginAttemptsLog
     {
@@ -108,13 +116,10 @@ class FailedLoginAttemptsLog implements EntityInterface
 
     /**
      * Set date logged
-     * @param DateTimeInterface $dateLogged
-     * @return FailedLoginAttemptsLog
      */
     public function setDateLogged(DateTimeInterface $dateLogged): FailedLoginAttemptsLog
     {
         $this->dateLogged = $dateLogged;
         return $this;
     }
-
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Model\TwoFactorAuthentication;
 
 use FwsDoctrineAuth\Model\TwoFactorAuthentication\Adapter\AbstractAdapter;

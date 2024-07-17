@@ -1,29 +1,30 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Listener;
 
-use FwsDoctrineAuth\Exception\DoctrineAuthException;
-use Laminas\Authentication\AuthenticationService;
 use FwsDoctrineAuth\Controller\LoginController;
-use FwsDoctrineAuth\Model\Acl;
-use Laminas\Http\Response;
 use FwsDoctrineAuth\Entity\BaseUser;
+use FwsDoctrineAuth\Exception\DoctrineAuthException;
+use FwsDoctrineAuth\Model\Acl;
+use Laminas\Authentication\AuthenticationService;
+use Laminas\Http\Response;
 use Laminas\Mvc\MvcEvent;
 use Laminas\Stdlib\ResponseInterface;
 use Laminas\View\Model\JsonModel;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
+use function in_array;
+use function sprintf;
+
 /**
  * Description of AuthListener
- *
- * @author Garry Childs <info@freedomwebservices.net>
  */
 class AuthListener
 {
-
     /**
-     * @param MvcEvent $event
      * @return Response|JsonModel|void
      * @throws ContainerExceptionInterface
      * @throws DoctrineAuthException
@@ -31,19 +32,19 @@ class AuthListener
      */
     public function checkUser(MvcEvent $event)
     {
-        $application = $event->getApplication();
-        $routeMatch = $event->getRouteMatch();
+        $application    = $event->getApplication();
+        $routeMatch     = $event->getRouteMatch();
         $serviceManager = $application->getServiceManager();
-        /* @var $auth AuthenticationService */
+        /** @var AuthenticationService $auth */
         $auth = $serviceManager->get(AuthenticationService::class);
 
-        /* @var $acl Acl */
+        /** @var Acl $acl */
         $acl = $serviceManager->get('acl');
 
         /* Get user role */
         $role = $acl->getDefaultRole();
         if ($auth->hasIdentity()) {
-            /* @var $user BaseUser */
+            /** @var BaseUser $user */
             $user = $auth->getIdentity();
             if ($user instanceof BaseUser) {
                 $role = $user->getUserRole()->getRole();
@@ -52,10 +53,10 @@ class AuthListener
 
         /* Get controller and action from route */
         $controller = $routeMatch->getParam('controller');
-        $action = $routeMatch->getParam('action');
+        $action     = $routeMatch->getParam('action');
 
         /* Resource not found in ACL (defined in config) */
-        if (!$acl->hasResource($controller)) {
+        if (! $acl->hasResource($controller)) {
             $config = $serviceManager->get('config');
             if (isset($config['controllers']['aliases'])) {
                 $controller = $this->getControllerAlias($controller, $acl, $config['controllers']['aliases']);
@@ -69,7 +70,7 @@ class AuthListener
             return;
         }
 
-        $request = $event->getRequest();
+        $request  = $event->getRequest();
         $response = $event->getResponse();
         /** ajax request */
         if ($request->isXmlHttpRequest()) {
@@ -88,11 +89,11 @@ class AuthListener
             /** User trying to access restricted page */
             if ($controller !== LoginController::class) {
                 /** Store page user is trying to access in session */
-                $container = $serviceManager->get('authContainerStorage');
+                $container           = $serviceManager->get('authContainerStorage');
                 $container->redirect = [
-                    'url' => $event->getRouter()->getRequestUri()->toString(),
+                    'url'        => $event->getRouter()->getRequestUri()->toString(),
                     'controller' => $controller,
-                    'action' => $action,
+                    'action'     => $action,
                 ];
             }
             /* Redirect to login */
@@ -102,10 +103,8 @@ class AuthListener
 
     /**
      * Redirect with 302 http status code
-     * @param MvcEvent $event
+     *
      * @param Response $response
-     * @param string $url
-     * @return Response
      */
     private function redirect(MvcEvent $event, ResponseInterface $response, string $url): Response
     {
@@ -118,10 +117,8 @@ class AuthListener
 
     /**
      * Get controller alias
-     * @param string $controller
-     * @param Acl $acl
+     *
      * @param array $aliases
-     * @return string
      * @throws DoctrineAuthException
      */
     public function getControllerAlias(string $controller, Acl $acl, array $aliases): string
@@ -133,5 +130,4 @@ class AuthListener
         }
         throw new DoctrineAuthException('ACL resource or controller alias "' . $controller . '" not defined');
     }
-
 }

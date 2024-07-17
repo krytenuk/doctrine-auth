@@ -1,6 +1,8 @@
 <?php
 
-Namespace FwsDoctrineAuth\Entity\Repository;
+declare(strict_types=1);
+
+namespace FwsDoctrineAuth\Entity\Repository;
 
 use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\EntityRepository;
@@ -8,8 +10,6 @@ use FwsDoctrineAuth\Entity\UserRole;
 
 /**
  * UserRoleRepository
- *
- * @author Garry Childs <info@freedomwebservices.net>
  *
  * @method UserRole|null findOneByRole(string $roleId)
  */

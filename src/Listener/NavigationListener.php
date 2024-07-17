@@ -1,26 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Listener;
 
-use FwsDoctrineAuth\Model\Acl;
-use Laminas\Mvc\MvcEvent;
-use Laminas\Authentication\AuthenticationService;
 use FwsDoctrineAuth\Entity\BaseUser;
+use FwsDoctrineAuth\Model\Acl;
+use Laminas\Authentication\AuthenticationService;
+use Laminas\Mvc\MvcEvent;
 use Laminas\View\Helper\Navigation;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
 /**
  * NavigationListener
- *
- * @author Garry Childs <info@freedomwebservices.net>
  */
 class NavigationListener
 {
-
     /**
      * Inject ACL & user role into navigation view helper
-     * @param MvcEvent $event
+     *
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      */
@@ -31,17 +30,17 @@ class NavigationListener
         $config = $serviceManager->get('config');
 
         /* Don't inject ACL into navigation view helper (set in config) */
-        if (!(isset($config['doctrineAuthAcl']['injectAclIntoNavigation']) && $config['doctrineAuthAcl']['injectAclIntoNavigation'])) {
+        if (! (isset($config['doctrineAuthAcl']['injectAclIntoNavigation']) && $config['doctrineAuthAcl']['injectAclIntoNavigation'])) {
             return;
         }
 
-        /* @var Navigation $plugin */
+        /** @var Navigation $plugin */
         $plugin = $serviceManager->get('ViewHelperManager')->get('navigation');
 
-        /* @var $acl Acl */
+        /** @var Acl $acl */
         $acl = $serviceManager->get('acl');
 
-        /* @var $auth AuthenticationService */
+        /** @var AuthenticationService $auth */
         $auth = $serviceManager->get(AuthenticationService::class);
 
         $role = $acl->getDefaultRole();
@@ -55,5 +54,4 @@ class NavigationListener
         $plugin->setAcl($acl);
         $plugin->setRole($role);
     }
-
 }

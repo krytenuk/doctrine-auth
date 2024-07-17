@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Controller\Plugin;
 
 use FwsDoctrineAuth\Entity\AuthUserInterface;
@@ -9,23 +11,18 @@ use FwsDoctrineAuth\Model\AuthContainerStorage;
 use Laminas\Http\Response;
 use Laminas\Mvc\Controller\Plugin\AbstractPlugin;
 
+use function is_array;
+
 class GetRedirect extends AbstractPlugin
 {
-    /**
-     * @param Acl $acl
-     * @param AuthContainerStorage $authContainerStorage
-     */
     public function __construct(
-        protected Acl                  $acl,
+        protected Acl $acl,
         protected AuthContainerStorage $authContainerStorage
-    )
-    {
+    ) {
     }
 
     /**
-     * @param AuthUserInterface $identity
      * @param bool $getDefault Return the default redirect
-     * @return Response
      * @throws DoctrineAuthException
      */
     public function __invoke(AuthUserInterface $identity, bool $getDefault = false): Response
@@ -33,7 +30,7 @@ class GetRedirect extends AbstractPlugin
         /**
          * HTTP 302 redirect if user is allowed to access resource
          */
-        if ($this->hasRedirect() && $this->canRedirect($identity) && !$getDefault) {
+        if ($this->hasRedirect() && $this->canRedirect($identity) && ! $getDefault) {
             /* Redirect to requested page */
             return $this->getController()->plugin('redirect')->toUrl($this->getRedirectUrl());
         }
@@ -46,7 +43,6 @@ class GetRedirect extends AbstractPlugin
     /**
      * Where to go if session container does not have redirect stored
      *
-     * @param AuthUserInterface $userEntity
      * @return array
      * @throws DoctrineAuthException
      */
@@ -61,17 +57,14 @@ class GetRedirect extends AbstractPlugin
 
     /**
      * Determine if redirect exists
-     * @return bool
      */
     private function hasRedirect(): bool
     {
-        return (is_array($this->authContainerStorage->redirect ?? false));
+        return is_array($this->authContainerStorage->redirect ?? false);
     }
 
     /**
      * Can user go to redirect resource
-     * @param AuthUserInterface $identity
-     * @return bool
      */
     private function canRedirect(AuthUserInterface $identity): bool
     {
@@ -84,7 +77,6 @@ class GetRedirect extends AbstractPlugin
 
     /**
      * Get url for redirect
-     * @return string
      */
     private function getRedirectUrl(): string
     {
@@ -92,5 +84,4 @@ class GetRedirect extends AbstractPlugin
         unset($this->authContainerStorage->redirect);
         return $url;
     }
-
 }

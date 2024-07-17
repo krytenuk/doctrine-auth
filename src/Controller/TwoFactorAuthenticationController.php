@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Controller;
 
 use FwsDoctrineAuth\Entity\AuthUserInterface;
@@ -9,11 +11,10 @@ use Laminas\Http\Response;
 use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\View\Model\ViewModel;
 
+use function _;
 
 /**
  * TwoFactorAuthenticationController
- *
- * @author Garry Childs <info@freedomwebservices.net>
  *
  * @method string translate($message, $textDomain = null, $locale = null)
  * @method Response getAuthRedirect(AuthUserInterface $identity, bool $getDefault = false)
@@ -24,30 +25,26 @@ use Laminas\View\Model\ViewModel;
  */
 class TwoFactorAuthenticationController extends AbstractActionController
 {
-    /**
-     * @param TwoFactorAuthenticationModel $twoFactorAuthModel
-     */
     public function __construct(
         protected TwoFactorAuthenticationModel $twoFactorAuthModel
-    )
-    {}
+    ) {
+    }
 
     /**
      * Let the user choose their 2FA method
-     * @return Response|ViewModel
      */
     public function selectAuthMethodAction(): Response|ViewModel
     {
-        if (!$this->twoFactorAuthModel->getIdentity()) {
+        if (! $this->twoFactorAuthModel->getIdentity()) {
             return $this->redirect()->toRoute('doctrine-auth/login');
         }
 
-        $viewModel = new ViewModel();
+        $viewModel                      = new ViewModel();
         $viewModel->userAuthMethodsForm = $this->twoFactorAuthModel->getSelectAuthMethodForm();
 
         $authMethod = $this->twoFactorAuthModel->getSingleAuthMethod();
         if ($authMethod) {
-            if (!$this->twoFactorAuthModel->setSelectedAuthMethod($authMethod->getMethod())) {
+            if (! $this->twoFactorAuthModel->setSelectedAuthMethod($authMethod->getMethod())) {
                 $viewModel->userAuthMethodsForm->get('method')->setMessages([_('Authentication method not found')]);
                 $this->getResponse()->setStatusCode(Response::STATUS_CODE_403);
                 return $viewModel;
@@ -55,18 +52,18 @@ class TwoFactorAuthenticationController extends AbstractActionController
             return $this->redirect()->toRoute('doctrine-auth/2fa/authenticate');
         }
 
-        if (!$this->getRequest()->isPost()) {
+        if (! $this->getRequest()->isPost()) {
             return $viewModel;
         }
 
         $postData = $this->getRequest()->getPost();
-        if (!$this->twoFactorAuthModel->processSelectForm($postData)) {
+        if (! $this->twoFactorAuthModel->processSelectForm($postData)) {
             $viewModel->userAuthMethodsForm->get('method')->setMessages([_('You must select your authentication method')]);
             $this->getResponse()->setStatusCode(Response::STATUS_CODE_400);
             return $viewModel;
         }
 
-        if (!$this->twoFactorAuthModel->getSelectedAuthMethod()) {
+        if (! $this->twoFactorAuthModel->getSelectedAuthMethod()) {
             $viewModel->userAuthMethodsForm->get('method')->setMessages([_('Authentication method not found')]);
             $this->getResponse()->setStatusCode(Response::STATUS_CODE_400);
             return $viewModel;
@@ -77,27 +74,27 @@ class TwoFactorAuthenticationController extends AbstractActionController
 
     /**
      * 2FA authenticate user
-     * @return Response|ViewModel
+     *
      * @throws DoctrineAuthException
      */
     public function authenticateAction(): Response|ViewModel
     {
         $identity = $this->twoFactorAuthModel->getIdentity();
-        if (!$identity) {
+        if (! $identity) {
             return $this->redirect()->toRoute('doctrine-auth/login');
         }
 
         $viewModel = new ViewModel();
         $viewModel->setTemplate($this->twoFactorAuthModel->getAuthenticateTemplate());
         $viewModel->authCodeForm = $this->twoFactorAuthModel->getAuthCodeForm();
-        $viewModel->user = $identity;
-        $viewModel->authMethod = $this->twoFactorAuthModel->getSelectedAuthMethod();
+        $viewModel->user         = $identity;
+        $viewModel->authMethod   = $this->twoFactorAuthModel->getSelectedAuthMethod();
 
-        if (!$this->getRequest()->isPost()) {
+        if (! $this->getRequest()->isPost()) {
             $viewModel->codeSent = true;
-            if (!$this->twoFactorAuthModel->codeSent()) {
+            if (! $this->twoFactorAuthModel->codeSent()) {
                 $this->twoFactorAuthModel->generateCode();
-                $viewModel->codeSent = $this->twoFactorAuthModel->sendCode();
+                $viewModel->codeSent      = $this->twoFactorAuthModel->sendCode();
                 $viewModel->adaptorErrors = $this->twoFactorAuthModel->getAdaptor()->getErrors();
             }
             return $viewModel;
@@ -111,7 +108,7 @@ class TwoFactorAuthenticationController extends AbstractActionController
         }
 
         $postData = $this->getRequest()->getPost();
-        if (!$this->twoFactorAuthModel->processAuthForm($postData)) {
+        if (! $this->twoFactorAuthModel->processAuthForm($postData)) {
             $this->getResponse()->setStatusCode(Response::STATUS_CODE_400);
             $codeElement->setMessages([_('There is a problem with the code you entered')]);
             return $viewModel;
@@ -151,7 +148,7 @@ class TwoFactorAuthenticationController extends AbstractActionController
 
     /**
      * Resend 2FA code
-     * @return Response
+     *
      * @throws DoctrineAuthException
      */
     public function resendCodeAction(): Response
@@ -159,5 +156,4 @@ class TwoFactorAuthenticationController extends AbstractActionController
         $this->twoFactorAuthModel->sendCode();
         return $this->redirect()->toRoute('doctrine-auth/2fa/authenticate');
     }
-
 }

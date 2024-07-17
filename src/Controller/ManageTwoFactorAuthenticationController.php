@@ -1,16 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Controller;
 
 use FwsDoctrineAuth\Controller\Plugin\ValidateHash;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
-use FwsDoctrineAuth\Model\TwoFactorAuthentication\AppAuthenticationMethodModel;
 use FwsDoctrineAuth\Model\TwoFactorAuthentication\ManageTwoFactorAuthenticationModel;
-use FwsDoctrineAuth\Model\TwoFactorAuthentication\TwoFactorAuthenticationModel;
 use Laminas\Http\Response;
 use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\Mvc\Plugin\FlashMessenger\FlashMessenger;
 use Laminas\View\Model\ViewModel;
+
+use function _;
+use function sprintf;
 
 /**
  * @method FlashMessenger flashMessenger()
@@ -18,12 +21,8 @@ use Laminas\View\Model\ViewModel;
  */
 class ManageTwoFactorAuthenticationController extends AbstractActionController
 {
-
     use CheckHashTrait;
 
-    /**
-     * @param ManageTwoFactorAuthenticationModel $manage2FAMethodsModel
-     */
     public function __construct(
         protected ManageTwoFactorAuthenticationModel $manage2FAMethodsModel
     )
@@ -31,21 +30,18 @@ class ManageTwoFactorAuthenticationController extends AbstractActionController
     }
 
     /**
-     * @return ViewModel
      * @throws DoctrineAuthException
      */
     public function listMethodsAction(): ViewModel
     {
-        $viewModel = new ViewModel();
-        $viewModel->allowedMethods = $this->manage2FAMethodsModel->getAllowedAuthenticationMethods();
-        $viewModel->user = $this->manage2FAMethodsModel->getUser();
-        $viewModel->hash = $this->validateHash()->getHash();
-
-        return $viewModel;
+        return new ViewModel([
+            'allowedMethods' => $this->manage2FAMethodsModel->getAllowedAuthenticationMethods(),
+            'user' => $this->manage2FAMethodsModel->getUser(),
+            'hash' => $this->validateHash()->getHash(),
+        ]);
     }
 
     /**
-     * @return Response
      * @throws DoctrineAuthException
      */
     public function addMethodAction(): Response
@@ -61,7 +57,8 @@ class ManageTwoFactorAuthenticationController extends AbstractActionController
 
         if ($this->manage2FAMethodsModel->addMethod($method)) {
             $this->flashMessenger()->addSuccessMessage(
-                sprintf(_('The %s authentication method has been added'),
+                sprintf(
+                    _('The %s authentication method has been added'),
                     $this->manage2FAMethodsModel->getMethodTitle()
                 )
             );
@@ -86,7 +83,8 @@ class ManageTwoFactorAuthenticationController extends AbstractActionController
 
         if ($this->manage2FAMethodsModel->removeMethod($method)) {
             $this->flashMessenger()->addSuccessMessage(
-                $viewModel->message = sprintf(_('The %s authentication method has been removed'),
+                $viewModel->message = sprintf(
+                    _('The %s authentication method has been removed'),
                     $this->manage2FAMethodsModel->getMethodTitle()
                 )
             );

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Model\TwoFactorAuthentication\Adapter;
 
 use Exception;
@@ -8,35 +10,28 @@ use PragmaRX\Google2FA\Google2FA;
 
 class AuthenticationAppAdapter extends AbstractAdapter
 {
-
-    /**
-     * @inheritdoc
-     */
+    /** @inheritDoc */
     protected static string $name = 'google-auth';
 
-    /**
-     * @inheritdoc
-     */
+    /** @inheritDoc */
     protected static string $title = 'Authenticator app';
 
-    /**
-     * @inheritdoc
-     */
+    /** @inheritDoc */
     protected static array $add2faMethodRoute = [
-        'name' => 'doctrine-auth/2fa/add-app-method',
+        'name'     => 'doctrine-auth/2fa/add-app-method',
         'defaults' => [],
-        'query' => [],
+        'query'    => [],
     ];
 
     /**
      * Template to render the authentication 2FA code page during the login process
-     * @var string
      */
     protected string $template = 'fws-doctrine-auth/2FA-templates/app-auth-2fa';
 
     /**
      * Not required for app authentication
-     * @inheritdoc
+     *
+     * @inheritDoc
      */
     public function codeExpired(): bool
     {
@@ -45,6 +40,7 @@ class AuthenticationAppAdapter extends AbstractAdapter
 
     /**
      * Not required for app authentication
+     *
      * @inheritDoc
      */
     public function sendCode(): bool
@@ -53,7 +49,7 @@ class AuthenticationAppAdapter extends AbstractAdapter
     }
 
     /**
-     * @inheritdoc
+     * @inheritDoc
      */
     public function authenticate(string $codeEntered): bool
     {
@@ -71,7 +67,6 @@ class AuthenticationAppAdapter extends AbstractAdapter
 
     /**
      * Get google auth secret
-     * @return string|null
      */
     private function getSecret(): ?string
     {

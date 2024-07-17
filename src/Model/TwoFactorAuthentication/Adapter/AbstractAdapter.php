@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Model\TwoFactorAuthentication\Adapter;
 
 use DateInterval;
-use DateTimeImmutable;
+use DateTime;
 use DateTimeInterface;
 use FwsDoctrineAuth\Entity\AuthUserInterface;
 use FwsDoctrineAuth\Entity\BaseUser;
@@ -11,22 +13,22 @@ use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use FwsDoctrineAuth\Model\AuthContainerStorage;
 use Laminas\Filter\Word\SeparatorToSeparator;
 
+use function array_merge;
+use function mt_rand;
+
 abstract class AbstractAdapter
 {
-    /**
-     * @var string Name of this adapter (saved on database table, no spaces)
-     */
+    /** @var string Name of this adapter (saved on database table, no spaces) */
     protected static string $name;
 
-    /**
-     * @var string Title of this adapter (used in rendering)
-     */
+    /** @var string Title of this adapter (used in rendering) */
     protected static string $title;
 
     /**
      * The user entity's properties that must not be falsy
      * For example the SMS (text) adaptor requires a mobile phone property to be non falsy in order to use it
      * This is used in the 2FA selection screen during the login process
+     *
      * @var string[]
      */
     protected static array $requiredProperties = [];
@@ -34,39 +36,40 @@ abstract class AbstractAdapter
     /**
      * Route array for adding 2FA method
      * Here you can add custom code to set-up your authentication method
+     *
      * @var array{name: string, defaults: array, query: array}
      */
     protected static array $add2faMethodRoute = [
-        'name' => 'doctrine-auth/2fa/add-method',
+        'name'     => 'doctrine-auth/2fa/add-method',
         'defaults' => [],
-        'query' => [],
+        'query'    => [],
     ];
 
     /**
      * Route array for adding 2FA method endpoint
      * Here you can add custom code to remove your authentication method
+     *
      * @var array{name: string, defaults: array, query: array}
      */
     protected static array $remove2faMethodRoute = [
-        'name' => 'doctrine-auth/2fa/remove-method',
+        'name'     => 'doctrine-auth/2fa/remove-method',
         'defaults' => [],
-        'query' => [],
+        'query'    => [],
     ];
 
     /**
      * Template to render the authentication 2FA code page during the login process
-     * @var string
      */
     protected string $template;
 
     /**
      * Authentication session container
-     * @var AuthContainerStorage
      */
     protected AuthContainerStorage $authContainerStorage;
 
     /**
      * Laminas config
+     *
      * @var array
      */
     protected array $config;
@@ -79,22 +82,15 @@ abstract class AbstractAdapter
      * This is required in your adaptor class
      * Sends the 2FA code to the user
      * Send the 2FA code
-     * @return bool
      */
     abstract public function sendCode(): bool;
 
-    /**
-     * @return string
-     */
     public static function getName(): string
     {
         $stripSpacesFilter = new SeparatorToSeparator(' ', '');
         return $stripSpacesFilter->filter(static::$name);
     }
 
-    /**
-     * @return string
-     */
     public static function getTitle(): string
     {
         return static::$title;
@@ -102,8 +98,10 @@ abstract class AbstractAdapter
 
     /**
      * Get the required properties in the user entity
+     *
      * @see AuthUserInterface
      * @see BaseUser
+     *
      * @return string[]
      */
     public static function getRequiredProperties(): array
@@ -113,11 +111,12 @@ abstract class AbstractAdapter
 
     /**
      * Get the add 2FA method endpoint route
+     *
      * @return array{name: string, defaults: array, query: array}
      */
     public static function getAdd2FaMethodRoute(): array
     {
-        $route = static::$add2faMethodRoute;
+        $route             = static::$add2faMethodRoute;
         $route['defaults'] = array_merge($route['defaults'], [
             'method' => static::getName(),
         ]);
@@ -127,11 +126,12 @@ abstract class AbstractAdapter
 
     /**
      * Get the remove 2FA method endpoint route
+     *
      * @return array{name: string, defaults: array, query: array}
      */
     public static function getRemove2faMethodRoute(): array
     {
-        $route = static::$remove2faMethodRoute;
+        $route             = static::$remove2faMethodRoute;
         $route['defaults'] = array_merge($route['defaults'], [
             'method' => static::getName(),
         ]);
@@ -141,8 +141,6 @@ abstract class AbstractAdapter
 
     /**
      * Add CSRF hash value to set/remove 2fA routes
-     * @param string $hash
-     * @return void
      */
     public static function setHash(string $hash): void
     {
@@ -153,13 +151,12 @@ abstract class AbstractAdapter
         static::$remove2faMethodRoute['defaults'] = array_merge(static::$remove2faMethodRoute['defaults'], [
             'hash' => $hash,
         ]);
-
     }
 
     /**
      * Set laminas config
+     *
      * @param array $config
-     * @return AbstractAdapter
      */
     public function setConfig(array $config): AbstractAdapter
     {
@@ -167,10 +164,6 @@ abstract class AbstractAdapter
         return $this;
     }
 
-    /**
-     * @param AuthContainerStorage $authContainerStorage
-     * @return AbstractAdapter
-     */
     public function setAuthContainerStorage(AuthContainerStorage $authContainerStorage): AbstractAdapter
     {
         $this->authContainerStorage = $authContainerStorage;
@@ -180,13 +173,13 @@ abstract class AbstractAdapter
     /**
      * Get the website name
      * Set in config @see config/autoload/doctrine.auth.config.local.php
-     * @return string
+     *
      * @throws DoctrineAuthException
      */
     public function getSiteName(): string
     {
         $siteName = (string) $this->config['doctrineAuth']['siteName'];
-        if (!$siteName) {
+        if (! $siteName) {
             throw new DoctrineAuthException('siteName config key not set');
         }
 
@@ -195,7 +188,6 @@ abstract class AbstractAdapter
 
     /**
      * Generate 6 digit 2FA code
-     * @return AbstractAdapter
      */
     public function generateCode(): AbstractAdapter
     {
@@ -205,7 +197,6 @@ abstract class AbstractAdapter
 
     /**
      * Has code been sent?
-     * @return bool
      */
     public function codeSent(): bool
     {
@@ -214,28 +205,25 @@ abstract class AbstractAdapter
 
     /**
      * Check if the generated code has expired
-     * @return bool
+     *
      * @throws DoctrineAuthException
      */
     public function codeExpired(): bool
     {
-        if (!$this->codeSent()) {
+        if (! $this->codeSent()) {
             throw new DoctrineAuthException('The 2FA code has not been sent');
         }
 
         $codeSentDate = $this->authContainerStorage->getCodeSent();
-        if (!$codeSentDate instanceof DateTimeInterface) {
+        if (! $codeSentDate instanceof DateTimeInterface) {
             throw new DoctrineAuthException('The 2FA code sent date is not an instance of DateTimeInterface');
         }
 
-        $currentDateTime = new DateTimeImmutable('now');
-        $expires = $codeSentDate->add(new DateInterval("PT{$this->getCodeActiveFor()}M"));
+        $currentDateTime = new DateTime('now');
+        $expires         = $codeSentDate->add(new DateInterval("PT{$this->getCodeActiveFor()}M"));
         return $currentDateTime > $expires;
     }
 
-    /**
-     * @return int|null
-     */
     public function getCodeActiveFor(): ?int
     {
         if ($this->codeActiveFor) {
@@ -248,17 +236,14 @@ abstract class AbstractAdapter
 
     /**
      * Get the template (view script) to render on the authentication 2FA code page during the login process
-     * @return string
      */
     public function getAuthenticateTemplate(): string
     {
         return $this->template;
     }
-    
+
     /**
      * Compare given code against generated code
-     * @param string $codeEntered
-     * @return bool
      */
     public function authenticate(string $codeEntered): bool
     {
@@ -267,8 +252,6 @@ abstract class AbstractAdapter
 
     /**
      * Log an error message
-     * @param string $message
-     * @return void
      */
     protected function error(string $message): void
     {
@@ -277,6 +260,7 @@ abstract class AbstractAdapter
 
     /**
      * Fetch error messages
+     *
      * @return array
      */
     public function getErrors(): array
@@ -286,7 +270,6 @@ abstract class AbstractAdapter
 
     /**
      * Has error messages
-     * @return bool
      */
     public function hasErrors(): bool
     {

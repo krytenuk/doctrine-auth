@@ -1,9 +1,33 @@
-<h2><?= $this->translate('Sign In'); ?></h2>
 <?php
-$this->form->setAttribute('action', $this->url('doctrine-auth/login'));
+/**
+ * @var PhpRenderer|ViewHelperTrait|HelperTrait|I18nHelperTrait $this
+ * @var bool $useForgotPassword
+ * @var FormInterface $form
+ * @var string|null $errorMessage
+ *
+ * @todo Document new form error variable and rendering
+ */
+
+use FwsDoctrineAuth\View\Helper\ViewHelperTrait;
+use Laminas\Form\View\HelperTrait;
+use Laminas\I18n\View\HelperTrait as I18nHelperTrait;
+use Laminas\View\Renderer\PhpRenderer;
+use Laminas\Form\FormInterface;
+
+?>
+    <h2><?= $this->translate('Sign In'); ?></h2>
+<?php
+if ($errorMessage):
+    ?>
+<p class="form-error error"><?= $errorMessage; ?></p>
+<?php
+endif;
+
+$form->setAttribute('action', $this->url('doctrine-auth/login'));
 $this->formElementErrors()->setAttributes(['class' => 'errors']);
-echo $this->partial('form.phtml', ['form' => $this->form]);
-if ($this->useForgotPassword === true):
+echo $this->partial('form.phtml', ['form' => $form]);
+
+if ($useForgotPassword === true):
     ?>
     <a href="<?= $this->url('doctrine-auth/password-reset'); ?>"><?= $this->translate('Forgot Password?'); ?></a>
 <?php endif; ?>

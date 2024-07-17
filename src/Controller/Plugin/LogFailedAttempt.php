@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Controller\Plugin;
 
 use Doctrine\ORM\EntityManagerInterface;
@@ -8,7 +10,6 @@ use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use FwsDoctrineAuth\Model\EntityManagerTrait;
 use FwsDoctrineAuth\Model\GetClientIpAddress;
 use Laminas\Mvc\Controller\Plugin\AbstractPlugin;
-use Laminas\Stdlib\ParametersInterface;
 
 class LogFailedAttempt extends AbstractPlugin
 {
@@ -16,22 +17,19 @@ class LogFailedAttempt extends AbstractPlugin
 
     public function __construct(
         protected EntityManagerInterface $entityManager,
-        protected GetClientIpAddress  $clientIpAddress
-    )
-    {
+        protected GetClientIpAddress $clientIpAddress
+    ) {
     }
-
 
     /**
      * Log failed login attempt
-     * @param string $emailAddress
-     * @return bool
+     *
      * @throws DoctrineAuthException
      */
     public function __invoke(string $emailAddress): bool
     {
         $clientsIp = $this->clientIpAddress->getClientIP();
-        if (!$clientsIp) {
+        if (! $clientsIp) {
             throw new DoctrineAuthException('Client IP address not found');
         }
 

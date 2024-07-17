@@ -1,64 +1,83 @@
-<?php /** @noinspection ALL */
+<?php
+
+declare(strict_types=1);
+
+/**
+ * GoogleAuth Entity
+ *
+ * @deprecated  Using TwoFactorAuthMethod::settings instead to store auth secret
+ *
+ * @noinspection ALL
+ */
 
 namespace FwsDoctrineAuth\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
+use DateTime;
 use DateTimeInterface;
-use DateTimeImmutable;
+use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\Mapping as ORM;
 use FwsDoctrineAuth\Model\TwoFactorAuthentication\Adapter\AuthenticationAppAdapter;
 
-/**
- * GoogleAuth
- * @ORM\Entity
- * @ORM\Table(name="google_auth", options={"collate"="latin1_swedish_ci", "charset"="latin1", "engine"="InnoDB"})
- * @author Garry Childs <info@freedomwebservices.net>
- * @deprecated  Using TwoFactorAuthMethod::settings instead to store auth secret
- */
+use JetBrains\PhpStorm\Deprecated;
+use function trigger_deprecation;
+
+#[Deprecated]
+#[ORM\Entity(readOnly: false)]
+#[ORM\Table(
+    name: "google_auth",
+    options: [
+        "collate" => "latin1_swedish_ci",
+        "charset" => "latin1",
+        "engine" => "InnoDB",
+    ]
+)]
 class GoogleAuth implements EntityInterface
 {
-    /**
-     *
-     * @var string|null
-     * @ORM\Column(name="secret", type="string", length=40, nullable=false, unique=true)
-     * @ORM\Id
-     */
+    #[ORM\Id,
+        ORM\Column(
+            name: "secret",
+            type: Types::STRING,
+            length: 40,
+            unique: true,
+            nullable: false
+        )]
     private string|null $secret = null;
 
-    /**
-     * @var TwoFactorAuthMethod|null
-     *
-     * @ORM\OneToOne(targetEntity="FwsDoctrineAuth\Entity\TwoFactorAuthMethod", inversedBy="googleAuth")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="auth_method_id", referencedColumnName="auth_method_id", onDelete="cascade")
-     * })
-     */
-    private TwoFactorAuthMethod|null $authMethod = null;
+    #[ORM\OneToOne(
+        inversedBy: "googleAuth",
+        targetEntity: TwoFactorAuthMethod::class
+    )]
+    #[ORM\JoinColumn(
+        name: "auth_method_id",
+        referencedColumnName: "auth_method_id",
+        nullable: false,
+        onDelete: "CASCADE"
+    )]
+    private TwoFactorAuthMethod|null $authMethod;
 
-    /**
-     * @var DateTimeInterface
-     *
-     * @ORM\Column(name="date_created", type="datetime", nullable=false)
-     */
+    #[ORM\Column(
+        name: "date_created",
+        type: Types::DATETIME_MUTABLE,
+        nullable: false,
+    )]
     private DateTimeInterface $dateCreated;
 
     public function __construct()
     {
-        trigger_deprecation(GoogleAuth::class, '1.0', 'This class has been replaced with the %s adaptor. Use the %s::setSettings() method to set the secret.', AuthenticationAppAdapter::class, TwoFactorAuthMethod::class);
-        $this->dateCreated = new DateTimeImmutable();
+        trigger_deprecation(self::class, '1.0', 'This class has been replaced with the %s adaptor. Use the %s::setSettings() method to set the secret.', AuthenticationAppAdapter::class, TwoFactorAuthMethod::class);
+        $this->dateCreated = new DateTime();
     }
-    
+
     /**
      * Get secret
-     * @return string|null
      */
     public function getSecret(): string|null
     {
         return $this->secret;
     }
-    
+
     /**
      * Get auth method
-     * @return TwoFactorAuthMethod|null
      */
     public function getAuthMethod(): TwoFactorAuthMethod|null
     {
@@ -67,7 +86,6 @@ class GoogleAuth implements EntityInterface
 
     /**
      * Get date created
-     * @return DateTimeInterface
      */
     public function getDateCreated(): DateTimeInterface
     {
@@ -76,19 +94,15 @@ class GoogleAuth implements EntityInterface
 
     /**
      * Set secret
-     * @param string $secret
-     * @return GoogleAuth
      */
     public function setSecret(string $secret): GoogleAuth
     {
         $this->secret = $secret;
         return $this;
     }
-    
+
     /**
      * Set authentication method
-     * @param TwoFactorAuthMethod $authMethod
-     * @return GoogleAuth
      */
     public function setAuthMethod(TwoFactorAuthMethod $authMethod): GoogleAuth
     {
@@ -98,13 +112,10 @@ class GoogleAuth implements EntityInterface
 
     /**
      * Set date created
-     * @param DateTimeInterface $dateCreated
-     * @return GoogleAuth
      */
     public function setDateCreated(DateTimeInterface $dateCreated): GoogleAuth
     {
         $this->dateCreated = $dateCreated;
         return $this;
     }
-
 }

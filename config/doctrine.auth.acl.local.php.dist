@@ -49,6 +49,7 @@ return [
                     FwsDoctrineAuth\Controller\LoginController::class,
                     FwsDoctrineAuth\Controller\ManageTwoFactorAuthenticationController::class,
                     FwsDoctrineAuth\Controller\TwoFactorAuthenticationController::class,
+                    FwsDoctrineAuth\Controller\AppAuthenticationController::class,
                 ],
             ],
             /**
@@ -101,6 +102,20 @@ return [
                 'role' => 'user', // <- change if required
                 'resource' => FwsDoctrineAuth\Controller\LoginController::class, // deny users & admins etc to login or register as they already have
                 'actions' => ['login', 'register'],
+            ],
+            [
+                // allow user access to list, add and remove 2fa methods
+                'type' => LaminasAcl::TYPE_ALLOW,
+                'role' => 'user', // <- change if required
+                'resource' => FwsDoctrineAuth\Controller\ManageTwoFactorAuthenticationController::class,
+                'actions' => ['list-methods', 'add-method', 'remove-method',],
+            ],
+            [
+                // deny guest access to list, add and remove 2fa methods
+                'type' => LaminasAcl::TYPE_DENY,
+                'role' => 'guest',
+                'resource' => FwsDoctrineAuth\Controller\ManageTwoFactorAuthenticationController::class,
+                'actions' => ['list-methods', 'add-method', 'remove-method'],
             ],
             /**
              * Add your permissions here

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Model\TwoFactorAuthentication;
 
 use Endroid\QrCode\Builder\Builder;
@@ -9,13 +11,10 @@ use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
 use Endroid\QrCode\Writer\PngWriter;
 use Exception;
 use FwsDoctrineAuth\Entity\AuthUserInterface;
-use FwsDoctrineAuth\Entity\GoogleAuth;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
-use FwsDoctrineAuth\Form\SelectTwoFactorAuthMethodForm;
 use FwsDoctrineAuth\Form\TwoFactorAuthenticationCodeForm;
 use FwsDoctrineAuth\Model\AuthContainerStorage;
 use FwsDoctrineAuth\Model\TwoFactorAuthentication\Adapter\AuthenticationAppAdapter;
-use Laminas\Authentication\AuthenticationService;
 use PragmaRX\Google2FA\Google2FA;
 
 class AppAuthenticationMethodModel
@@ -24,25 +23,19 @@ class AppAuthenticationMethodModel
     private AuthContainerStorage $authContainerStorage;
 
     /**
-     * @param ManageTwoFactorAuthenticationModel $selectTwoFactorAuthenticationModel
-     * @param TwoFactorAuthenticationModel $twoFactorAuthenticationModel
      * @param array $config
      * @throws DoctrineAuthException
      */
     public function __construct(
         protected ManageTwoFactorAuthenticationModel $selectTwoFactorAuthenticationModel,
-        private TwoFactorAuthenticationModel         $twoFactorAuthenticationModel,
-        private array                                $config
-    )
-    {
+        private TwoFactorAuthenticationModel $twoFactorAuthenticationModel,
+        private array $config
+    ) {
         $this->google2FA = new Google2FA();
         $this->twoFactorAuthenticationModel->setAdaptor(AuthenticationAppAdapter::getName());
         $this->authContainerStorage = $this->twoFactorAuthenticationModel->getAuthContainerStorage();
     }
 
-    /**
-     * @return TwoFactorAuthenticationModel
-     */
     public function getTwoFactorAuthenticationModel(): TwoFactorAuthenticationModel
     {
         return $this->twoFactorAuthenticationModel;
@@ -50,7 +43,7 @@ class AppAuthenticationMethodModel
 
     /**
      * Add authentication method
-     * @return bool
+     *
      * @throws DoctrineAuthException
      */
     public function addMethod(): bool
@@ -60,12 +53,12 @@ class AppAuthenticationMethodModel
 
     /**
      * Get Google auth secret or generate new if not set
+     *
      * @param bool $regenerate Create new secret
-     * @return string|null
      */
     public function getSecret(bool $regenerate = false): ?string
     {
-        if ($this->authContainerStorage->secret && !$regenerate) {
+        if ($this->authContainerStorage->secret && ! $regenerate) {
             return $this->authContainerStorage->secret;
         }
 
@@ -78,9 +71,6 @@ class AppAuthenticationMethodModel
         return $this->authContainerStorage->secret;
     }
 
-    /**
-     * @return TwoFactorAuthenticationCodeForm
-     */
     public function getAuthCodeForm(): TwoFactorAuthenticationCodeForm
     {
         return $this->twoFactorAuthenticationModel->getAuthCodeForm();
@@ -88,24 +78,24 @@ class AppAuthenticationMethodModel
 
     /**
      * Get QR code image data
-     * @return string|null
+     *
      * @throws DoctrineAuthException
      */
     public function getQrCode(): ?string
     {
         $siteName = $this->config['doctrineAuth']['siteName'] ?? null;
-        if (!$siteName) {
+        if (! $siteName) {
             throw new DoctrineAuthException('siteName config key not set');
         }
 
         $this->authContainerStorage->setAuthSelectedMethod(AuthenticationAppAdapter::getName());
         $secret = $this->getSecret();
-        if (!$secret) {
+        if (! $secret) {
             return null;
         }
 
         $identity = $this->twoFactorAuthenticationModel->getAuthService()->getIdentity();
-        if (!$identity instanceof AuthUserInterface) {
+        if (! $identity instanceof AuthUserInterface) {
             return null;
         }
 

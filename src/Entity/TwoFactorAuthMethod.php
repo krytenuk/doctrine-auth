@@ -1,103 +1,114 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
-use DateTimeImmutable;
+use DateTime;
 use DateTimeInterface;
+use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\Mapping as ORM;
 use FwsDoctrineAuth\Model\TwoFactorAuthentication\Adapter\AuthenticationAppAdapter;
+use JetBrains\PhpStorm\Deprecated;
 
-/**
- * TwoFactorAuthMethod
- * @ORM\Entity
- * @ORM\Table(name="auth_methods", options={"collate"="latin1_swedish_ci", "charset"="latin1", "engine"="InnoDB"})
- * @author Garry Childs <info@freedomwebservices.net>
- */
+use function trigger_deprecation;
+
+#[ORM\Entity(readOnly: false)]
+#[ORM\Table(
+    name: "auth_methods",
+    options: [
+        "collate" => "latin1_swedish_ci",
+        "charset" => "latin1",
+        "engine" => "InnoDB",
+    ]
+)]
 class TwoFactorAuthMethod implements EntityInterface
 {
+    #[ORM\Id,
+        ORM\Column(
+            name: "auth_method_id",
+            type: Types::INTEGER,
+            nullable: false,
+            options: ["unsigned" => true]
+        ),
+        ORM\GeneratedValue(strategy: "IDENTITY")
+    ]
+    private int|null $authMethodId = null;
 
-    /**
-     * @var int|null
-     * @ORM\Column(name="auth_method_id", type="integer", options={"unsigned"=true}, nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private ?int $authMethodId = null;
+    #[ORM\Column(
+        name: "method",
+        type: Types::STRING,
+        length: 30,
+        nullable: false
+    )]
+    private string|null $method;
 
-    /**
-     *
-     * @var string|null
-     * @ORM\Column(name="method", type="string", length=30, nullable=false)
-     */
-    private ?string $method = null;
+    #[ORM\ManyToOne(
+        targetEntity: BaseUser::class,
+        inversedBy: "authMethods"
+    )]
+    #[ORM\JoinColumn(
+        name: "user_id",
+        referencedColumnName: "user_id",
+        nullable: false,
+        onDelete: "CASCADE"
+    )]
+    private AuthUserInterface|null $user;
 
-    /**
-     * @var BaseUser|null
-     *
-     * @ORM\ManyToOne(targetEntity="FwsDoctrineAuth\Entity\BaseUser", inversedBy="authMethods")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="user_id", referencedColumnName="user_id", onDelete="cascade")
-     * })
-     */
-    private ?BaseUser $user = null;
+    #[ORM\Column(
+        name: "date_created",
+        type: Types::DATETIME_MUTABLE,
+        nullable: false,
+    )]
+    protected DateTimeInterface|null $dateCreated;
 
-    /**
-     * @var DateTimeInterface
-     *
-     * @ORM\Column(name="date_created", type="datetime", nullable=false)
-     */
-    private DateTimeInterface $dateCreated;
-
-    /**
-     * @var GoogleAuth|null
-     *
-     * @ORM\OneToOne(targetEntity="FwsDoctrineAuth\Entity\GoogleAuth", mappedBy="authMethod", orphanRemoval=true, cascade={"persist"}, fetch="EAGER")
-     * @deprecated
-     */
+    #[Deprecated]
+    #[ORM\OneToOne(
+        mappedBy: "authMethod",
+        targetEntity: GoogleAuth::class,
+        cascade: ["PERSIST", "REMOVE"],
+        orphanRemoval: true
+    )]
     private ?GoogleAuth $googleAuth = null;
 
-    /**
-     * @var array
-     *
-     * @ORM\Column(name="settings", type="json", nullable=true)
-     */
+    #[ORM\Column(
+        name: "settings",
+        type: Types::JSON,
+        nullable: true,
+    )]
     private array $settings = [];
 
     public function __construct()
     {
-        $this->dateCreated = new DateTimeImmutable();
+        $this->dateCreated = new DateTime();
     }
 
     /**
      * Get 2FA authentication method id
-     * @return int
      */
-    public function getAuthMethodId(): ?int
+    public function getAuthMethodId(): int|null
     {
         return $this->authMethodId;
     }
 
     /**
      * Get 2FA authentication method
-     * @return string|null
      */
-    public function getMethod(): ?string
+    public function getMethod(): string|null
     {
         return $this->method;
     }
 
     /**
      * Get user
-     * @return BaseUser|null
      */
-    public function getUser(): ?BaseUser
+    public function getUser(): AuthUserInterface|null
     {
         return $this->user;
     }
 
     /**
      * Date created
-     * @return DateTimeInterface
      */
     public function getDateCreated(): DateTimeInterface
     {
@@ -114,7 +125,7 @@ class TwoFactorAuthMethod implements EntityInterface
 
     /**
      * Get google auth secret entity
-     * @return GoogleAuth|null
+     *
      * @deprecated Using TwoFactorAuthMethod::settings instead to store auth secret
      */
     public function getGoogleAuth(): ?GoogleAuth
@@ -124,8 +135,6 @@ class TwoFactorAuthMethod implements EntityInterface
 
     /**
      * Get 2FA authentication method
-     * @param string $method
-     * @return TwoFactorAuthMethod
      */
     public function setMethod(string $method): TwoFactorAuthMethod
     {
@@ -135,8 +144,6 @@ class TwoFactorAuthMethod implements EntityInterface
 
     /**
      * Set user
-     * @param BaseUser $user
-     * @return TwoFactorAuthMethod
      */
     public function setUser(BaseUser $user): TwoFactorAuthMethod
     {
@@ -146,8 +153,6 @@ class TwoFactorAuthMethod implements EntityInterface
 
     /**
      * Set date created
-     * @param DateTimeInterface $dateCreated
-     * @return TwoFactorAuthMethod
      */
     public function setDateCreated(DateTimeInterface $dateCreated): TwoFactorAuthMethod
     {
@@ -157,7 +162,6 @@ class TwoFactorAuthMethod implements EntityInterface
 
     /**
      * @param array $settings
-     * @return TwoFactorAuthMethod
      */
     public function setSettings(array $settings): TwoFactorAuthMethod
     {
@@ -167,8 +171,7 @@ class TwoFactorAuthMethod implements EntityInterface
 
     /**
      * Set google auth secret entity
-     * @param GoogleAuth|null $googleAuth
-     * @return TwoFactorAuthMethod
+     *
      * @deprecated Using TwoFactorAuthMethod::settings instead to store auth secret
      */
     public function setGoogleAuth(?GoogleAuth $googleAuth): TwoFactorAuthMethod
@@ -180,5 +183,4 @@ class TwoFactorAuthMethod implements EntityInterface
         }
         return $this;
     }
-
 }

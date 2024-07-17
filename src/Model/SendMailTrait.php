@@ -1,30 +1,31 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Model;
 
 use Exception;
-use Laminas\Mail\Transport\Sendmail as SendmailTransport;
+use FwsDoctrineAuth\Exception\DoctrineAuthException;
+use Laminas\Mail\Message;
 use Laminas\Mail\Transport\File as FileTransport;
 use Laminas\Mail\Transport\FileOptions;
-use Laminas\Mail\Message;
-use FwsDoctrineAuth\Exception\DoctrineAuthException;
+use Laminas\Mail\Transport\Sendmail as SendmailTransport;
 
-/**
- *
- * @author Garry Childs <info@freedomwebservices.net>
- */
+use function is_array;
+use function microtime;
+use function mt_rand;
+use function rtrim;
+
 trait SendMailTrait
 {
-
     /**
      * Send email
-     * @param Message $message
-     * @return boolean
+     *
      * @throws DoctrineAuthException
      */
     protected function sendMail(Message $message): bool
     {
-        if (!is_array($this->config)) {
+        if (! is_array($this->config)) {
             throw new DoctrineAuthException('Config not found');
         }
 
@@ -37,11 +38,11 @@ trait SendMailTrait
             $transport = new SendmailTransport();
         } else {
             $emailsFolder = $this->config['doctrineAuth']['emailsFolder'] ?? null;
-            if (!$emailsFolder) {
+            if (! $emailsFolder) {
                 throw new DoctrineAuthException('emailsFolder configuration key not set');
             }
-            $options = new FileOptions([
-                'path' => rtrim("$emailsFolder", '/'),
+            $options   = new FileOptions([
+                'path'     => rtrim("$emailsFolder", '/'),
                 'callback' => function () {
                     return 'Message_' . microtime(true) . '_' . mt_rand() . '.eml';
                 },
@@ -56,5 +57,4 @@ trait SendMailTrait
             return false;
         }
     }
-
 }

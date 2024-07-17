@@ -1,17 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Model;
 
 use DateTimeInterface;
 use FwsDoctrineAuth\Entity\AuthUserInterface;
-use Laminas\Session\Container;
 use FwsDoctrineAuth\Model\TwoFactorAuthentication\Adapter\AbstractAdapter;
+use Laminas\Session\Container;
 
 /**
  * Stores values in the laminas session container
  * As this class extends the Laminas session container you can store and retrieve custom values by using the magic __get method in your custom adaptors
  * $authContainer->yourValueKey = $yourValue;
  * $yourValue = $authContainer->yourValueKey;
+ *
  * @see Container
  * @see AbstractAdapter
  */
@@ -19,7 +22,6 @@ class AuthContainerStorage extends Container
 {
     /**
      * Retrieve user attempting to authenticate
-     * @return AuthUserInterface|null
      */
     public function getIdentity(): ?AuthUserInterface
     {
@@ -28,8 +30,6 @@ class AuthContainerStorage extends Container
 
     /**
      * Store user attempting to authenticate
-     * @param AuthUserInterface|null $identity
-     * @return AuthContainerStorage
      */
     public function setIdentity(?AuthUserInterface $identity): AuthContainerStorage
     {
@@ -39,7 +39,6 @@ class AuthContainerStorage extends Container
 
     /**
      * Store the DateTime the 2FA code was sent
-     * @return DateTimeInterface|null
      */
     public function getCodeSent(): ?DateTimeInterface
     {
@@ -48,8 +47,6 @@ class AuthContainerStorage extends Container
 
     /**
      * Store the DateTime the code was sent
-     * @param DateTimeInterface|null $codeSent
-     * @return AuthContainerStorage
      */
     public function setCodeSent(?DateTimeInterface $codeSent): AuthContainerStorage
     {
@@ -59,7 +56,6 @@ class AuthContainerStorage extends Container
 
     /**
      * Retrieve the number of times the 2FA code has been sent
-     * @return int
      */
     public function getCodeSentAttempts(): int
     {
@@ -68,7 +64,6 @@ class AuthContainerStorage extends Container
 
     /**
      * Clear the number of times the 2FA code has been sent
-     * @return void
      */
     public function clearCodeSentAttempts(): void
     {
@@ -77,7 +72,6 @@ class AuthContainerStorage extends Container
 
     /**
      * Add 1 to the number of times the 2FA code has been sent
-     * @return AuthContainerStorage
      */
     public function increaseCodeSentAttempts(): AuthContainerStorage
     {
@@ -88,7 +82,7 @@ class AuthContainerStorage extends Container
 
     /**
      * Store the selected 2FA method
-     * @param string|null $authMethod
+     *
      * @return $this
      */
     public function setAuthSelectedMethod(?string $authMethod): AuthContainerStorage
@@ -99,7 +93,6 @@ class AuthContainerStorage extends Container
 
     /**
      * Retrieve the selected 2FA auth method
-     * @return string|null
      */
     public function getSelectedAuthMethod(): ?string
     {
@@ -108,6 +101,7 @@ class AuthContainerStorage extends Container
 
     /**
      * Store the 2FA code
+     *
      * @param mixed $code
      * @return $this
      */
@@ -119,11 +113,10 @@ class AuthContainerStorage extends Container
 
     /**
      * Retrieve the 2FA code
-     * @return string|null
      */
     public function getCode(): ?string
     {
-        return $this->offsetGet(('code'));
+        return $this->offsetGet('code');
     }
 
     public function clear(): void
@@ -131,8 +124,5 @@ class AuthContainerStorage extends Container
         $this->offsetSet('codeSent', null);
         $this->offsetSet('codeSentAttempts', 0);
         $this->offsetSet('identity', null);
-
-
     }
-
 }

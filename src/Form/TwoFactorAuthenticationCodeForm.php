@@ -1,21 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Form;
 
+use Laminas\Filter;
+use Laminas\Form\Element;
 use Laminas\Form\Form;
 use Laminas\InputFilter\InputFilterProviderInterface;
-use Laminas\Form\Element;
-use Laminas\Filter;
 use Laminas\Validator;
+
+use function _;
 
 /**
  * Description of TwoFactorAuthForm
- *
- * @author Garry Childs <info@freedomwebservices.net>
  */
 class TwoFactorAuthenticationCodeForm extends Form implements InputFilterProviderInterface
 {
-    
     public function __construct()
     {
         parent::__construct('enter-code-form');
@@ -25,22 +26,22 @@ class TwoFactorAuthenticationCodeForm extends Form implements InputFilterProvide
     public function init(): void
     {
         $this->add([
-            'name' => 'code',
-            'type' => Element\Text::class,
+            'name'       => 'code',
+            'type'       => Element\Text::class,
             'attributes' => [
-                'size' => 6,
+                'size'      => 6,
                 'maxlength' => 6,
                 'autofocus' => true,
             ],
-            'options' => [
-                'label' => _('Code'),
+            'options'    => [
+                'label'            => _('Code'),
                 'label_attributes' => ['class' => 'required'],
             ],
         ]);
 
         $this->add([
-            'name' => 'csrf',
-            'type' => Element\Csrf::class,
+            'name'    => 'csrf',
+            'type'    => Element\Csrf::class,
             'options' => [
                 'csrf_options' => [
                     'timeout' => 600,
@@ -49,8 +50,8 @@ class TwoFactorAuthenticationCodeForm extends Form implements InputFilterProvide
         ]);
 
         $this->add([
-            'name' => 'submit',
-            'type' => Element\Submit::class,
+            'name'       => 'submit',
+            'type'       => Element\Submit::class,
             'attributes' => [
                 'value' => _('Submit'),
                 'label' => _('Submit'),
@@ -60,45 +61,45 @@ class TwoFactorAuthenticationCodeForm extends Form implements InputFilterProvide
 
     public function getInputFilterSpecification(): array
     {
-        return[
+        return [
             'code' => [
-                'required' => true,
-                'filters' => [
+                'required'   => true,
+                'filters'    => [
                     ['name' => Filter\Digits::class],
                 ],
                 'validators' => [
                     [
-                        'name' => Validator\NotEmpty::class,
+                        'name'                   => Validator\NotEmpty::class,
                         'break_chain_on_failure' => true,
-                        'options' => [
+                        'options'                => [
                             'messages' => [
                                 Validator\NotEmpty::IS_EMPTY => _("You must enter the security code"),
                             ],
                         ],
                     ],
                     [
-                        'name' => Validator\Digits::class,
+                        'name'                   => Validator\Digits::class,
                         'break_chain_on_failure' => true,
-                        'options' => [
+                        'options'                => [
                             'messages' => [
-                                Validator\Digits::INVALID => _("The security code must only contain digits"),
-                                Validator\Digits::NOT_DIGITS => _("The security code must only contain digits"),
+                                Validator\Digits::INVALID      => _("The security code must only contain digits"),
+                                Validator\Digits::NOT_DIGITS   => _("The security code must only contain digits"),
                                 Validator\Digits::STRING_EMPTY => _("You must enter the security code"),
                             ],
                         ],
                     ],
                     [
-                        'name' => Validator\Between::class,
+                        'name'                   => Validator\Between::class,
                         'break_chain_on_failure' => true,
-                        'options' => [
+                        'options'                => [
                             'encoding' => 'UTF-8',
-                            'min' => 1,
-                            'max' => 999999,
+                            'min'      => 1,
+                            'max'      => 999999,
                             'messages' => [
-                                Validator\Between::NOT_BETWEEN => _("The security code must contain 6 digits"),
+                                Validator\Between::NOT_BETWEEN        => _("The security code must contain 6 digits"),
                                 Validator\Between::NOT_BETWEEN_STRICT => _("The security code must contain 6 digits"),
-                                Validator\Between::VALUE_NOT_NUMERIC => _("The security code is invalid"),
-                                Validator\Between::VALUE_NOT_STRING => _("The security code is invalid"),
+                                Validator\Between::VALUE_NOT_NUMERIC  => _("The security code is invalid"),
+                                Validator\Between::VALUE_NOT_STRING   => _("The security code is invalid"),
                             ],
                         ],
                     ],
@@ -106,5 +107,4 @@ class TwoFactorAuthenticationCodeForm extends Form implements InputFilterProvide
             ],
         ];
     }
-
 }

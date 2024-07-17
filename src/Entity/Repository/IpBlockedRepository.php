@@ -1,26 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Entity\Repository;
 
-use Doctrine\ORM\EntityRepository;
 use DateTimeInterface;
+use Doctrine\ORM\EntityRepository;
 use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\NoResultException;
-use FwsDoctrineAuth\Entity\IpBlocked;
 
 /**
  * Description of IpBlockedRepository
- *
- * @author Garry Childs <info@freedomwebservices.net>
  */
 class IpBlockedRepository extends EntityRepository
 {
-
     /**
      * Delete IP address from blocked list
-     * @param string $ipAddress
-     * @param DateTimeInterface|null $date
-     * @return void
      */
     public function deleteBlockedIpAddress(string $ipAddress, ?DateTimeInterface $date = null): void
     {
@@ -36,7 +31,7 @@ class IpBlockedRepository extends EntityRepository
 
         try {
             $builder->getQuery()->getSingleScalarResult();
-        } catch (NoResultException|NonUniqueResultException) {}
+        } catch (NoResultException | NonUniqueResultException) {
+        }
     }
-
 }

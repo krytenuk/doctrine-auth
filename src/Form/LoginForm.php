@@ -1,25 +1,20 @@
 <?php
 
-namespace FwsDoctrineAuth\Form;
+declare(strict_types=1);
 
-use FwsDoctrineAuth\Exception\DoctrineAuthException;
+namespace FwsDoctrineAuth\Form;
 
 /**
  * LoginForm
- *
- * @author Garry Childs <info@freedomwebservices.net>
  */
 class LoginForm extends DefaultForm
 {
-    
     /**
      * Create form elements
-     * @return void
      */
     public function init(): void
     {
         parent::init();
         $this->get('submit')->setValue('Login');
     }
-
 }

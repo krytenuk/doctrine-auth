@@ -1,66 +1,79 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Model;
 
-use DateInterval;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use DoctrineModule\Authentication\Adapter\ObjectRepository;
 use FwsDoctrineAuth\Entity\AuthUserInterface;
 use FwsDoctrineAuth\Entity\BaseUser;
-use FwsDoctrineAuth\Entity\FailedLoginAttemptsLog;
-use FwsDoctrineAuth\Entity\IpBlocked;
-use FwsDoctrineAuth\Entity\LoginLog;
-use FwsDoctrineAuth\Entity\Repository\FailedLoginAttemptsLogRepository;
-use FwsDoctrineAuth\Entity\Repository\IpBlockedRepository;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use FwsDoctrineAuth\Form\LoginForm;
 use Laminas\Authentication\AuthenticationService;
+use Laminas\Form\FormElementManager;
 use Laminas\Session\Container;
 use Laminas\Session\SessionManager;
 use Laminas\Stdlib\ParametersInterface;
+use FwsDoctrineAuth\Form\Service\DoctrineAuthFormFactory;
+
+use function class_exists;
 
 /** * LoginModel
- *
- * @author Garry Childs (Freedom Web Services)
  */
 class LoginModel extends AbstractModel
 {
+    const ERROR_IP_BLOCKED = 'ipBlocked';
+    const ERROR_INVALID_CREDENTIALS = 'invalidCredentials';
+    const ERROR_BLOCK_IP_ADDRESS = 'blockIpAddress';
 
     private ?BaseUser $identity = null;
-    private ?string $callback = null;
+    private ?string $callback   = null;
+    private LoginForm $loginForm;
+    public static array $loginErrorMessages = [];
+
+    /**
+     * @todo Document error messages
+     */
+    public static function setErrorMessages(): void
+    {
+        self::$loginErrorMessages = [
+            self::ERROR_IP_BLOCKED => _('Sorry your IP address is blocked'),
+            self::ERROR_INVALID_CREDENTIALS => _('Your login credentials are invalid'),
+            self::ERROR_BLOCK_IP_ADDRESS => _('Too many login attempts, your IP address is blocked'),
+        ];
+    }
 
     /**
      *  Set model dependencies
      *
-     * @param LoginForm $loginForm
+     * @param FormElementManager $formElementManager
      * @param AuthenticationService $authService
      * @param EntityManagerInterface $entityManager
      * @param AuthContainerStorage $authContainerStorage
      * @param SessionManager $sessionManager
      * @param Acl $acl
      * @param array $config
+     * @throws DoctrineAuthException
      */
     public function __construct(
-            protected LoginForm $loginForm,
-            protected AuthenticationService $authService,
-            protected EntityManagerInterface $entityManager,
-            protected AuthContainerStorage $authContainerStorage,
-            protected SessionManager $sessionManager,
-            protected Acl $acl,
-            protected array $config
-    )
-    {
+        FormElementManager $formElementManager,
+        protected AuthenticationService $authService,
+        protected EntityManagerInterface $entityManager,
+        protected AuthContainerStorage $authContainerStorage,
+        protected SessionManager $sessionManager,
+        protected Acl $acl,
+        protected array $config
+    ) {
+        /* Fetch login form from config value */
+        $this->loginForm = $formElementManager->get(DoctrineAuthFormFactory::LOGIN_FORM);
+
         /* Store login callback if set */
         if (isset($config['doctrineAuth']['loginCallback'])) {
             $this->callback = $config['doctrineAuth']['loginCallback'];
         }
     }
 
-    /**
-     *
-     * @return LoginForm
-     */
     public function getLoginForm(): LoginForm
     {
         return $this->loginForm;
@@ -68,8 +81,6 @@ class LoginModel extends AbstractModel
 
     /**
      * Validate the login/auth code form
-     * @param ParametersInterface $postData
-     * @return bool
      */
     public function processForm(ParametersInterface $postData): bool
     {
@@ -79,8 +90,8 @@ class LoginModel extends AbstractModel
 
     /**
      * Attempt to login user
+     *
      * @param array|null $data
-     * @return boolean
      * @throws DoctrineAuthException
      */
     public function login(?array $data): bool
@@ -95,7 +106,7 @@ class LoginModel extends AbstractModel
         $adapter->setCredential($data[$this->config['doctrine']['authentication']['orm_default']['credential_property']]);
         $authResult = $this->authService->authenticate($adapter);
         /* Authentication failed */
-        if (!$authResult->isValid()) {
+        if (! $authResult->isValid()) {
             return false;
         }
 
@@ -103,7 +114,7 @@ class LoginModel extends AbstractModel
         $this->identity = $authResult->getIdentity();
 
         /* User not active */
-        if (!$this->identity->isUserActive()) {
+        if (! $this->identity->isUserActive()) {
             $this->authService->clearIdentity();
             return false;
         }
@@ -122,7 +133,7 @@ class LoginModel extends AbstractModel
         $this->authContainerStorage->setIdentity($this->identity);
 
         /* Update user on database and reload user entity */
-        if (!$this->flushEntityManager($this->entityManager)) {
+        if (! $this->flushEntityManager($this->entityManager)) {
             return false;
         }
 
@@ -132,26 +143,24 @@ class LoginModel extends AbstractModel
 
     /**
      * Check if using 2FA
-     * @return bool
+     *
      * @throws DoctrineAuthException
      */
     public function use2Fa(): bool
     {
-        if (!isset($this->config['doctrineAuth']['useTwoFactorAuthentication'])) {
+        if (! isset($this->config['doctrineAuth']['useTwoFactorAuthentication'])) {
             throw new DoctrineAuthException('useTwoFactorAuthentication setting not found in config');
         }
 
-        if (!$this->config['doctrineAuth']['useTwoFactorAuthentication']) {
+        if (! $this->config['doctrineAuth']['useTwoFactorAuthentication']) {
             return false;
         }
 
-        return ($this->getIdentity() instanceof BaseUser && $this->identity->hasAuthMethods());
+        return $this->getIdentity() instanceof BaseUser && $this->identity->hasAuthMethods();
     }
 
     /**
      * Set identity
-     * @param AuthUserInterface $identity
-     * @return LoginModel
      */
     public function setIdentity(AuthUserInterface $identity): LoginModel
     {
@@ -162,7 +171,6 @@ class LoginModel extends AbstractModel
 
     /**
      * Get identity
-     * @return AuthUserInterface|null
      */
     public function getIdentity(): ?AuthUserInterface
     {
@@ -177,7 +185,6 @@ class LoginModel extends AbstractModel
 
     /**
      * Logout user
-     * @return void
      */
     public function logout(): void
     {
@@ -187,9 +194,6 @@ class LoginModel extends AbstractModel
 
     /**
      * Set form identity element error message
-     *
-     * @param string $message
-     * @return LoginModel
      */
     public function setFormIdentityMessage(string $message): LoginModel
     {
@@ -199,16 +203,15 @@ class LoginModel extends AbstractModel
 
     /**
      * Use forgot password link
-     * @return bool
      */
     public function useForgotPassword(): bool
     {
-        return (isset($this->config['doctrineAuth']['allowPasswordReset']) && $this->config['doctrineAuth']['allowPasswordReset']);
+        return isset($this->config['doctrineAuth']['allowPasswordReset']) && $this->config['doctrineAuth']['allowPasswordReset'];
     }
 
     /**
      * Get Laminas config
-     * 
+     *
      * @return array
      */
     public function getConfig(): array
@@ -216,13 +219,8 @@ class LoginModel extends AbstractModel
         return $this->config;
     }
 
-    /**
-     * 
-     * @return Container
-     */
     public function getAuthContainer(): Container
     {
         return $this->authContainerStorage;
     }
-
 }

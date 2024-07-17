@@ -1,12 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Entity;
 
-/**
- *
- * @author Garry Childs <info@freedomwebservices.net>
- */
 interface EntityInterface
 {
-    
 }

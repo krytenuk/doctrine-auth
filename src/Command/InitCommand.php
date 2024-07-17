@@ -1,34 +1,39 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuth\Command;
 
+use Doctrine\DBAL\Exception as DoctrineDBALException;
+use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use FwsDoctrineAuth\Entity\UserRole;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputOption;
-use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\DBAL\Exception as DoctrineDBALException;
-use Exception;
+use Symfony\Component\Console\Output\OutputInterface;
+
+use function count;
+use function in_array;
+use function is_array;
+use function sprintf;
 
 /**
  * ImportCommand
- *
- * @author Garry Childs <info@freedomwebservices.net>
  */
 class InitCommand extends Command
 {
+    /** @var string */
+    public static $defaultName = 'doctrine-auth:init';
+
     private array $userRoles = [];
     /**
-     *
-     * @param EntityManagerInterface $entityManager
      * @param array $config
      */
     public function __construct(
         protected EntityManagerInterface $entityManager,
         protected array $config
-    )
-    {
+    ) {
         parent::__construct();
     }
 
@@ -38,7 +43,7 @@ class InitCommand extends Command
     protected function configure(): void
     {
         parent::configure();
-        $this->setName('doctrine-auth:init')
+        $this->setName(self::$defaultName)
             ->setDescription('Initialize database data')
             ->setHelp(
                 <<<EOT
@@ -50,9 +55,7 @@ EOT
 
     /**
      * Add user roles to database
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     * @return int
+     *
      * @throws DoctrineDBALException
      */
     public function execute(InputInterface $input, OutputInterface $output): int
@@ -65,8 +68,8 @@ EOT
             if ($input->getOption('truncate')) {
                 $connection = $this->entityManager->getConnection();
                 $connection->executeQuery('SET FOREIGN_KEY_CHECKS = 0;');
-                $platform = $connection->getDatabasePlatform();
-                $tableName = $this->entityManager->getClassMetadata(UserRole::class)->getTableName();
+                $platform    = $connection->getDatabasePlatform();
+                $tableName   = $this->entityManager->getClassMetadata(UserRole::class)->getTableName();
                 $truncateSql = $platform->getTruncateTableSQL($tableName);
                 $connection->executeStatement($truncateSql);
                 $connection->executeQuery('SET FOREIGN_KEY_CHECKS = 1;');
@@ -80,14 +83,12 @@ EOT
 
     /**
      * Add user roles to database
-     * @param OutputInterface $output
-     * @return boolean
      */
     protected function addRoles(OutputInterface $output): bool
     {
         /* No user roles in config */
         $roles = $this->config['doctrineAuthAcl']['roles'] ?? null;
-        if (!is_array($roles) || empty($roles)) {
+        if (! is_array($roles) || empty($roles)) {
             $output->writeln('<error>No user roles found in config</error>');
             return false;
         }
@@ -113,5 +114,4 @@ EOT
         }
         return false;
     }
-
 }
