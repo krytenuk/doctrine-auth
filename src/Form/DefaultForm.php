@@ -32,6 +32,7 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
     protected ?string $identityPropertyFormElement = null;
 
     /**
+     * @param EntityManager $entityManager
      * @param array $config
      * @throws DoctrineAuthException
      */
@@ -55,6 +56,22 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
 
         parent::__construct('auth');
         $this->setAttribute('method', 'POST');
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getIdentityProperty(): ?string
+    {
+        return $this->identityProperty;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getCredentialProperty(): ?string
+    {
+        return $this->credentialProperty;
     }
 
     /**
