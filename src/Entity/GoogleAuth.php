@@ -31,7 +31,10 @@ use function trigger_deprecation;
         "engine" => "InnoDB",
     ]
 )]
-#[ORM\Index(columns: ["auth_method_id"], name: "auth_method_id")]
+#[ORM\UniqueConstraint(
+    name: "auth_method_id",
+    columns: ["auth_method_id"]
+)]
 class GoogleAuth implements EntityInterface
 {
     #[ORM\Id,
@@ -51,6 +54,7 @@ class GoogleAuth implements EntityInterface
     #[ORM\JoinColumn(
         name: "auth_method_id",
         referencedColumnName: "auth_method_id",
+        unique: true,
         nullable: false,
         onDelete: "CASCADE"
     )]

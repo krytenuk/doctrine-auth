@@ -8,6 +8,8 @@ declare(strict_types=1);
 
 namespace FwsDoctrineAuth\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use FwsDoctrineAuth\Entity\Repository\UserRoleRepository;
@@ -44,6 +46,12 @@ class UserRole implements EntityInterface
     )]
     private string|null $role;
 
+    #[ORM\OneToMany(
+        mappedBy: 'userRole',
+        targetEntity: BaseUser::class
+    )]
+    private Collection|null $users = null;
+
     /**
      * Set user role id
      */
@@ -77,4 +85,14 @@ class UserRole implements EntityInterface
     {
         return $this->role;
     }
+
+    /**
+     * Get users associated with this role
+     * @return Collection
+     */
+    public function getUsers(): Collection
+    {
+        return $this->users;
+    }
+
 }

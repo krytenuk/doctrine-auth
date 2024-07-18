@@ -36,13 +36,16 @@ use Doctrine\ORM\Mapping as ORM;
     columns: ["user_role_id"],
     name: "user_role_id"
 )]
+#[ORM\UniqueConstraint(
+    name: "email_address",
+    columns: ["email_address"]
+)]
 #[ORM\InheritanceType("SINGLE_TABLE"),
     ORM\DiscriminatorColumn(
         name: "type",
         type: "string"
     )
 ]
-#[ORM\Index(columns: ["user_id"], name: "user_id")]
 class BaseUser implements AuthUserInterface
 {
     #[ORM\Id,
@@ -116,7 +119,8 @@ class BaseUser implements AuthUserInterface
     #[ORM\ManyToOne(
         targetEntity: UserRole::class,
         cascade: ["PERSIST"],
-        fetch: "EAGER"
+        fetch: "EAGER",
+        inversedBy: "users"
     )]
     #[ORM\JoinColumn(
         name: "user_role_id",
