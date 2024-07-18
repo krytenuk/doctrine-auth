@@ -14,8 +14,7 @@ use FwsDoctrineAuth\Command;
 use FwsDoctrineAuth\Controller;
 use FwsDoctrineAuth\Controller\Plugin as ControllerPlugin;
 use FwsDoctrineAuth\Form;
-use FwsDoctrineAuth\Listener\AuthListener;
-use FwsDoctrineAuth\Listener\NavigationListener;
+use FwsDoctrineAuth\Listener;
 use FwsDoctrineAuth\Model;
 use FwsDoctrineAuth\Model\TwoFactorAuthentication\AdaptorPluginManager;
 use FwsDoctrineAuth\Model\TwoFactorAuthentication\ManageTwoFactorAuthenticationModel;
@@ -254,8 +253,9 @@ return [
             ConfigAbstractFactory::class,
         ],
         'factories' => [
-            AuthListener::class => InvokableFactory::class,
-            NavigationListener::class => InvokableFactory::class,
+            Listener\AuthListener::class => InvokableFactory::class,
+            Listener\NavigationListener::class => InvokableFactory::class,
+            Listener\LayoutListener::class => InvokableFactory::class,
             Model\Acl::class => ConfigAbstractFactory::class,
             Model\AuthContainerStorage::class => function () {
                 return new Model\AuthContainerStorage('auth');
@@ -274,7 +274,7 @@ return [
             Model\TwoFactorAuthentication\Adapter\AuthenticationAppAdapter::class => InvokableFactory::class,
 
             Command\InitCommand::class => ConfigAbstractFactory::class,
-            
+
             AuthenticationService::class => function ($serviceManager) {
                 return $serviceManager->get('doctrine.authenticationservice.orm_default');
             },
@@ -307,15 +307,21 @@ return [
     'event_manager' => [
         'lazy_listeners' => [
             [
-                'listener' => AuthListener::class,
+                'listener' => Listener\AuthListener::class,
                 'method' => 'checkUser',
                 'event' => MvcEvent::EVENT_DISPATCH,
                 'priority' => 1000,
             ],
             [
-                'listener' => NavigationListener::class,
+                'listener' => Listener\NavigationListener::class,
                 'method' => 'addAcl',
                 'event' => MvcEvent::EVENT_RENDER,
+                'priority' => -100,
+            ],
+            [
+                'listener' => Listener\LayoutListener::class,
+                'method' => 'setLayout',
+                'event' => MvcEvent::EVENT_DISPATCH,
                 'priority' => -100,
             ],
         ],
@@ -357,7 +363,7 @@ return [
             ControllerPlugin\BlockIP::class => ConfigAbstractFactory::class,
             ControllerPlugin\LogFailedAttempt::class => ConfigAbstractFactory::class,
             ControllerPlugin\LogSuccessfulLogin::class => ConfigAbstractFactory::class,
-            ControllerPlugin\ValidateHash::class => function (ContainerInterface $container, $requestedName) {
+            ControllerPlugin\ValidateHash::class => function (ContainerInterface $container) {
                 return new ControllerPlugin\ValidateHash(new Csrf(['session' => $container->get(Model\AuthContainerStorage::class)]));
             },
         ],

@@ -7,7 +7,6 @@ namespace FwsDoctrineAuth\Controller;
 use Exception;
 use FwsDoctrineAuth\Entity\AuthUserInterface;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
-use FwsDoctrineAuth\Form\LoginForm;
 use FwsDoctrineAuth\Model;
 use Laminas\Http\Response;
 use Laminas\Mvc\Controller\AbstractActionController;
@@ -29,13 +28,13 @@ use function _;
 class LoginController extends AbstractActionController
 {
     public function __construct(
-        protected Model\LoginModel $loginModel,
-        protected Model\RegisterModel $registerModel,
-        protected Model\ForgotPasswordModel $forgotPasswordModel,
+        protected Model\LoginModel                                                 $loginModel,
+        protected Model\RegisterModel                                              $registerModel,
+        protected Model\ForgotPasswordModel                                        $forgotPasswordModel,
         protected Model\TwoFactorAuthentication\ManageTwoFactorAuthenticationModel $select2faModel,
-        protected Model\TwoFactorAuthentication\TwoFactorAuthenticationModel $twoFactorAuthModel
-    ) {
-    }
+        protected Model\TwoFactorAuthentication\TwoFactorAuthenticationModel       $twoFactorAuthModel
+    )
+    {}
 
     /**
      * Redirect to login
@@ -163,7 +162,7 @@ class LoginController extends AbstractActionController
     public function passwordResetAction(): ViewModel
     {
         /* Setup view model */
-        $viewModel         = new ViewModel();
+        $viewModel = new ViewModel();
         $viewModel->config = $this->forgotPasswordModel->getConfig();
 
         $request = $this->getRequest();
