@@ -7,7 +7,7 @@ namespace FwsDoctrineAuth\Form;
 /**
  * LoginForm
  */
-class LoginForm extends DefaultForm
+class LoginForm extends AbstractDefaultForm
 {
     /**
      * Create form elements

@@ -32,7 +32,6 @@ abstract class AbstractDefaultForm extends Form implements InputFilterProviderIn
     protected ?string $identityPropertyFormElement = null;
 
     /**
-     * @param EntityManager $entityManager
      * @param array $config
      * @throws DoctrineAuthException
      */
@@ -60,7 +59,6 @@ abstract class AbstractDefaultForm extends Form implements InputFilterProviderIn
 
     /**
      * @todo Document identity and credential getters
-     * @return string|null
      */
     public function getIdentityProperty(): ?string
     {
@@ -69,7 +67,6 @@ abstract class AbstractDefaultForm extends Form implements InputFilterProviderIn
 
     /**
      * @todo Document identity and credential getters
-     * @return string|null
      */
     public function getCredentialProperty(): ?string
     {
@@ -193,7 +190,7 @@ abstract class AbstractDefaultForm extends Form implements InputFilterProviderIn
         ]));
 
         /* Register form */
-        if ($this instanceof RegisterFormAbstract) {
+        if ($this instanceof RegisterForm) {
             /* Identity class not found in config */
             $identityClass = $this->config['doctrine']['authentication']['orm_default']['identity_class'] ?? null;
             if (! $identityClass) {

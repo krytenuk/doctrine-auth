@@ -1,10 +1,10 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * To override settings here, ensure your module is defined after FwsDoctrineAuth module.
  */
+
+declare(strict_types=1);
 
 namespace FwsDoctrineAuth;
 
@@ -329,8 +329,8 @@ return [
     'form_elements'              => [
         'factories' => [
             // Default Doctrine Auth Forms
-            Form\LoginFormAbstract::class                       => ConfigAbstractFactory::class,
-            Form\RegisterFormAbstract::class                    => ConfigAbstractFactory::class,
+            Form\LoginForm::class                       => ConfigAbstractFactory::class,
+            Form\RegisterForm::class                    => ConfigAbstractFactory::class,
             Form\ResetPasswordForm::class               => ConfigAbstractFactory::class,
             Form\ForgottenPasswordForm::class           => ConfigAbstractFactory::class,
             Form\SelectTwoFactorAuthMethodForm::class   => ConfigAbstractFactory::class,
@@ -421,11 +421,11 @@ return [
 
         /* Forms */
         /* Default Auth Forms */
-        Form\LoginFormAbstract::class                     => [
+        Form\LoginForm::class                     => [
             EntityManager::class,
             'config',
         ],
-        Form\RegisterFormAbstract::class                  => [
+        Form\RegisterForm::class                  => [
             EntityManager::class,
             'config',
         ],

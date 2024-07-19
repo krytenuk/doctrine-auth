@@ -19,7 +19,7 @@ use function array_merge;
 /**
  * RegisterForm
  */
-class RegisterFormAbstract extends AbstractDefaultForm
+class RegisterForm extends AbstractDefaultForm
 {
     public function __construct(EntityManager $entityManager, array $config)
     {
