@@ -10,7 +10,7 @@ use Doctrine\ORM\Exception\NotSupported;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use Laminas\Filter;
 use Laminas\Form\Element;
-use Laminas\I18n\Validator as I18nValidator;
+use Laminas\I18n\PhoneNumber\Validator\PhoneNumber;
 use Laminas\Validator;
 
 use function _;
@@ -19,7 +19,7 @@ use function array_merge;
 /**
  * RegisterForm
  */
-class RegisterForm extends DefaultForm
+class RegisterFormAbstract extends AbstractDefaultForm
 {
     public function __construct(EntityManager $entityManager, array $config)
     {
@@ -102,15 +102,11 @@ class RegisterForm extends DefaultForm
                             ],
                         ],
                         [
-                            'name'    => I18nValidator\PhoneNumber::class,
+                            'name'    => PhoneNumber::class,
                             'options' => [
                                 'allowed_types' => ['mobile'],
                                 'country'       => $stringToUpperFilter->filter($siteCountryCode),
-                                'messages'      => [
-                                    I18nValidator\PhoneNumber::INVALID     => _("This is not a valid mobile number"),
-                                    I18nValidator\PhoneNumber::NO_MATCH    => _("This is not a valid mobile number"),
-                                    I18nValidator\PhoneNumber::UNSUPPORTED => _("This is not a valid mobile number"),
-                                ],
+                                'message'       => _("This is not a valid mobile number"),
                             ],
                         ],
                     ],

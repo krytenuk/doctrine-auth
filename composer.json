@@ -29,7 +29,8 @@
     "ext-gettext": "*",
     "ext-curl": "*",
     "ext-http": "*",
-    "laminas/laminas-navigation": "^2.19"
+    "laminas/laminas-navigation": "^2.19",
+    "laminas/laminas-i18n-phone-number": "^1.2"
   },
   "authors": [
     {

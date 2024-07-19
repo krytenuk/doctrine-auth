@@ -23,7 +23,7 @@ use function method_exists;
 /**
  * DefaultForm
  */
-abstract class DefaultForm extends Form implements InputFilterProviderInterface
+abstract class AbstractDefaultForm extends Form implements InputFilterProviderInterface
 {
     protected ?string $identityProperty            = null;
     protected ?string $credentialProperty          = null;
@@ -59,6 +59,7 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
     }
 
     /**
+     * @todo Document identity and credential getters
      * @return string|null
      */
     public function getIdentityProperty(): ?string
@@ -67,6 +68,7 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
     }
 
     /**
+     * @todo Document identity and credential getters
      * @return string|null
      */
     public function getCredentialProperty(): ?string
@@ -191,7 +193,7 @@ abstract class DefaultForm extends Form implements InputFilterProviderInterface
         ]));
 
         /* Register form */
-        if ($this instanceof RegisterForm) {
+        if ($this instanceof RegisterFormAbstract) {
             /* Identity class not found in config */
             $identityClass = $this->config['doctrine']['authentication']['orm_default']['identity_class'] ?? null;
             if (! $identityClass) {

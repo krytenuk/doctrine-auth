@@ -54,9 +54,9 @@ class Module implements BootstrapListenerInterface
         $events->getSharedManager()->attach('doctrine', 'loadCli.post', function (EventInterface $event) {
             /** @var Application $cli */
             $cli = $event->getTarget();
-            /** @var EntityManagerInterface $entityManager */
             $cli->addCommands([
                 $event->getParam('ServiceManager')->get(Command\InitCommand::class),
+                $event->getParam('ServiceManager')->get(Command\CreateUserCommand::class),
             ]);
         });
     }

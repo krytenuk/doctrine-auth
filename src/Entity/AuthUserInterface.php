@@ -20,6 +20,10 @@ interface AuthUserInterface extends EntityInterface
 
     public function getPassword(): string|null;
 
+    public function setUserRole(UserRole $userRole): AuthUserInterface;
+
+    public function getUserRole(): UserRole|null;
+
     public function setMobileNumber(string|null $mobileNumber): AuthUserInterface;
 
     public function getMobileNumber(): string|null;
