@@ -243,6 +243,7 @@ return [
         ],
     ],
     'view_manager'    => [
+        // @todo Document using $this->layout()->setTemplate('fws-doctrine-auth/layout'); in view overrides to set a different template
         'template_path_stack' => [
             'fws-doctrine-auth' => __DIR__ . '/../view',
         ],
