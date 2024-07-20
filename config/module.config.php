@@ -255,7 +255,6 @@ return [
         'factories'          => [
             Listener\AuthListener::class                                      => InvokableFactory::class,
             Listener\NavigationListener::class                                => InvokableFactory::class,
-            Listener\LayoutListener::class                                    => InvokableFactory::class,
             Model\Acl::class                                                  => ConfigAbstractFactory::class,
             Model\AuthContainerStorage::class                                 => function () {
                 return new Model\AuthContainerStorage('auth');
@@ -314,12 +313,6 @@ return [
                 'listener' => Listener\NavigationListener::class,
                 'method'   => 'addAcl',
                 'event'    => MvcEvent::EVENT_RENDER,
-                'priority' => -100,
-            ],
-            [
-                'listener' => Listener\LayoutListener::class,
-                'method'   => 'setLayout',
-                'event'    => MvcEvent::EVENT_DISPATCH,
                 'priority' => -100,
             ],
         ],
