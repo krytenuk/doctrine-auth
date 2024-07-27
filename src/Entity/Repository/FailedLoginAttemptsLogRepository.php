@@ -29,7 +29,7 @@ class FailedLoginAttemptsLogRepository extends EntityRepository
                 ->setParameter('date', $date);
 
         try {
-            return $builder->getQuery()->getSingleScalarResult();
+            return (int) $builder->getQuery()->getSingleScalarResult();
         } catch (NoResultException | NonUniqueResultException) {
             return null;
         }
