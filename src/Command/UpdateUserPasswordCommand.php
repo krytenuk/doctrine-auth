@@ -72,10 +72,6 @@ EOT
         }
 
         $email = $input->getArgument('email');
-        if ($this->entityManager->getRepository($userClass)->count(['emailAddress' => $email])) {
-            $output->writeln(sprintf('<error>User email %s is already registered.</error>', $email));
-            return Command::INVALID;
-        }
 
         $emailValidator = new EmailAddress([
             'allow' => [
