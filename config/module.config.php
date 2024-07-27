@@ -56,11 +56,8 @@ return [
                     'default'        => [
                         'type'          => Segment::class,
                         'options'       => [
-                            'route'       => '[/:action]',
-                            'constraints' => [
-                                'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
-                            ],
-                            'defaults'    => [
+                            'route'    => '[/:action]',
+                            'defaults' => [
                                 'controller' => Controller\LoginController::class,
                                 'action'     => 'index',
                             ],
@@ -81,11 +78,8 @@ return [
                     'register'       => [
                         'type'          => Segment::class,
                         'options'       => [
-                            'route'       => '/register',
-                            'constraints' => [
-                                'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
-                            ],
-                            'defaults'    => [
+                            'route'    => '/register',
+                            'defaults' => [
                                 'controller' => Controller\LoginController::class,
                                 'action'     => 'register',
                             ],
@@ -95,13 +89,10 @@ return [
                     'logout'         => [
                         'type'          => Segment::class,
                         'options'       => [
-                            'route'       => '/login',
-                            'constraints' => [
-                                'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
-                            ],
-                            'defaults'    => [
+                            'route'    => '/logout',
+                            'defaults' => [
                                 'controller' => Controller\LoginController::class,
-                                'action'     => 'login',
+                                'action'     => 'logout',
                             ],
                         ],
                         'may_terminate' => true,
