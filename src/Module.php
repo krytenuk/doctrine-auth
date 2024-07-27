@@ -57,6 +57,7 @@ class Module implements BootstrapListenerInterface
             $cli->addCommands([
                 $event->getParam('ServiceManager')->get(Command\InitCommand::class),
                 $event->getParam('ServiceManager')->get(Command\CreateUserCommand::class),
+                $event->getParam('ServiceManager')->get(Command\UpdateUserPasswordCommand::class),
             ]);
         });
     }

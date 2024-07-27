@@ -18,6 +18,7 @@ use FwsDoctrineAuth\Listener;
 use FwsDoctrineAuth\Model;
 use FwsDoctrineAuth\Model\TwoFactorAuthentication\AdaptorPluginManager;
 use FwsDoctrineAuth\Model\TwoFactorAuthentication\ManageTwoFactorAuthenticationModel;
+use FwsDoctrineAuth\Model\TwoFactorAuthentication\Service\AdaptorPluginManagerFactory;
 use FwsDoctrineAuth\Model\TwoFactorAuthentication\TwoFactorAuthenticationModel;
 use FwsDoctrineAuth\View\Helper as ViewHelper;
 use Laminas\Authentication\AuthenticationService;
@@ -258,12 +259,13 @@ return [
             Model\RegisterModel::class                                        => ConfigAbstractFactory::class,
             Model\ForgotPasswordModel::class                                  => ConfigAbstractFactory::class,
             Model\GetClientIpAddress::class                                   => ConfigAbstractFactory::class,
-            AdaptorPluginManager::class                                       => Model\TwoFactorAuthentication\Service\AdaptorPluginManagerFactory::class,
+            AdaptorPluginManager::class                                       => AdaptorPluginManagerFactory::class,
             Model\TwoFactorAuthentication\Adapter\EmailAdapter::class         => ConfigAbstractFactory::class,
             Model\TwoFactorAuthentication\Adapter\BulkSmsAdapter::class       => ConfigAbstractFactory::class,
             Model\TwoFactorAuthentication\Adapter\AuthenticationAppAdapter::class => InvokableFactory::class,
             Command\InitCommand::class                                            => ConfigAbstractFactory::class,
             Command\CreateUserCommand::class                                      => ConfigAbstractFactory::class,
+            Command\UpdateUserPasswordCommand::class                              => ConfigAbstractFactory::class,
             AuthenticationService::class                                          => function ($serviceManager) {
                 return $serviceManager->get('doctrine.authenticationservice.orm_default');
             },
@@ -349,7 +351,9 @@ return [
             ControllerPlugin\LogFailedAttempt::class   => ConfigAbstractFactory::class,
             ControllerPlugin\LogSuccessfulLogin::class => ConfigAbstractFactory::class,
             ControllerPlugin\ValidateHash::class       => function (ContainerInterface $container) {
-                return new ControllerPlugin\ValidateHash(new Csrf(['session' => $container->get(Model\AuthContainerStorage::class)]));
+                return new ControllerPlugin\ValidateHash(new Csrf([
+                    'session' => $container->get(Model\AuthContainerStorage::class),
+                ]));
             },
         ],
         'aliases'   => [
@@ -481,11 +485,15 @@ return [
         ],
 
         /* Commands */
-        Command\InitCommand::class       => [
+        Command\InitCommand::class               => [
             EntityManager::class,
             'config',
         ],
-        Command\CreateUserCommand::class => [
+        Command\CreateUserCommand::class         => [
+            EntityManager::class,
+            'config',
+        ],
+        Command\UpdateUserPasswordCommand::class => [
             EntityManager::class,
             'config',
         ],
