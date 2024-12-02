@@ -181,8 +181,9 @@ class LoginController extends AbstractActionController
             'code'          => '',
             'invalidLink'   => false,
             'passwordReset' => false,
+            'emailSent'     => false,
+            'config'        => $this->forgotPasswordModel->getConfig(),
         ]);
-        $viewModel->config = $this->forgotPasswordModel->getConfig();
 
         $request = $this->getRequest();
         /* Get code from url */
@@ -191,7 +192,7 @@ class LoginController extends AbstractActionController
         if ($code === null) {
             /* Form not submitted, pass email address form to view */
             if (! $request->isPost()) {
-                $viewModel->emailForm = $this->forgotPasswordModel->getEmailForm();
+                $viewModel->setVariable('emailForm', $this->forgotPasswordModel->getEmailForm());
                 return $viewModel;
             }
             /* Form submitted, process email form */
@@ -205,7 +206,7 @@ class LoginController extends AbstractActionController
         /* New password form not submitted */
         if (! $request->isPost()) {
             if ($user) {
-                $viewModel->resetForm = $this->forgotPasswordModel->getResetPasswordForm();
+                $viewModel->setVariable('resetForm', $this->forgotPasswordModel->getResetPasswordForm());
             } else {
                 $viewModel->invalidLink = true;
             }
@@ -228,10 +229,9 @@ class LoginController extends AbstractActionController
      */
     private function processEmailForm(ViewModel $viewModel, Parameters $postData): ViewModel
     {
-        $viewModel->emailSent = false;
         if ($this->forgotPasswordModel->processEmailForm($postData)) {
             if ($this->forgotPasswordModel->sendEmail()) {
-                $viewModel->emailSent = true;
+                $viewModel->setVariable('emailSent', true);
             }
             return $viewModel;
         }
