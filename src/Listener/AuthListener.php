@@ -75,15 +75,34 @@ class AuthListener
         /** ajax request */
         if ($request->isXmlHttpRequest()) {
             $response->setStatusCode(Response::STATUS_CODE_200);
-            $viewModel = new JsonModel(['redirect' => $event->getRouter()->assemble(['action' => 'login'], ['name' => 'doctrine-auth/default', 'force_canonical' => true])]);
+            $viewModel = new JsonModel([
+                'redirect' => $event->getRouter()->assemble(
+                    [
+                        'action' => 'login',
+                    ],
+                    [
+                        'name'            => 'doctrine-auth/default',
+                        'force_canonical' => true,
+                    ]
+                ),
+            ]);
             $event->setViewModel($viewModel);
             $event->stopPropagation();
             return $viewModel;
         } else {
             /** On login page */
-            if ($controller == LoginController::class && $action == 'login') {
+            if ($controller === LoginController::class && $action === 'login') {
                 /* Redirect to log out */
-                return $this->redirect($event, $response, $event->getRouter()->assemble(['action' => 'logout'], ['name' => 'doctrine-auth/default']));
+                return $this->redirect(
+                    $event,
+                    $response,
+                    $event->getRouter()->assemble(
+                        [
+                            'action' => 'logout',
+                        ],
+                        ['name' => 'doctrine-auth/default']
+                    )
+                );
             }
 
             /** User trying to access restricted page */

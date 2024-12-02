@@ -13,8 +13,6 @@ use Laminas\Mvc\Controller\AbstractActionController;
 use Laminas\Stdlib\Parameters;
 use Laminas\View\Model\ViewModel;
 
-use function _;
-
 /**
  * IndexController
  *
@@ -28,13 +26,13 @@ use function _;
 class LoginController extends AbstractActionController
 {
     public function __construct(
-        protected Model\LoginModel                                                 $loginModel,
-        protected Model\RegisterModel                                              $registerModel,
-        protected Model\ForgotPasswordModel                                        $forgotPasswordModel,
+        protected Model\LoginModel $loginModel,
+        protected Model\RegisterModel $registerModel,
+        protected Model\ForgotPasswordModel $forgotPasswordModel,
         protected Model\TwoFactorAuthentication\ManageTwoFactorAuthenticationModel $select2faModel,
-        protected Model\TwoFactorAuthentication\TwoFactorAuthenticationModel       $twoFactorAuthModel
-    )
-    {}
+        protected Model\TwoFactorAuthentication\TwoFactorAuthenticationModel $twoFactorAuthModel
+    ) {
+    }
 
     /**
      * Redirect to login
@@ -53,10 +51,10 @@ class LoginController extends AbstractActionController
     {
         /* Create view model */
         $viewModel = new ViewModel([
-            'config' => $this->loginModel->getConfig(),
-            'form' => $this->loginModel->getLoginForm(),
+            'config'            => $this->loginModel->getConfig(),
+            'form'              => $this->loginModel->getLoginForm(),
             'useForgotPassword' => $this->loginModel->useForgotPassword(),
-            'errorMessage' => '',
+            'errorMessage'      => '',
         ]);
 
         /* Form NOT submitted */
@@ -75,17 +73,26 @@ class LoginController extends AbstractActionController
         /* IP address blocked */
         if ($this->isIpBlocked()) {
             $this->getResponse()->setStatusCode(Response::STATUS_CODE_401);
-            $viewModel->setVariable('errorMessage', Model\LoginModel::$loginErrorMessages[Model\LoginModel::ERROR_IP_BLOCKED]);
+            $viewModel->setVariable(
+                'errorMessage',
+                Model\LoginModel::$loginErrorMessages[Model\LoginModel::ERROR_IP_BLOCKED]
+            );
             return $viewModel;
         }
 
         /* Login authentication failed */
         if (! $this->loginModel->login(null)) {
-            $viewModel->setVariable('errorMessage', Model\LoginModel::$loginErrorMessages[Model\LoginModel::ERROR_INVALID_CREDENTIALS]);
+            $viewModel->setVariable(
+                'errorMessage',
+                Model\LoginModel::$loginErrorMessages[Model\LoginModel::ERROR_INVALID_CREDENTIALS]
+            );
             $emailAddress = $viewModel->form->getData()['emailAddress'];
             if ($this->logFailedLoginAttempt($emailAddress)) {
                 if ($this->blockIpAddress($emailAddress)) {
-                    $viewModel->setVariable('errorMessage', Model\LoginModel::$loginErrorMessages[Model\LoginModel::ERROR_BLOCK_IP_ADDRESS]);
+                    $viewModel->setVariable(
+                        'errorMessage',
+                        Model\LoginModel::$loginErrorMessages[Model\LoginModel::ERROR_BLOCK_IP_ADDRESS]
+                    );
                 }
             }
             $this->getResponse()->setStatusCode(Response::STATUS_CODE_401);
@@ -125,7 +132,7 @@ class LoginController extends AbstractActionController
 
         $viewModel = new ViewModel([
             'config' => $this->registerModel->getConfig(),
-            'form' => $this->registerModel->getForm(),
+            'form'   => $this->registerModel->getForm(),
         ]);
 
         /* Form NOT submitted */
@@ -136,10 +143,16 @@ class LoginController extends AbstractActionController
         /* registration failed */
         if (! $this->registerModel->processForm($this->getRequest()->getPost())) {
             if ($this->registerModel->getForm()->isValid()) {
-                $viewModel->setVariable('errorMessage', Model\RegisterModel::$loginErrorMessages[Model\RegisterModel::ERROR_REGISTRATION_FAILED]);
+                $viewModel->setVariable(
+                    'errorMessage',
+                    Model\RegisterModel::$loginErrorMessages[Model\RegisterModel::ERROR_REGISTRATION_FAILED]
+                );
             } else {
                 $this->getResponse()->setStatusCode(Response::STATUS_CODE_400);
-                $viewModel->setVariable('errorMessage', Model\RegisterModel::$loginErrorMessages[Model\RegisterModel::ERROR_FORM_INVALID]);
+                $viewModel->setVariable(
+                    'errorMessage',
+                    Model\RegisterModel::$loginErrorMessages[Model\RegisterModel::ERROR_FORM_INVALID]
+                );
             }
             return $viewModel;
         }
@@ -162,7 +175,13 @@ class LoginController extends AbstractActionController
     public function passwordResetAction(): ViewModel
     {
         /* Setup view model */
-        $viewModel = new ViewModel();
+        $viewModel         = new ViewModel([
+            'emailForm'     => null,
+            'resetForm'     => null,
+            'code'          => '',
+            'invalidLink'   => false,
+            'passwordReset' => false,
+        ]);
         $viewModel->config = $this->forgotPasswordModel->getConfig();
 
         $request = $this->getRequest();

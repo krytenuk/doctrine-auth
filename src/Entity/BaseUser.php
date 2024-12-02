@@ -29,7 +29,7 @@ use Doctrine\ORM\Mapping as ORM;
     options: [
         "collate" => "latin1_swedish_ci",
         "charset" => "latin1",
-        "engine" => "InnoDB"
+        "engine" => "InnoDB",
     ]
 )]
 #[ORM\Index(
@@ -96,7 +96,6 @@ class BaseUser implements AuthUserInterface
     #[ORM\Column(
         name: "user_active",
         type: Types::BOOLEAN,
-        length: 256,
         nullable: false,
         options: ["default" => 0]
     )]
