@@ -175,13 +175,13 @@ class LoginController extends AbstractActionController
     public function passwordResetAction(): ViewModel
     {
         /* Setup view model */
-        $viewModel         = new ViewModel([
+        $viewModel = new ViewModel([
             'emailForm'     => null,
             'resetForm'     => null,
             'code'          => '',
-            'invalidLink'   => false,
-            'passwordReset' => false,
-            'emailSent'     => false,
+            'invalidLink'   => null,
+            'passwordReset' => null,
+            'emailSent'     => null,
             'config'        => $this->forgotPasswordModel->getConfig(),
         ]);
 
