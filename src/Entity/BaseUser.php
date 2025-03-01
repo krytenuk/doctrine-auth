@@ -29,7 +29,7 @@ use Doctrine\ORM\Mapping as ORM;
     options: [
         "collate" => "latin1_swedish_ci",
         "charset" => "latin1",
-        "engine" => "InnoDB",
+        "engine"  => "InnoDB",
     ]
 )]
 #[ORM\Index(
@@ -46,6 +46,7 @@ use Doctrine\ORM\Mapping as ORM;
         type: "string"
     )
 ]
+#[ORM\MappedSuperclass]
 class BaseUser implements AuthUserInterface
 {
     #[ORM\Id,
@@ -68,7 +69,6 @@ class BaseUser implements AuthUserInterface
         name: "email_address",
         type: Types::STRING,
         length: 100,
-        unique: true,
         nullable: false
     )]
     protected string|null $emailAddress = null;
@@ -82,7 +82,7 @@ class BaseUser implements AuthUserInterface
         length: 100,
         nullable: true
     )]
-    protected string|null $password = null;
+    protected string|null $password  = null;
 
     /** @todo Document text to string datatype change, write convert script? */
     #[ORM\Column(
@@ -143,7 +143,7 @@ class BaseUser implements AuthUserInterface
         fetch: "EAGER",
         orphanRemoval: true
     )]
-    protected Collection|null $authMethods;
+    protected Collection|null $authMethods = null;
 
     #[ORM\OneToMany(
         mappedBy: "user",
@@ -156,9 +156,9 @@ class BaseUser implements AuthUserInterface
 
     public function __construct()
     {
-        $this->authMethods = new ArrayCollection();
-        $this->logins = new ArrayCollection();
-        $this->dateCreated = new DateTime();
+        $this->authMethods  = new ArrayCollection();
+        $this->logins       = new ArrayCollection();
+        $this->dateCreated  = new DateTime();
         $this->dateModified = new DateTime();
     }
 
@@ -272,7 +272,7 @@ class BaseUser implements AuthUserInterface
 
     public function hasPasswordReminder(): bool
     {
-        return (bool)$this->getPasswordReminder();
+        return (bool) $this->getPasswordReminder();
     }
 
     public function getPasswordReminder(): ?PasswordReminder
@@ -304,7 +304,7 @@ class BaseUser implements AuthUserInterface
      */
     public function hasAuthMethods(): bool
     {
-        return (bool)$this->countAuthMethods();
+        return (bool) $this->countAuthMethods();
     }
 
     /**
@@ -315,7 +315,7 @@ class BaseUser implements AuthUserInterface
         if ($authMethod instanceof TwoFactorAuthMethod) {
             return $this->authMethods->contains($authMethod);
         }
-        return (bool)$this->getAuthMethod($authMethod);
+        return (bool) $this->getAuthMethod($authMethod);
     }
 
     /**
@@ -434,7 +434,7 @@ class BaseUser implements AuthUserInterface
      */
     public function prePersist(): void
     {
-        $this->dateCreated = new DateTime();
+        $this->dateCreated  = new DateTime();
         $this->dateModified = new DateTime();
     }
 
@@ -449,28 +449,28 @@ class BaseUser implements AuthUserInterface
     public function __serialize(): array
     {
         return [
-            'userId' => $this->userId,
+            'userId'       => $this->userId,
             'emailAddress' => $this->emailAddress,
             'mobileNumber' => $this->mobileNumber,
-            'userActive' => $this->userActive,
-            'dateCreated' => $this->dateCreated,
+            'userActive'   => $this->userActive,
+            'dateCreated'  => $this->dateCreated,
             'dateModified' => $this->dateModified,
-            'userRole' => $this->userRole,
-            'authMethods' => $this->authMethods?->toArray(),
-            'logins' => $this->logins?->toArray(),
+            'userRole'     => $this->userRole,
+            'authMethods'  => $this->authMethods?->toArray(),
+            'logins'       => $this->logins?->toArray(),
         ];
     }
 
     public function __unserialize(array $data): void
     {
-        $this->userId = $data['userId'];
+        $this->userId       = $data['userId'];
         $this->emailAddress = $data['emailAddress'];
         $this->mobileNumber = $data['mobileNumber'];
-        $this->userActive = $data['userActive'];
-        $this->dateCreated = $data['dateCreated'];
+        $this->userActive   = $data['userActive'];
+        $this->dateCreated  = $data['dateCreated'];
         $this->dateModified = $data['dateModified'];
-        $this->userRole = $data['userRole'];
-        $this->authMethods = $data['authMethods'] ? new ArrayCollection($data['authMethods']) : null;
-        $this->logins = $data['logins'] ? new ArrayCollection($data['logins']) : null;
+        $this->userRole     = $data['userRole'];
+        $this->authMethods  = $data['authMethods'] ? new ArrayCollection($data['authMethods']) : null;
+        $this->logins       = $data['logins'] ? new ArrayCollection($data['logins']) : null;
     }
 }
