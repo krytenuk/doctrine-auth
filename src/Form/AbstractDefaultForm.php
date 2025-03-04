@@ -216,7 +216,7 @@ abstract class AbstractDefaultForm extends Form implements InputFilterProviderIn
         }
 
         /* Return input filters and validators */
-        return array_merge($filter, [
+        return array_merge([
             $this->identityProperty   => [
                 'required'   => true,
                 'filters'    => [
@@ -256,6 +256,6 @@ abstract class AbstractDefaultForm extends Form implements InputFilterProviderIn
                     ],
                 ],
             ],
-        ]);
+        ], $filter);
     }
 }
