@@ -22,6 +22,8 @@ use function _;
 class ForgottenPasswordForm extends Form implements InputFilterProviderInterface
 {
     private ?string $identityClass;
+    private string $identityProperty;
+    private string $identityPropertyFormElement;
 
     /**
      * @param array $config
@@ -35,6 +37,10 @@ class ForgottenPasswordForm extends Form implements InputFilterProviderInterface
         if (! $this->identityClass) {
             throw new DoctrineAuthException('identity_class not found in config');
         }
+        $this->identityProperty            =
+            $this->config['doctrine']['authentication']['orm_default']['identity_property'] ?? null;
+        $this->identityPropertyFormElement =
+            $this->config['doctrineAuth']['formElements']['identity_property_element'] ?? Element\Email::class;
 
         parent::__construct('reset-password');
         $this->setAttribute('method', 'POST');
@@ -48,10 +54,9 @@ class ForgottenPasswordForm extends Form implements InputFilterProviderInterface
         /*
          * Add form elements
          */
-
         $this->add([
-            'name'       => 'emailAddress',
-            'type'       => Element\Email::class,
+            'name'       => $this->identityProperty,
+            'type'       => $this->identityPropertyFormElement,
             'attributes' => [
                 'size'      => 30,
                 'maxlength' => 255,

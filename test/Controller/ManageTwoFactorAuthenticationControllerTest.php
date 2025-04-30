@@ -1,26 +1,29 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuthTest\Controller;
 
 use FwsDoctrineAuth\Controller\ManageTwoFactorAuthenticationController;
 use FwsDoctrineAuth\Controller\Plugin\ValidateHash;
 use FwsDoctrineAuth\Entity\AuthUserInterface;
 use FwsDoctrineAuth\Model\TwoFactorAuthentication\Adapter\AbstractAdapter;
-use FwsDoctrineAuth\Model\TwoFactorAuthentication\AppAuthenticationMethodModel;
 use FwsDoctrineAuth\Model\TwoFactorAuthentication\ManageTwoFactorAuthenticationModel;
 use Laminas\Http\Header\Location;
 use Laminas\Http\Request;
 use Laminas\Http\Response;
 use Laminas\Mvc\Plugin\FlashMessenger\FlashMessenger;
 use Laminas\View\Model\ViewModel;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\MockObject\MockObject;
+
+use function sprintf;
+use function uniqid;
 
 #[CoversClass(ManageTwoFactorAuthenticationController::class)]
 class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpControllerTestCase
 {
     private ManageTwoFactorAuthenticationModel|MockObject $manageTwoFactorAuthenticationModelMock;
-    private AppAuthenticationMethodModel|MockObject $appAuthenticationMethodModelMock;
 
     private ValidateHash|MockObject $validateHash;
 
@@ -39,17 +42,6 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
             ])
             ->getMock();
 
-        $this->appAuthenticationMethodModelMock = $this->getMockBuilder(AppAuthenticationMethodModel::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods([
-                'getAuthCodeForm',
-                'getQrCode',
-                'getTwoFactorAuthenticationModel',
-                'addMethod',
-                'getSecret',
-            ])
-            ->getMock();
-
         $this->controller = new ManageTwoFactorAuthenticationController($this->manageTwoFactorAuthenticationModelMock);
         $this->controller->setEvent($this->event);
         $this->controller->setEventManager($this->events);
@@ -65,6 +57,7 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
             ->onlyMethods([
                 '__invoke',
                 'getHash',
+                'isValid',
             ])
             ->getMock();
 
@@ -79,13 +72,11 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
 
     /**
      * Create dummy 2FA adaptor
-     *
-     * @return AbstractAdapter
      */
     protected function getAdaptor(): AbstractAdapter
     {
-        return new class extends AbstractAdapter {
-
+        return new class extends AbstractAdapter
+        {
             public function sendCode(): bool
             {
                 return false;
@@ -100,6 +91,7 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
 
     /**
      * Test list 2FA methods
+     *
      * @group manage-two-factor-authentication
      * @return void
      */
@@ -108,7 +100,7 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
         $this->routeMatch->setParam('action', 'list-methods');
 
         $allowedAuthMethods = ['TestAdaptor' => $this->getAdaptor()];
-        $testHash = uniqid();
+        $testHash           = uniqid();
         $this->manageTwoFactorAuthenticationModelMock->expects($this->once())->method('getAllowedAuthenticationMethods')->willReturn($allowedAuthMethods);
         $this->manageTwoFactorAuthenticationModelMock->expects($this->once())->method('getUser')->willReturn($this->identity);
         $this->validateHash->expects($this->once())->method('__invoke')->willReturn($this->validateHash);
@@ -118,14 +110,9 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getMethodTitle');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('removeMethod');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getMethodTitle');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getAuthCodeForm');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getQrCode');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getTwoFactorAuthenticationModel');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('addMethod');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getSecret');
 
         $this->request->setMethod(Request::METHOD_GET);
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $view     = $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_200, $response->getStatusCode());
         $this->assertFalse($response->isRedirect());
@@ -144,13 +131,13 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
 
     /**
      * Add 2FA method, method not found
+     *
      * @group manage-two-factor-authentication
      * @return void
      */
     public function testAddMethodActionMethodNotSpecified()
     {
         $this->initAddMethodAction();
-        $errorMessage = 'The request could not be validated, please try again';
 
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getAllowedAuthenticationMethods');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getUser');
@@ -160,14 +147,9 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getMethodTitle');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('removeMethod');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getMethodTitle');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getAuthCodeForm');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getQrCode');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getTwoFactorAuthenticationModel');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('addMethod');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getSecret');
 
         $this->request->setMethod(Request::METHOD_GET);
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_302, $response->getStatusCode());
         $this->assertTrue($response->isRedirect());
@@ -178,6 +160,7 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
 
     /**
      * Add 2FA method, hash not sent
+     *
      * @group manage-two-factor-authentication
      * @return void
      */
@@ -187,7 +170,9 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
         $this->routeMatch->setParam('method', 'test-method');
         $errorMessage = 'The request could not be validated, please try again';
 
-        $this->validateHash->expects($this->never())->method('__invoke');
+        $this->validateHash->expects($this->once())->method('__invoke')->willReturn($this->validateHash);
+        $this->validateHash->expects($this->once())->method('isValid')->with(null)->willReturn(false);
+
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getAllowedAuthenticationMethods');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getUser');
         $this->validateHash->expects($this->never())->method('getHash');
@@ -195,14 +180,9 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getMethodTitle');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('removeMethod');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getMethodTitle');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getAuthCodeForm');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getQrCode');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getTwoFactorAuthenticationModel');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('addMethod');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getSecret');
 
         $this->request->setMethod(Request::METHOD_GET);
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_302, $response->getStatusCode());
         $this->assertTrue($response->isRedirect());
@@ -217,6 +197,7 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
 
     /**
      * Add 2FA method, invalid hash
+     *
      * @group manage-two-factor-authentication
      * @return void
      */
@@ -228,7 +209,8 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
         $this->routeMatch->setParam('hash', $badHash);
         $errorMessage = 'The request could not be validated, please try again';
 
-        $this->validateHash->expects($this->once())->method('__invoke')->with($badHash)->willReturn(false);
+        $this->validateHash->expects($this->once())->method('__invoke')->willReturn($this->validateHash);
+        $this->validateHash->expects($this->once())->method('isValid')->with($badHash)->willReturn(false);
 
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getAllowedAuthenticationMethods');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getUser');
@@ -237,14 +219,9 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getMethodTitle');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('removeMethod');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getMethodTitle');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getAuthCodeForm');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getQrCode');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getTwoFactorAuthenticationModel');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('addMethod');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getSecret');
 
         $this->request->setMethod(Request::METHOD_GET);
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_302, $response->getStatusCode());
         $this->assertTrue($response->isRedirect());
@@ -259,20 +236,22 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
 
     /**
      * Add 2FA method, method added
+     *
      * @group manage-two-factor-authentication
      * @return void
      */
     public function testAddMethodActionSuccess()
     {
         $this->initAddMethodAction();
-        $testHash = 'test-hash';
-        $method = 'test-method';
-        $methodTitle = 'Test Method';
+        $testHash       = 'test-hash';
+        $method         = 'test-method';
+        $methodTitle    = 'Test Method';
         $successMessage = sprintf('The %s authentication method has been added', $methodTitle);
         $this->routeMatch->setParam('method', $method);
         $this->routeMatch->setParam('hash', $testHash);
 
-        $this->validateHash->expects($this->once())->method('__invoke')->with($testHash)->willReturn(true);
+        $this->validateHash->expects($this->once())->method('__invoke')->willReturn($this->validateHash);
+        $this->validateHash->expects($this->once())->method('isValid')->with($testHash)->willReturn(true);
         $this->manageTwoFactorAuthenticationModelMock->expects($this->once())->method('addMethod')->with($method)->willReturn(true);
         $this->manageTwoFactorAuthenticationModelMock->expects($this->once())->method('getMethodTitle')->willReturn($methodTitle);
 
@@ -280,14 +259,9 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getUser');
         $this->validateHash->expects($this->never())->method('getHash');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('removeMethod');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getAuthCodeForm');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getQrCode');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getTwoFactorAuthenticationModel');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('addMethod');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getSecret');
 
         $this->request->setMethod(Request::METHOD_GET);
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_302, $response->getStatusCode());
         $this->assertTrue($response->isRedirect());
@@ -302,20 +276,21 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
 
     /**
      * Add 2FA method, failed to add method
+     *
      * @group manage-two-factor-authentication
      * @return void
      */
     public function testAddMethodActionFails()
     {
         $this->initAddMethodAction();
-        $testHash = 'test-hash';
-        $method = 'test-method';
-        $methodTitle = 'Test Method';
+        $testHash       = 'test-hash';
+        $method         = 'test-method';
         $successMessage = 'Unable to add authentication method';
         $this->routeMatch->setParam('method', $method);
         $this->routeMatch->setParam('hash', $testHash);
 
-        $this->validateHash->expects($this->once())->method('__invoke')->with($testHash)->willReturn(true);
+        $this->validateHash->expects($this->once())->method('__invoke')->willReturn($this->validateHash);
+        $this->validateHash->expects($this->once())->method('isValid')->with($testHash)->willReturn(true);
         $this->manageTwoFactorAuthenticationModelMock->expects($this->once())->method('addMethod')->with($method)->willReturn(false);
 
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getAllowedAuthenticationMethods');
@@ -323,14 +298,9 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
         $this->validateHash->expects($this->never())->method('getHash');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getMethodTitle');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('removeMethod');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getAuthCodeForm');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getQrCode');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getTwoFactorAuthenticationModel');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('addMethod');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getSecret');
 
         $this->request->setMethod(Request::METHOD_GET);
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_302, $response->getStatusCode());
         $this->assertTrue($response->isRedirect());
@@ -350,6 +320,7 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
 
     /**
      * Remove 2FA method, method not sent
+     *
      * @group manage-two-factor-authentication
      * @return void
      */
@@ -365,14 +336,9 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getMethodTitle');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('removeMethod');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getMethodTitle');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getAuthCodeForm');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getQrCode');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getTwoFactorAuthenticationModel');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('addMethod');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getSecret');
 
         $this->request->setMethod(Request::METHOD_GET);
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_302, $response->getStatusCode());
         $this->assertTrue($response->isRedirect());
@@ -383,6 +349,7 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
 
     /**
      * Add 2FA method, hash not sent
+     *
      * @group manage-two-factor-authentication
      * @return void
      */
@@ -392,7 +359,9 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
         $this->routeMatch->setParam('method', 'test-method');
         $errorMessage = 'The request could not be validated, please try again';
 
-        $this->validateHash->expects($this->never())->method('__invoke');
+        $this->validateHash->expects($this->once())->method('__invoke')->willReturn($this->validateHash);
+        $this->validateHash->expects($this->once())->method('isValid')->with('')->willReturn(false);
+
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getAllowedAuthenticationMethods');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getUser');
         $this->validateHash->expects($this->never())->method('getHash');
@@ -400,14 +369,9 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getMethodTitle');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('removeMethod');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getMethodTitle');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getAuthCodeForm');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getQrCode');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getTwoFactorAuthenticationModel');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('addMethod');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getSecret');
 
         $this->request->setMethod(Request::METHOD_GET);
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_302, $response->getStatusCode());
         $this->assertTrue($response->isRedirect());
@@ -422,6 +386,7 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
 
     /**
      * Remove 2FA method, invalid hash
+     *
      * @group manage-two-factor-authentication
      * @return void
      */
@@ -433,7 +398,8 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
         $this->routeMatch->setParam('hash', $badHash);
         $errorMessage = 'The request could not be validated, please try again';
 
-        $this->validateHash->expects($this->once())->method('__invoke')->with($badHash)->willReturn(false);
+        $this->validateHash->expects($this->once())->method('__invoke')->willReturn($this->validateHash);
+        $this->validateHash->expects($this->once())->method('isValid')->with($badHash)->willReturn(false);
 
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getAllowedAuthenticationMethods');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getUser');
@@ -442,14 +408,9 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getMethodTitle');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('removeMethod');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getMethodTitle');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getAuthCodeForm');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getQrCode');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getTwoFactorAuthenticationModel');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('addMethod');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getSecret');
 
         $this->request->setMethod(Request::METHOD_GET);
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_302, $response->getStatusCode());
         $this->assertTrue($response->isRedirect());
@@ -464,20 +425,22 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
 
     /**
      * Add 2FA method, method added
+     *
      * @group manage-two-factor-authentication
      * @return void
      */
     public function testRemoveMethodActionSuccess()
     {
         $this->initRemoveMethodAction();
-        $testHash = 'test-hash';
-        $method = 'test-method';
-        $methodTitle = 'Test Method';
+        $testHash       = 'test-hash';
+        $method         = 'test-method';
+        $methodTitle    = 'Test Method';
         $successMessage = sprintf('The %s authentication method has been removed', $methodTitle);
         $this->routeMatch->setParam('method', $method);
         $this->routeMatch->setParam('hash', $testHash);
 
-        $this->validateHash->expects($this->once())->method('__invoke')->with($testHash)->willReturn(true);
+        $this->validateHash->expects($this->once())->method('__invoke')->willReturn($this->validateHash);
+        $this->validateHash->expects($this->once())->method('isValid')->with($testHash)->willReturn(true);
         $this->manageTwoFactorAuthenticationModelMock->expects($this->once())->method('removeMethod')->with($method)->willReturn(true);
         $this->manageTwoFactorAuthenticationModelMock->expects($this->once())->method('getMethodTitle')->willReturn($methodTitle);
 
@@ -485,14 +448,9 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getUser');
         $this->validateHash->expects($this->never())->method('getHash');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('addMethod');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getAuthCodeForm');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getQrCode');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getTwoFactorAuthenticationModel');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('addMethod');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getSecret');
 
         $this->request->setMethod(Request::METHOD_GET);
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_302, $response->getStatusCode());
         $this->assertTrue($response->isRedirect());
@@ -507,20 +465,21 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
 
     /**
      * Add 2FA method, failed to add method
+     *
      * @group manage-two-factor-authentication
      * @return void
      */
     public function testRemoveMethodActionFails()
     {
         $this->initRemoveMethodAction();
-        $testHash = 'test-hash';
-        $method = 'test-method';
-        $methodTitle = 'Test Method';
+        $testHash       = 'test-hash';
+        $method         = 'test-method';
         $successMessage = 'Unable to remove authentication method';
         $this->routeMatch->setParam('method', $method);
         $this->routeMatch->setParam('hash', $testHash);
 
-        $this->validateHash->expects($this->once())->method('__invoke')->with($testHash)->willReturn(true);
+        $this->validateHash->expects($this->once())->method('__invoke')->willReturn($this->validateHash);
+        $this->validateHash->expects($this->once())->method('isValid')->with($testHash)->willReturn(true);
         $this->manageTwoFactorAuthenticationModelMock->expects($this->once())->method('removeMethod')->with($method)->willReturn(false);
 
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getAllowedAuthenticationMethods');
@@ -528,14 +487,9 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
         $this->validateHash->expects($this->never())->method('getHash');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('getMethodTitle');
         $this->manageTwoFactorAuthenticationModelMock->expects($this->never())->method('addMethod');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getAuthCodeForm');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getQrCode');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getTwoFactorAuthenticationModel');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('addMethod');
-        $this->appAuthenticationMethodModelMock->expects($this->never())->method('getSecret');
 
         $this->request->setMethod(Request::METHOD_GET);
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_302, $response->getStatusCode());
         $this->assertTrue($response->isRedirect());
@@ -547,5 +501,4 @@ class ManageTwoFactorAuthenticationControllerTest extends AbstractHttpController
         $this->assertArrayHasKey(0, $messages);
         $this->assertEquals($successMessage, $messages[0]);
     }
-
 }

@@ -25,6 +25,7 @@ use function method_exists;
  */
 abstract class AbstractDefaultForm extends Form implements InputFilterProviderInterface
 {
+    protected ?string $identityClass               = null;
     protected ?string $identityProperty            = null;
     protected ?string $credentialProperty          = null;
     protected ?string $identityLabel               = null;
@@ -40,8 +41,10 @@ abstract class AbstractDefaultForm extends Form implements InputFilterProviderIn
         protected array $config
     ) {
         /* Identity/credential property not found in config */
-        $this->identityProperty   = $this->config['doctrine']['authentication']['orm_default']['identity_property'] ?? null;
-        $this->credentialProperty = $this->config['doctrine']['authentication']['orm_default']['credential_property'] ?? null;
+        $this->identityProperty   =
+            $this->config['doctrine']['authentication']['orm_default']['identity_property'] ?? null;
+        $this->credentialProperty =
+            $this->config['doctrine']['authentication']['orm_default']['credential_property'] ?? null;
         if (! ($this->identityProperty && $this->credentialProperty)) {
             throw new DoctrineAuthException('identity_property and/or credential_property not found in config');
         }
@@ -51,7 +54,8 @@ abstract class AbstractDefaultForm extends Form implements InputFilterProviderIn
         if (! ($this->identityLabel && $this->credentialLabel)) {
             throw new DoctrineAuthException('identity_label and/or credential_label not found in config');
         }
-        $this->identityPropertyFormElement = $this->config['doctrineAuth']['formElements']['identity_property_element'] ?? Element\Email::class;
+        $this->identityPropertyFormElement =
+            $this->config['doctrineAuth']['formElements']['identity_property_element'] ?? Element\Email::class;
 
         parent::__construct('auth');
         $this->setAttribute('method', 'POST');
@@ -95,19 +99,10 @@ abstract class AbstractDefaultForm extends Form implements InputFilterProviderIn
         if ($identityElement instanceof Element\Email) {
             $identityElement->setEmailValidator(new Validator\EmailAddress([
                 'options' => [
-                    'deep'     => true,
-                    'allow'    => true,
-                    'mx'       => true,
-                    'messages' => [
-                        Validator\EmailAddress::INVALID            => _("Your email address is invalid"),
-                        Validator\EmailAddress::INVALID_FORMAT     => _("Your email address is invalid"),
-                        Validator\EmailAddress::INVALID_HOSTNAME   => _("Your email address is invalid"),
-                        Validator\EmailAddress::INVALID_LOCAL_PART => _("Your email address is invalid"),
-                        Validator\EmailAddress::INVALID_MX_RECORD  => _("Your email address is invalid"),
-                        Validator\EmailAddress::INVALID_SEGMENT    => _("Your email address is invalid"),
-                        Validator\EmailAddress::LENGTH_EXCEEDED    => _("Your email address is invalid"),
-                        Validator\EmailAddress::QUOTED_STRING      => _("Your email address is invalid"),
-                    ],
+                    'deep'    => true,
+                    'allow'   => true,
+                    'mx'      => true,
+                    'message' => _("Your email address is invalid"),
                 ],
             ]));
         }
@@ -126,6 +121,9 @@ abstract class AbstractDefaultForm extends Form implements InputFilterProviderIn
         ]);
 
         /* Add custom user elements */
+        /**
+         * @todo Remove, just use init() method override instead
+         */
         if (method_exists($this, 'addElements')) {
             $this->addElements();
         }
@@ -159,7 +157,7 @@ abstract class AbstractDefaultForm extends Form implements InputFilterProviderIn
      *
      * @return array
      */
-    private function generateValidationGroup(FieldsetInterface $formOrFieldset): array
+    protected function generateValidationGroup(FieldsetInterface $formOrFieldset): array
     {
         $validationGroup = [];
         foreach ($formOrFieldset as $element) {
@@ -180,50 +178,39 @@ abstract class AbstractDefaultForm extends Form implements InputFilterProviderIn
      */
     public function getInputFilterSpecification(): array
     {
-        /* Default identity validators */
-        $validatorChain = new Validator\ValidatorChain();
-        $validatorChain->attach(new Validator\NotEmpty([
-            'break_chain_on_failure' => true,
-            'messages'               => [
-                Validator\NotEmpty::IS_EMPTY => _("You must specify your email address"),
-            ],
-        ]));
-
-        /* Register form */
-        if ($this instanceof RegisterForm) {
-            /* Identity class not found in config */
-            $identityClass = $this->config['doctrine']['authentication']['orm_default']['identity_class'] ?? null;
-            if (! $identityClass) {
-                throw new DoctrineAuthException('identity_class not found in config');
-            }
-            /* Add no object exists validator to identity validators */
-            $validatorChain->attach(new DoctrineModuleValidator\NoObjectExists([
-                'break_chain_on_failure' => true,
-                'target_class'           => $identityClass,
-                'object_repository'      => $this->entityManager->getRepository($identityClass),
-                'fields'                 => [$this->identityProperty],
-                'messages'               => [
-                    DoctrineModuleValidator\NoObjectExists::ERROR_OBJECT_FOUND => _("This email address is already registered"),
-                ],
-            ]));
+        /* Identity class not found in config */
+        $this->identityClass = $this->config['doctrine']['authentication']['orm_default']['identity_class'] ?? null;
+        if (! $this->identityClass) {
+            throw new DoctrineAuthException('identity_class not found in config');
         }
 
         $filter = [];
 
         /* Add custom user filters and validators if exists */
+        /**
+         * @todo Remove, just use getInputFilterSpecification() method override instead
+         */
         if (method_exists($this, 'addInputFilterSpecification')) {
             $filter = $this->addInputFilterSpecification();
         }
 
         /* Return input filters and validators */
-        return array_merge([
+        $filtersArray = array_merge([
             $this->identityProperty   => [
                 'required'   => true,
                 'filters'    => [
                     ['name' => Filter\StripTags::class],
                     ['name' => Filter\StringTrim::class],
                 ],
-                'validators' => $validatorChain,
+                'validators' => [
+                    [
+                        'name'                   => Validator\NotEmpty::class,
+                        'break_chain_on_failure' => true,
+                        'options'                => [
+                            'message' => _("You must specify your email address"),
+                        ],
+                    ],
+                ],
             ],
             $this->credentialProperty => [
                 'required'   => true,
@@ -236,9 +223,7 @@ abstract class AbstractDefaultForm extends Form implements InputFilterProviderIn
                         'name'                   => Validator\NotEmpty::class,
                         'break_chain_on_failure' => true,
                         'options'                => [
-                            'messages' => [
-                                Validator\NotEmpty::IS_EMPTY => _("You must specify your password"),
-                            ],
+                            'message' => _("You must specify your password"),
                         ],
                     ],
                     [
@@ -247,15 +232,27 @@ abstract class AbstractDefaultForm extends Form implements InputFilterProviderIn
                             'encoding' => 'UTF-8',
                             'min'      => 8,
                             'max'      => 16,
-                            'messages' => [
-                                Validator\StringLength::INVALID   => _("Your password must contain between %min% and %max% characters"),
-                                Validator\StringLength::TOO_LONG  => _("Your password must not contain more than %max% characters"),
-                                Validator\StringLength::TOO_SHORT => _("Your password must contain more than %min% characters"),
-                            ],
+                            'message'  => _("Your password must contain between %min% and %max% characters"),
                         ],
                     ],
                 ],
             ],
         ], $filter);
+
+        /* Register form */
+        if ($this instanceof RegisterForm) {
+            $filtersArray[$this->identityProperty]['validators'][] = [
+                'name'                   => DoctrineModuleValidator\NoObjectExists::class,
+                'break_chain_on_failure' => true,
+                'options'                => [
+                    'target_class'      => $this->identityClass,
+                    'object_repository' => $this->entityManager->getRepository($this->identityClass),
+                    'fields'            => [$this->identityProperty],
+                    'message'           => _("This email address is already registered"),
+                ],
+            ];
+        }
+
+        return $filtersArray;
     }
 }

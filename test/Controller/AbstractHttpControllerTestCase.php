@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuthTest\Controller;
 
 use FwsDoctrineAuth\Entity\AuthUserInterface;
@@ -29,40 +31,35 @@ class AbstractHttpControllerTestCase extends LaminasAbstractHttpControllerTestCa
     protected SharedEventManager $sharedEvents;
 
     /**
-     * @return void
      * @throws DoctrineAuthException
      */
     protected function setUp(): void
     {
         $this->setApplicationConfig(include __DIR__ . '/../TestConfig.php');
 
-        $this->config = $this->getApplicationConfig();
-        $this->identityProperty = $this->config['doctrine']['authentication']['orm_default']['identity_property'] ?? null;
+        $this->config             = $this->getApplicationConfig();
+        $this->identityProperty   = $this->config['doctrine']['authentication']['orm_default']['identity_property'] ?? null;
         $this->credentialProperty = $this->config['doctrine']['authentication']['orm_default']['credential_property'] ?? null;
-        if (!($this->identityProperty && $this->credentialProperty)) {
+        if (! ($this->identityProperty && $this->credentialProperty)) {
             throw new DoctrineAuthException('identity_property and/or credential_property not set in test config');
         }
         $this->identity = new BaseUser();
         $this->identity->setEmailAddress('test@example.com');
 
-        $this->request = new Request();
-        $this->response = null;
+        $this->request    = new Request();
+        $this->response   = null;
         $this->routeMatch = new RouteMatch(['action' => 'index']);
-        $routeStack = TreeRouteStack::factory($this->config['router']);
-        $this->event = new MvcEvent();
+        $routeStack       = TreeRouteStack::factory($this->config['router']);
+        $this->event      = new MvcEvent();
         $this->event->setRouteMatch($this->routeMatch);
         $this->event->setRouter($routeStack);
 
         $this->sharedEvents = new SharedEventManager();
-        $this->events = $this->createEventManager($this->sharedEvents);
+        $this->events       = $this->createEventManager($this->sharedEvents);
 
         parent::setUp();
     }
 
-    /**
-     * @param SharedEventManagerInterface $sharedManager
-     * @return EventManager
-     */
     protected function createEventManager(SharedEventManagerInterface $sharedManager): EventManager
     {
         return new EventManager($sharedManager);

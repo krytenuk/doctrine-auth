@@ -30,7 +30,8 @@ class LoginController extends AbstractActionController
         protected Model\RegisterModel $registerModel,
         protected Model\ForgotPasswordModel $forgotPasswordModel,
         protected Model\TwoFactorAuthentication\ManageTwoFactorAuthenticationModel $select2faModel,
-        protected Model\TwoFactorAuthentication\TwoFactorAuthenticationModel $twoFactorAuthModel
+        protected Model\TwoFactorAuthentication\TwoFactorAuthenticationModel $twoFactorAuthModel,
+        protected array $config
     ) {
     }
 
@@ -86,7 +87,9 @@ class LoginController extends AbstractActionController
                 'errorMessage',
                 Model\LoginModel::$loginErrorMessages[Model\LoginModel::ERROR_INVALID_CREDENTIALS]
             );
-            $emailAddress = $viewModel->form->getData()['emailAddress'];
+            $emailAddress = $viewModel->getVariable('form')->getData()[
+                $this->config['doctrine']['authentication']['orm_default']['identity_property']
+            ];
             if ($this->logFailedLoginAttempt($emailAddress)) {
                 if ($this->blockIpAddress($emailAddress)) {
                     $viewModel->setVariable(
@@ -98,7 +101,6 @@ class LoginController extends AbstractActionController
             $this->getResponse()->setStatusCode(Response::STATUS_CODE_401);
             return $viewModel;
         }
-
         /* Use 2FA */
         if ($this->loginModel->use2Fa()) {
             return $this->redirect()->toRoute('doctrine-auth/2fa/select-auth-method');

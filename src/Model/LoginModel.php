@@ -10,22 +10,23 @@ use FwsDoctrineAuth\Entity\AuthUserInterface;
 use FwsDoctrineAuth\Entity\BaseUser;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use FwsDoctrineAuth\Form\LoginForm;
+use FwsDoctrineAuth\Form\Service\DoctrineAuthFormFactory;
 use Laminas\Authentication\AuthenticationService;
 use Laminas\Form\FormElementManager;
 use Laminas\Session\Container;
 use Laminas\Session\SessionManager;
 use Laminas\Stdlib\ParametersInterface;
-use FwsDoctrineAuth\Form\Service\DoctrineAuthFormFactory;
 
+use function _;
 use function class_exists;
 
 /** * LoginModel
  */
 class LoginModel extends AbstractModel
 {
-    const ERROR_IP_BLOCKED = 'ipBlocked';
+    const ERROR_IP_BLOCKED          = 'ipBlocked';
     const ERROR_INVALID_CREDENTIALS = 'invalidCredentials';
-    const ERROR_BLOCK_IP_ADDRESS = 'blockIpAddress';
+    const ERROR_BLOCK_IP_ADDRESS    = 'blockIpAddress';
 
     private ?BaseUser $identity = null;
     private ?string $callback   = null;
@@ -38,21 +39,15 @@ class LoginModel extends AbstractModel
     public static function setErrorMessages(): void
     {
         self::$loginErrorMessages = [
-            self::ERROR_IP_BLOCKED => _('Sorry your IP address is blocked'),
+            self::ERROR_IP_BLOCKED          => _('Sorry your IP address is blocked'),
             self::ERROR_INVALID_CREDENTIALS => _('Your login credentials are invalid'),
-            self::ERROR_BLOCK_IP_ADDRESS => _('Too many login attempts, your IP address is blocked'),
+            self::ERROR_BLOCK_IP_ADDRESS    => _('Too many login attempts, your IP address is blocked'),
         ];
     }
 
     /**
      *  Set model dependencies
      *
-     * @param FormElementManager $formElementManager
-     * @param AuthenticationService $authService
-     * @param EntityManagerInterface $entityManager
-     * @param AuthContainerStorage $authContainerStorage
-     * @param SessionManager $sessionManager
-     * @param Acl $acl
      * @param array $config
      * @throws DoctrineAuthException
      */
@@ -103,7 +98,9 @@ class LoginModel extends AbstractModel
         /** @var ObjectRepository $adapter */
         $adapter = $this->authService->getAdapter();
         $adapter->setIdentity($data[$this->config['doctrine']['authentication']['orm_default']['identity_property']]);
-        $adapter->setCredential($data[$this->config['doctrine']['authentication']['orm_default']['credential_property']]);
+        $adapter->setCredential(
+            $data[$this->config['doctrine']['authentication']['orm_default']['credential_property']]
+        );
         $authResult = $this->authService->authenticate($adapter);
         /* Authentication failed */
         if (! $authResult->isValid()) {
@@ -197,7 +194,13 @@ class LoginModel extends AbstractModel
      */
     public function setFormIdentityMessage(string $message): LoginModel
     {
-        $this->loginForm->get($this->config['doctrine']['authentication']['orm_default']['identity_property'])->setMessages([$message]);
+        $this
+            ->loginForm
+            ->get(
+                $this
+                ->config['doctrine']['authentication']['orm_default']['identity_property']
+            )
+            ->setMessages([$message]);
         return $this;
     }
 
@@ -206,7 +209,8 @@ class LoginModel extends AbstractModel
      */
     public function useForgotPassword(): bool
     {
-        return isset($this->config['doctrineAuth']['allowPasswordReset']) && $this->config['doctrineAuth']['allowPasswordReset'];
+        return isset($this->config['doctrineAuth']['allowPasswordReset']) &&
+            $this->config['doctrineAuth']['allowPasswordReset'];
     }
 
     /**

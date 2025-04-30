@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace FwsDoctrineAuthTest\Controller;
 
 use FwsDoctrineAuth\Controller\LoginController;
@@ -20,25 +22,17 @@ use FwsDoctrineAuth\Model\TwoFactorAuthentication\ManageTwoFactorAuthenticationM
 use FwsDoctrineAuth\Model\TwoFactorAuthentication\TwoFactorAuthenticationModel;
 use Laminas\Http\Header\Location;
 use Laminas\Http\Request;
-use Laminas\EventManager\EventManager;
-use Laminas\EventManager\SharedEventManager;
-use Laminas\EventManager\SharedEventManagerInterface;
 use Laminas\Http\Response;
 use Laminas\Mvc\Controller\Plugin\Params;
-use Laminas\Mvc\MvcEvent;
-use Laminas\Router\Http\RouteMatch;
-use Laminas\Router\Http\TreeRouteStack;
 use Laminas\Stdlib\Parameters;
 use Laminas\View\Model\ViewModel;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 
-
 #[CoversClass(LoginController::class)]
 class LoginControllerTest extends AbstractHttpControllerTestCase
 {
     protected $traceError = false;
-
 
     protected LoginController $controller;
     protected LoginModel|MockObject $loginModelMock;
@@ -52,8 +46,6 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
     private ForgottenPasswordForm|MockObject $forgotPasswordFormMock;
     private ResetPasswordForm|MockObject $resetPasswordFormMock;
 
-
-
     protected IsIpBlocked|MockObject $isIpBlockedMock;
     protected LogFailedAttempt|MockObject $logFailedLoginAttemptMock;
     protected BlockIP|MockObject $blockIpAddressMock;
@@ -62,7 +54,6 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
     private Params|MockObject $paramsMock;
 
     /**
-     * @return void
      * @throws DoctrineAuthException
      */
     protected function setUp(): void
@@ -87,7 +78,6 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Create model mocks
-     * @return void
      */
     protected function mockModels(): void
     {
@@ -185,11 +175,10 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Create and add mocked controller plugins
-     * @return void
      */
     protected function mockControllerPlugins(): void
     {
-        $this->isIpBlockedMock = $this
+        $this->isIpBlockedMock           = $this
             ->getMockBuilder(IsIpBlocked::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['__invoke'])
@@ -199,27 +188,27 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
             ->disableOriginalConstructor()
             ->onlyMethods(['__invoke'])
             ->getMock();
-        $this->blockIpAddressMock = $this
+        $this->blockIpAddressMock        = $this
             ->getMockBuilder(BlockIP::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['__invoke'])
             ->getMock();
-        $this->logSuccessfulLoginMock = $this
+        $this->logSuccessfulLoginMock    = $this
             ->getMockBuilder(LogSuccessfulLogin::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['__invoke'])
             ->getMock();
-        $this->getAuthRedirectMock = $this
+        $this->getAuthRedirectMock       = $this
             ->getMockBuilder(GetRedirect::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['__invoke'])
             ->getMock();
-        $this->paramsMock = $this
+        $this->paramsMock                = $this
             ->getMockBuilder(Params::class)
             ->disableOriginalConstructor()
             ->onlyMethods([
                 '__invoke',
-                'fromRoute'
+                'fromRoute',
             ])
             ->getMock();
 
@@ -245,7 +234,6 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test index action redirects to the log in endpoint
-     * @return void
      */
     public function testIndexActionRedirects(): void
     {
@@ -260,8 +248,8 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Check the login action returns the form with a GET method
+     *
      * @group authenticate_user
-     * @return void
      */
     public function testLoginActionGetForm(): void
     {
@@ -269,7 +257,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
         $this->routeMatch->setParam('action', 'login');
         $this->request->setMethod(Request::METHOD_GET);
 
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $view     = $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_200, $response->getStatusCode());
         $this->assertInstanceOf(ViewModel::class, $view);
@@ -280,7 +268,6 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Initiate login action defaults
-     * @return void
      */
     protected function initLoginAction(): void
     {
@@ -292,8 +279,8 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test login action when invalid credentials are sent ($form->isValid() === false)
+     *
      * @group authenticate_user
-     * @return void
      */
     public function testLoginActionInvalidCredentials(): void
     {
@@ -301,7 +288,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
         $this->request->setMethod(Request::METHOD_POST);
         $this->loginModelMock->expects($this->once())->method('processForm')->willReturn(false);
 
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $view     = $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_401, $response->getStatusCode());
         $this->assertInstanceOf(ViewModel::class, $view);
@@ -312,8 +299,8 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test login fails and the logging of the fai8led attempt also fails
+     *
      * @group authenticate_user
-     * @return void
      */
     public function testLoginActionLoginFailedLogAttemptFailed(): void
     {
@@ -327,7 +314,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
         $this->loginModelMock->expects($this->once())->method('setFormIdentityMessage')->willReturn($this->loginModelMock);
 
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $view     = $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_401, $response->getStatusCode());
         $this->assertInstanceOf(ViewModel::class, $view);
@@ -338,8 +325,8 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test login fails and the logging of the failed attempt is successful but the IP block check fails
+     *
      * @group authenticate_user
-     * @return void
      */
     public function testLoginActionLoginFailedBlockIpFailed(): void
     {
@@ -354,7 +341,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
         $this->loginModelMock->expects($this->once())->method('setFormIdentityMessage')->willReturn($this->loginModelMock);
 
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $view     = $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_401, $response->getStatusCode());
         $this->assertInstanceOf(ViewModel::class, $view);
@@ -365,8 +352,8 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test login fails and the logging of the failed attempt and the IP block check is successful
+     *
      * @group authenticate_user
-     * @return void
      */
     public function testLoginActionLoginFailedBlockIpSuccess(): void
     {
@@ -381,7 +368,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
         $this->loginModelMock->expects($this->exactly(2))->method('setFormIdentityMessage')->willReturn($this->loginModelMock);
 
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $view     = $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_401, $response->getStatusCode());
         $this->assertInstanceOf(ViewModel::class, $view);
@@ -392,6 +379,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test login successful and use 2FA is enabled
+     *
      * @group authenticate_user
      * @return void
      */
@@ -409,7 +397,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
         $this->loginModelMock->expects($this->never())->method('setFormIdentityMessage');
 
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $view     = $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_302, $response->getStatusCode());
         $this->assertTrue($response->isRedirect());
@@ -420,6 +408,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test login successful and use 2FA is not enabled
+     *
      * @group authenticate_user
      * @return void
      */
@@ -447,13 +436,13 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
         $this->assertTrue($response->isRedirect());
     }
 
-
     /**
      * Test logout action
+     *
      * @group logout
      * @return void
      */
-    public function testLogoutActionN()
+    public function testLogoutAction()
     {
         $this->routeMatch->setParam('action', 'logout');
         $this->request->setMethod(Request::METHOD_GET);
@@ -468,10 +457,8 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
         $this->assertEquals('/auth/login', $location->getUri());
     }
 
-
     /**
      * Initiate register action defaults
-     * @return void
      */
     protected function initRegisterAction(): void
     {
@@ -482,6 +469,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test register action when registration is not allowed
+     *
      * @group register_user
      * @return void
      */
@@ -502,6 +490,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test register action returns form from get request
+     *
      * @group register_user
      * @return void
      */
@@ -517,7 +506,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
         $this->registerModelMock->expects($this->never())->method('login');
         $this->getAuthRedirectMock->expects($this->never())->method('__invoke');
 
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $view     = $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_200, $response->getStatusCode());
         $this->assertInstanceOf(ViewModel::class, $view);
@@ -527,6 +516,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test register action when form is not valid
+     *
      * @group register_user
      * Incorrect email/password combination
      * @return void
@@ -543,7 +533,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
         $this->registerModelMock->expects($this->never())->method('login');
         $this->getAuthRedirectMock->expects($this->never())->method('__invoke');
 
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $view     = $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_400, $response->getStatusCode());
         $this->assertInstanceOf(ViewModel::class, $view);
@@ -554,6 +544,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test registration action failed
+     *
      * @group register_user
      * @return void
      */
@@ -569,7 +560,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
         $this->registerModelMock->expects($this->never())->method('login');
         $this->getAuthRedirectMock->expects($this->never())->method('__invoke');
 
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $view     = $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_200, $response->getStatusCode());
         $this->assertInstanceOf(ViewModel::class, $view);
@@ -580,6 +571,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test register action succeeds with auto login enabled
+     *
      * @group register_user
      * @return void
      */
@@ -605,6 +597,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test register action succeeds with auto login enabled
+     *
      * @group register_user
      * @return void
      */
@@ -632,6 +625,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test register action succeeds with auto login enabled
+     *
      * @group register_user
      * @return void
      */
@@ -657,10 +651,8 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
         $this->assertEquals('/auth/login', $location->getUri());
     }
 
-
     /**
      * Initiate reset password action defaults
-     * @return void
      */
     protected function initResetPasswordAction(): void
     {
@@ -670,6 +662,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test reset password action with no code in URL, get email form
+     *
      * @group password_reset
      * @return void
      */
@@ -685,7 +678,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
         $this->forgotPasswordModelMock->expects($this->never())->method('getResetPasswordForm');
         $this->forgotPasswordModelMock->expects($this->never())->method('processResetForm');
 
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $view     = $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_200, $response->getStatusCode());
         $this->assertInstanceOf(ViewModel::class, $view);
@@ -708,7 +701,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
         $this->forgotPasswordModelMock->expects($this->once())->method('isFormValid')->willReturn(false);
         $this->forgotPasswordModelMock->expects($this->once())->method('getEmailForm')->willReturn($this->forgotPasswordFormMock);
 
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $view     = $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_400, $response->getStatusCode());
         $this->assertInstanceOf(ViewModel::class, $view);
@@ -720,6 +713,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test reset password action when email form sent but validation fails (invalid credentials)
+     *
      * @group password_reset
      * @return void
      */
@@ -734,7 +728,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
         $this->forgotPasswordModelMock->expects($this->never())->method('getEmailForm');
 
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $view     = $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_500, $response->getStatusCode());
         $this->assertInstanceOf(ViewModel::class, $view);
@@ -747,6 +741,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test reset password action when email form sent and valid but email sending fails
+     *
      * @group password_reset
      * @return void
      */
@@ -761,7 +756,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
         $this->forgotPasswordModelMock->expects($this->never())->method('getEmailForm');
 
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $view     = $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_200, $response->getStatusCode());
         $this->assertInstanceOf(ViewModel::class, $view);
@@ -773,6 +768,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test reset password action when email form sent and valid but email sending fails
+     *
      * @group password_reset
      * @return void
      */
@@ -787,7 +783,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
         $this->forgotPasswordModelMock->expects($this->never())->method('getEmailForm');
 
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $view     = $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_200, $response->getStatusCode());
         $this->assertInstanceOf(ViewModel::class, $view);
@@ -799,6 +795,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test reset password with valid code sent with get request
+     *
      * @group password_reset
      * @return void
      */
@@ -817,7 +814,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
         $this->forgotPasswordModelMock->expects($this->never())->method('getEmailForm');
         $this->forgotPasswordModelMock->expects($this->never())->method('isFormValid');
 
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $view     = $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_200, $response->getStatusCode());
         $this->assertInstanceOf(ViewModel::class, $view);
@@ -831,6 +828,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test reset password with invalid code sent with get request
+     *
      * @group password_reset
      * @return void
      */
@@ -849,7 +847,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
         $this->forgotPasswordModelMock->expects($this->never())->method('getEmailForm');
         $this->forgotPasswordModelMock->expects($this->never())->method('isFormValid');
 
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $view     = $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_200, $response->getStatusCode());
         $this->assertInstanceOf(ViewModel::class, $view);
@@ -863,15 +861,15 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test reset password with valid password reset form
+     *
      * @group password_reset
      * @return void
      */
     public function testPasswordResetActionCodeSentResetSucceedsValidForm()
     {
         $postData = new Parameters([
-            'password' => 'password',
+            'password'       => 'password',
             'retypePassword' => 'password',
-
         ]);
         $this->request->setPost($postData);
         $code = 'invalid_code';
@@ -888,7 +886,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
         $this->forgotPasswordModelMock->expects($this->never())->method('getEmailForm');
         $this->forgotPasswordModelMock->expects($this->never())->method('isFormValid');
 
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $view     = $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_200, $response->getStatusCode());
         $this->assertInstanceOf(ViewModel::class, $view);
@@ -903,15 +901,15 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test reset password with invalid password reset form
+     *
      * @group password_reset
      * @return void
      */
     public function testPasswordResetActionCodeSentResetFailsInvalidForm()
     {
         $postData = new Parameters([
-            'password' => 'password',
+            'password'       => 'password',
             'retypePassword' => 'password',
-
         ]);
         $this->request->setPost($postData);
         $code = 'invalid_code';
@@ -928,7 +926,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
         $this->forgotPasswordModelMock->expects($this->never())->method('sendEmail');
         $this->forgotPasswordModelMock->expects($this->never())->method('getEmailForm');
 
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $view     = $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_400, $response->getStatusCode());
         $this->assertInstanceOf(ViewModel::class, $view);
@@ -943,15 +941,15 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
 
     /**
      * Test reset password with invalid password reset form
+     *
      * @group password_reset
      * @return void
      */
     public function testPasswordResetActionCodeSentResetFailsValidForm()
     {
         $postData = new Parameters([
-            'password' => 'password',
+            'password'       => 'password',
             'retypePassword' => 'password',
-
         ]);
         $this->request->setPost($postData);
         $code = 'invalid_code';
@@ -968,7 +966,7 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
         $this->forgotPasswordModelMock->expects($this->never())->method('sendEmail');
         $this->forgotPasswordModelMock->expects($this->never())->method('getEmailForm');
 
-        $view = $this->controller->dispatch($this->request, $this->response);
+        $view     = $this->controller->dispatch($this->request, $this->response);
         $response = $this->controller->getResponse();
         $this->assertEquals(Response::STATUS_CODE_500, $response->getStatusCode());
         $this->assertInstanceOf(ViewModel::class, $view);
@@ -980,5 +978,4 @@ class LoginControllerTest extends AbstractHttpControllerTestCase
         $this->assertNull($view->emailForm);
         $this->assertNull($view->resetForm);
     }
-
 }

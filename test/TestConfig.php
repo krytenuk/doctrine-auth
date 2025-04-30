@@ -2,16 +2,18 @@
 
 declare(strict_types=1);
 
-use Laminas\Permissions\Acl\Acl as LaminasAcl;
-use FwsDoctrineAuth\Entity\BaseUser;
-use Laminas\Session\Validator as SessionValidator;
-use Laminas\Session\Storage\SessionArrayStorage;
-use FwsDoctrineAuth\Form;
-use FwsDoctrineAuth\Model\TwoFactorAuthentication\Adapter;
-use Laminas\Stdlib\ArrayUtils;
+use FwsDoctrineAuth\Module;
 
+$moduleConfig = (new Module())->getConfig();
 return array_merge(
-    include __DIR__ . '/../config/module.config.php',
+    include $moduleConfig,
     include __DIR__ . '/../config/doctrine.auth.config.local.php.dist',
-    include __DIR__ . '/../config/doctrine.auth.acl.local.php.dist'
+    include __DIR__ . '/../config/doctrine.auth.acl.local.php.dist',
+    [
+        'modules'                 => [
+            'Laminas\Router',
+            'Laminas\Form',
+        ],
+        'module_listener_options' => [],
+    ]
 );

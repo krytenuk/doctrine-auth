@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace FwsDoctrineAuth;
 
-use Doctrine\ORM\EntityManagerInterface;
-use FwsDoctrineAuth\Command;
 use FwsDoctrineAuth\Model\HashPassword;
 use FwsDoctrineAuth\Model\LoginModel;
 use FwsDoctrineAuth\Model\RegisterModel;
@@ -13,10 +11,18 @@ use Laminas\EventManager\EventInterface;
 use Laminas\EventManager\LazyListenerAggregate;
 use Laminas\ModuleManager\Feature\BootstrapListenerInterface;
 use Laminas\ModuleManager\ModuleManagerInterface;
+use Laminas\ServiceManager\AbstractFactory\ConfigAbstractFactory;
 use Symfony\Component\Console\Application;
 
 class Module implements BootstrapListenerInterface
 {
+    protected ConfigProvider $configProvider;
+    public function __construct()
+    {
+        $this->configProvider = new ConfigProvider();
+    }
+
+
     public function onBootstrap(EventInterface $e): void
     {
         $eventManager   = $e->getApplication()->getEventManager();
@@ -36,16 +42,29 @@ class Module implements BootstrapListenerInterface
         RegisterModel::setErrorMessages();
     }
 
-    /**
-     * @return array
-     */
     public function getConfig(): array
     {
-        return include __DIR__ . '/../config/module.config.php';
+        return [
+            'service_manager' => $this->configProvider->getDependenciesConfig(),
+            'event_manager' => $this->configProvider->getEventManagerConfig(),
+            'form_elements' => $this->configProvider->getFormElementConfig(),
+            'controller_plugins' => $this->configProvider->getControllerPluginsConfig(),
+            'view_manager' => $this->configProvider->getViewManagerConfig(),
+            'doctrine' => $this->configProvider->getDoctrineConfig(),
+            'view_helpers' => $this->configProvider->getViewHelpersConfig(),
+            'controllers' => $this->configProvider->getMvcControllersConfig(),
+            'router' => $this->configProvider->getLaminasRouterConfig(),
+            ConfigAbstractFactory::class => $this->configProvider->getConfigAbstractFactoryConfig(),
+        ];
+    }
+
+    protected function getMappingsConfig(): array
+    {
+
     }
 
     /**
-     * Add doctrine cli command
+     * Add doctrine cli commands
      */
     public function init(ModuleManagerInterface $moduleManager): void
     {
