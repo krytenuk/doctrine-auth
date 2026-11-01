@@ -186,3 +186,13 @@ to
 - Add routes to documentation
 - Document CheckHashTrait
 - Add Doctrine Auth PWA push authentication app
+
+2.0.0 - unreleased
+
+Rewritten as a headless module for Mezzio, removed Laminas MVC support, controllers, forms, views, routes, ACL and registration
+Added attributes on the user entity to identify the login properties, replacing the doctrine.authentication config
+Added login throttling per account as well as per IP address, and PSR-14 events
+Added krytenuk/doctrine-crypt blind index lookup for encrypted identities
+Fixed the stored password hash being accepted as the password
+Fixed the session ID not changing at login
+Password reset and two factor authentication are not available yet

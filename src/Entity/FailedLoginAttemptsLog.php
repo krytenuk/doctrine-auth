@@ -2,124 +2,46 @@
 
 declare(strict_types=1);
 
-/**
- * UserBlocked Entity
- **/
-
 namespace FwsDoctrineAuth\Entity;
 
-use DateTime;
-use DateTimeInterface;
+use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use FwsDoctrineAuth\Entity\Repository\FailedLoginAttemptsLogRepository;
 
-#[ORM\Entity(repositoryClass: FailedLoginAttemptsLogRepository::class, readOnly: false)]
-#[ORM\Table(
-    name: "login_attempts",
-    options: [
-        "collate" => "latin1_swedish_ci",
-        "charset" => "latin1",
-        "engine" => "InnoDB",
-    ]
-)]
-class FailedLoginAttemptsLog implements EntityInterface
+/**
+ * Stores a keyed hash of the identity rather than the text typed, which may be an address or a mistyped password.
+ */
+#[ORM\Entity]
+#[ORM\Table(name: 'failed_login_attempts_log')]
+#[ORM\Index(name: 'failed_login_identity', columns: ['identity_hash', 'attempted_at'])]
+#[ORM\Index(name: 'failed_login_ip', columns: ['ip_address', 'attempted_at'])]
+class FailedLoginAttemptsLog
 {
-    #[ORM\Id,
-        ORM\Column(
-            name: "login_attempt_id",
-            type: Types::INTEGER,
-            nullable: false,
-            options: ["unsigned" => true]
-        ),
-        ORM\GeneratedValue(strategy: "IDENTITY")
-    ]
-    private int|null $loginAttemptId = null;
+    #[ORM\Id, ORM\Column(type: Types::INTEGER), ORM\GeneratedValue]
+    private ?int $id = null;
 
-    #[ORM\Column(
-        name: "email_address",
-        type: Types::STRING,
-        length: 256,
-        nullable: false
-    )]
-    private string|null $emailAddress;
-
-    #[ORM\Column(
-        name: "ip_address",
-        type: Types::STRING,
-        length: 16,
-        nullable: false
-    )]
-    private string|null $ipAddress;
-
-    #[ORM\Column(
-        name: "date_logged",
-        type: Types::DATETIME_MUTABLE,
-        nullable: false,
-    )]
-    private DateTimeInterface $dateLogged;
-
-    public function __construct()
-    {
-        $this->dateLogged = new DateTime();
+    public function __construct(
+        #[ORM\Column(name: 'identity_hash', type: Types::STRING, length: 64)]
+        private string $identityHash,
+        #[ORM\Column(name: 'ip_address', type: Types::STRING, length: 45)]
+        private string $ipAddress,
+        #[ORM\Column(name: 'attempted_at', type: Types::DATETIME_IMMUTABLE)]
+        private DateTimeImmutable $attemptedAt,
+    ) {
     }
 
-    /**
-     * Get login attempt id
-     */
-    public function getLoginAttemptId(): int|null
+    public function getIdentityHash(): string
     {
-        return $this->loginAttemptId;
+        return $this->identityHash;
     }
 
-    /**
-     * Get email address entered
-     */
-    public function getEmailAddress(): string|null
-    {
-        return $this->emailAddress;
-    }
-
-    /**
-     * Get IP address of login attempt
-     */
-    public function getIpAddress(): string|null
+    public function getIpAddress(): string
     {
         return $this->ipAddress;
     }
 
-    /**
-     * Get date logged
-     */
-    public function getDateLogged(): DateTimeInterface
+    public function getAttemptedAt(): DateTimeImmutable
     {
-        return $this->dateLogged;
-    }
-
-    /**
-     * Set the email address entered
-     */
-    public function setEmailAddress(string $emailAddress): FailedLoginAttemptsLog
-    {
-        $this->emailAddress = $emailAddress;
-        return $this;
-    }
-
-    /**
-     * Set the IP address of user
-     */
-    public function setIpAddress(string $ipAddress): FailedLoginAttemptsLog
-    {
-        $this->ipAddress = $ipAddress;
-        return $this;
-    }
-
-    /**
-     * Set date logged
-     */
-    public function setDateLogged(DateTimeInterface $dateLogged): FailedLoginAttemptsLog
-    {
-        $this->dateLogged = $dateLogged;
-        return $this;
+        return $this->attemptedAt;
     }
 }

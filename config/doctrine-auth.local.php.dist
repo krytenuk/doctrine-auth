@@ -1,0 +1,17 @@
+<?php
+
+return [
+    'doctrine-auth' => [
+        'user_class' => App\Entity\User::class, // <- Your user entity, with the module's attributes on its properties
+        'login_path' => '/login', // <- Where to redirect requests that are not logged in, null to respond with a 401
+        'throttle'   => [
+            'secret' => 'your_secret', // <- Random and private. You can use bin2hex(random_bytes(32)) to generate one
+            // Failures before an account is temporarily refused. Times are in seconds, a max_attempts of 0 turns it off
+            // 'account' => ['max_attempts' => 5, 'window' => 900],
+            // Failures before an address is blocked. A block_for of 0 blocks it until you delete the ip_blocked row
+            // 'ip' => ['max_attempts' => 50, 'window' => 900, 'block_for' => 3600],
+        ],
+        // Optional. The container name of the entity manager, if not Doctrine\ORM\EntityManagerInterface
+        // 'entity_manager' => 'doctrine.entity_manager.orm_default',
+    ],
+];

@@ -2,124 +2,45 @@
 
 declare(strict_types=1);
 
-/**
- * UserBlocked Entity
- */
-
 namespace FwsDoctrineAuth\Entity;
 
-use DateTime;
-use DateTimeInterface;
+use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use FwsDoctrineAuth\Entity\Repository\IpBlockedRepository;
 
-#[ORM\Entity(repositoryClass: IpBlockedRepository::class, readOnly: false)]
-#[ORM\Table(
-    name: "ip_blocked",
-    options: [
-        "collate" => "latin1_swedish_ci",
-        "charset" => "latin1",
-        "engine" => "InnoDB",
-    ]
-)]
-class IpBlocked implements EntityInterface
+#[ORM\Entity]
+#[ORM\Table(name: 'ip_blocked')]
+#[ORM\Index(name: 'ip_blocked_ip', columns: ['ip_address'])]
+class IpBlocked
 {
-    #[ORM\Id,
-        ORM\Column(
-            name: "block_id",
-            type: Types::INTEGER,
-            nullable: false,
-            options: ["unsigned" => true]
-        ),
-        ORM\GeneratedValue(strategy: "IDENTITY")
-    ]
-    private int|null $blockId = null;
-
-    #[ORM\Column(
-        name: "ip_address",
-        type: Types::STRING,
-        length: 16,
-        nullable: false
-    )]
-    private string|null $ipAddress;
-
-    #[ORM\Column(
-        name: "email_address",
-        type: Types::STRING,
-        length: 100,
-        nullable: false
-    )]
-    private string|null $emailAddress;
-
-    #[ORM\Column(
-        name: "date_blocked",
-        type: Types::DATETIME_MUTABLE,
-        nullable: false,
-    )]
-    private DateTimeInterface|null $dateBlocked;
-
-    public function __construct()
-    {
-        $this->dateBlocked = new DateTime('now');
-    }
+    #[ORM\Id, ORM\Column(type: Types::INTEGER), ORM\GeneratedValue]
+    private ?int $id = null;
 
     /**
-     * Get block id
+     * @param DateTimeImmutable|null $expiresAt Null keeps the address blocked until the row is deleted
      */
-    public function getBlockId(): int|null
-    {
-        return $this->blockId;
+    public function __construct(
+        #[ORM\Column(name: 'ip_address', type: Types::STRING, length: 45)]
+        private string $ipAddress,
+        #[ORM\Column(name: 'blocked_at', type: Types::DATETIME_IMMUTABLE)]
+        private DateTimeImmutable $blockedAt,
+        #[ORM\Column(name: 'expires_at', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+        private ?DateTimeImmutable $expiresAt,
+    ) {
     }
 
-    /**
-     * Get blocked IP address
-     */
-    public function getIpAddress(): string|null
+    public function getIpAddress(): string
     {
         return $this->ipAddress;
     }
 
-    /**
-     * Set blocked IP address
-     */
-    public function setIpAddress(string $ipAddress): IpBlocked
+    public function getBlockedAt(): DateTimeImmutable
     {
-        $this->ipAddress = $ipAddress;
-        return $this;
+        return $this->blockedAt;
     }
 
-    /**
-     * Get email address
-     */
-    public function getEmailAddress(): string|null
+    public function getExpiresAt(): ?DateTimeImmutable
     {
-        return $this->emailAddress;
-    }
-
-    /**
-     * Set email address
-     */
-    public function setEmailAddress(string $emailAddress): IpBlocked
-    {
-        $this->emailAddress = $emailAddress;
-        return $this;
-    }
-
-    /**
-     * Get date & time blocked
-     */
-    public function getDateBlocked(): ?DateTimeInterface
-    {
-        return $this->dateBlocked;
-    }
-
-    /**
-     * Set date & time blocked
-     */
-    public function setDateBlocked(DateTimeInterface $dateBlocked): IpBlocked
-    {
-        $this->dateBlocked = $dateBlocked;
-        return $this;
+        return $this->expiresAt;
     }
 }
