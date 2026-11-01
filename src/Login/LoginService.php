@@ -8,13 +8,11 @@ use FwsDoctrineAuth\Event\LoginFailed;
 use FwsDoctrineAuth\Event\LoginSucceeded;
 use FwsDoctrineAuth\Event\LoginThrottled;
 use FwsDoctrineAuth\Password\PasswordHasherInterface;
+use FwsDoctrineAuth\Password\PasswordRules;
 use FwsDoctrineAuth\Throttle\LoginThrottleInterface;
 use FwsDoctrineAuth\TwoFactor\TwoFactorPolicyInterface;
 use FwsDoctrineAuth\User\UserProviderInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
-
-use function str_contains;
-use function strlen;
 
 /**
  * Checks login details and reports the outcome. It knows nothing about requests, sessions or pages, so the
@@ -22,8 +20,6 @@ use function strlen;
  */
 final class LoginService
 {
-    private const MAX_PASSWORD_LENGTH = 4096;
-
     public function __construct(
         private readonly UserProviderInterface $users,
         private readonly PasswordHasherInterface $hasher,
@@ -64,7 +60,7 @@ final class LoginService
 
     private function verify(string $identity, string $password): ?object
     {
-        if (! $this->isAcceptablePassword($password)) {
+        if (! PasswordRules::isAcceptable($password)) {
             return null;
         }
 
@@ -87,16 +83,6 @@ final class LoginService
         }
 
         return null;
-    }
-
-    /**
-     * Very long passwords would make hashing slow enough to use as an attack, and bcrypt refuses null bytes.
-     */
-    private function isAcceptablePassword(string $password): bool
-    {
-        return $password !== ''
-            && strlen($password) <= self::MAX_PASSWORD_LENGTH
-            && ! str_contains($password, "\0");
     }
 
     private function upgradeHash(object $user, string $password): void

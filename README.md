@@ -4,8 +4,8 @@ FwsDoctrineAuth
 Login for Doctrine ORM users in Mezzio applications. The module has no pages, forms, routes or email templates: it checks
 login details and reports the outcome, and your application decides what to show.
 
-**This is a work in progress.** Login, throttling and the login log are done. Password reset and two factor authentication
-are still to come.
+**This is a work in progress.** Login, throttling, the login log and password reset are done. Two factor authentication is
+still to come.
 
 Installation
 ------------
@@ -82,8 +82,53 @@ header that a client can set would let anyone get around the limits, or block so
 
 Protect pages by adding `Mezzio\Authentication\AuthenticationMiddleware` to a route, after `SessionMiddleware`. The user is
 then in the `Mezzio\Authentication\UserInterface` request attribute. Users are loaded on every request, so disabling an
-account ends its sessions straight away. To use `mezzio-authorization`, point
+account or changing its password ends its sessions straight away. To use `mezzio-authorization`, point
 `FwsDoctrineAuth\Mezzio\RolesProviderInterface` at your own class that supplies each user's roles.
+
+Forgotten passwords
+-------------------
+
+Your application provides the pages and the email. Implement `FwsDoctrineAuth\PasswordReset\AuthMailerInterface` and alias
+that name to your class in the container:
+
+```php
+public function sendPasswordReset(object $user, string $token, DateTimeImmutable $expiresAt): void
+{
+    // Render your own template, with a link to your own page containing $token
+}
+```
+
+Then use `FwsDoctrineAuth\PasswordReset\PasswordResetService`:
+
+```php
+// The "forgotten password" form. Say the same thing whether or not the account exists
+$passwordReset->request($email, $clientIpAddress);
+
+// The page the link goes to. Decide whether to show the form
+$user = $passwordReset->findUser($token);
+
+// The form is submitted. Check the password against your own policy first
+match ($passwordReset->reset($token, $newPassword, $clientIpAddress)) {
+    PasswordResetStatus::Success              => /* ask them to log in */,
+    PasswordResetStatus::UnacceptablePassword => /* show the form again, the link still works */,
+    PasswordResetStatus::InvalidToken         => /* the link is wrong, used or expired */,
+};
+```
+
+- **Links** work once, for an hour. Requesting another stops the earlier link working. Only a hash of the token is stored, so
+  a database leak gives nobody a working link.
+- **After a reset,** all of the user's sessions end, and so does any failed login lockout. Listen for the `PasswordChanged`
+  event to tell the user by email, in case it was not them.
+- **Emails are limited** to 3 per account and 10 per address each hour, without telling the requester. Change this in
+  `doctrine-auth.password_reset`.
+- **Mail failures** do not reach the caller, as that would reveal the account exists. Listen for the
+  `PasswordResetDeliveryFailed` event, or you will not find out about them.
+
+**Queue the email if you can.** Mail is only sent for real accounts, so the time it takes during a request can reveal which
+addresses have one. **Send a `Referrer-Policy: no-referrer` header on your reset page,** so that the token in its address
+does not reach other sites through links or images on the page.
+
+If a logged-in user changes their own password, call `$sessionLogin->login($session, $user)` afterwards to keep them logged in.
 
 Failed login limits
 -------------------
@@ -99,7 +144,8 @@ not atomic, so a few extra attempts can get through under many simultaneous requ
 Events
 ------
 
-The module dispatches `LoginSucceeded`, `LoginFailed` and `LoginThrottled`. Add listeners to the config, as callable services:
+The module dispatches `LoginSucceeded`, `LoginFailed`, `LoginThrottled`, `PasswordResetRequested`,
+`PasswordResetDeliveryFailed` and `PasswordChanged`. Add listeners to the config, as callable services:
 
 ```php
 'doctrine-auth' => [
@@ -113,13 +159,14 @@ The module dispatches `LoginSucceeded`, `LoginFailed` and `LoginThrottled`. Add 
 Replacing parts
 ---------------
 
-Everything is behind an interface, with an alias in the container that you can point at your own class:
+Each of these has an alias in the container that you can point at your own class:
 
 | Interface | Default |
 |---|---|
 | `User\UserProviderInterface` | Reads the attributes on your user entity |
 | `Password\PasswordHasherInterface` | PHP's `password_hash()` |
 | `Throttle\LoginThrottleInterface` | The limits above, stored with Doctrine |
+| `PasswordReset\PasswordResetStoreInterface` | Reset tokens, stored with Doctrine |
 | `TwoFactor\TwoFactorPolicyInterface` | Never requires two factor authentication |
 | `Mezzio\RolesProviderInterface` | No roles |
 

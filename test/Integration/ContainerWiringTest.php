@@ -14,9 +14,13 @@ use FwsDoctrineAuth\Entity\FailedLoginAttemptsLog;
 use FwsDoctrineAuth\Entity\LoginLog;
 use FwsDoctrineAuth\Exception\DoctrineAuthException;
 use FwsDoctrineAuth\Login\LoginService;
+use FwsDoctrineAuth\PasswordReset\AuthMailerInterface;
+use FwsDoctrineAuth\PasswordReset\PasswordResetService;
+use FwsDoctrineAuth\PasswordReset\PasswordResetStatus;
 use FwsDoctrineAuth\Mezzio\SessionAuthentication;
 use FwsDoctrineAuth\Mezzio\SessionLogin;
 use FwsDoctrineAuthTest\Support\Entity\User;
+use FwsDoctrineAuthTest\Support\RecordingMailer;
 use Laminas\Diactoros\ResponseFactory;
 use Laminas\ServiceManager\ServiceManager;
 use Laminas\Stdlib\ArrayUtils;
@@ -69,6 +73,7 @@ final class ContainerWiringTest extends TestCase
         $dependencies['aliases'][EntityManagerInterface::class] = self::ENTITY_MANAGER;
         $dependencies['invokables'][ResponseFactoryInterface::class] = ResponseFactory::class;
         $dependencies['services']['config']                     = $config;
+        $dependencies['allow_override']                         = true;
 
         return new ServiceManager($dependencies);
     }
@@ -81,6 +86,7 @@ final class ContainerWiringTest extends TestCase
             $entityManager->getClassMetadata(LoginLog::class),
             $entityManager->getClassMetadata(FailedLoginAttemptsLog::class),
             $entityManager->getClassMetadata(\FwsDoctrineAuth\Entity\IpBlocked::class),
+            $entityManager->getClassMetadata(\FwsDoctrineAuth\Entity\PasswordReminder::class),
         ]);
 
         return $entityManager;
@@ -122,6 +128,24 @@ final class ContainerWiringTest extends TestCase
 
         self::assertInstanceOf(SessionAuthentication::class, $container->get(AuthenticationInterface::class));
         self::assertInstanceOf(SessionLogin::class, $container->get(SessionLogin::class));
+    }
+
+    public function testPasswordResetWorksThroughTheContainer(): void
+    {
+        $mailer    = new RecordingMailer();
+        $container = $this->container();
+        $container->setService(AuthMailerInterface::class, $mailer);
+        $entityManager = $this->createSchema($container);
+        $user          = new User('a@example.com', password_hash('old', PASSWORD_BCRYPT, ['cost' => 4]));
+        $entityManager->persist($user);
+        $entityManager->flush();
+
+        $service = $container->get(PasswordResetService::class);
+        $service->request('a@example.com', '203.0.113.5');
+
+        self::assertSame(PasswordResetStatus::Success, $service->reset($mailer->lastToken(), 'new', '203.0.113.5'));
+        self::assertTrue(password_verify('new', (string) $user->getPassword()));
+        self::assertTrue($container->get(LoginService::class)->attempt('a@example.com', 'new', '203.0.113.5')->isSuccess());
     }
 
     public function testMissingUserClassFailsClearly(): void

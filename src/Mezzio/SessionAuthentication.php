@@ -19,7 +19,7 @@ use function is_string;
 /**
  * Lets mezzio-authentication's AuthenticationMiddleware recognise users logged in through SessionLogin.
  *
- * The user is loaded on every request, so disabling an account ends its sessions straight away.
+ * The user is loaded on every request, so disabling an account or changing its password ends its sessions straight away.
  */
 final class SessionAuthentication implements AuthenticationInterface
 {
@@ -29,6 +29,7 @@ final class SessionAuthentication implements AuthenticationInterface
      */
     public function __construct(
         private readonly UserProviderInterface $users,
+        private readonly SessionLogin $sessionLogin,
         private readonly RolesProviderInterface $roles,
         private readonly ResponseFactoryInterface $responseFactory,
         private $userFactory,
@@ -49,7 +50,7 @@ final class SessionAuthentication implements AuthenticationInterface
         }
 
         $user = $this->users->findById($id);
-        if ($user === null || ! $this->users->isEnabled($user)) {
+        if ($user === null || ! $this->users->isEnabled($user) || ! $this->sessionLogin->isCurrent($session, $user)) {
             return null;
         }
 

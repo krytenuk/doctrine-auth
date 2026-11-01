@@ -11,6 +11,13 @@ return [
             // Failures before an address is blocked. A block_for of 0 blocks it until you delete the ip_blocked row
             // 'ip' => ['max_attempts' => 50, 'window' => 900, 'block_for' => 3600],
         ],
+        'password_reset' => [
+            // 'lifetime' => 3600, // <- Seconds a reset link works for
+            // Emails sent per account and per address in each window of seconds. A max_requests of 0 turns a limit off
+            // 'window' => 3600,
+            // 'account' => ['max_requests' => 3],
+            // 'ip' => ['max_requests' => 10],
+        ],
         // Optional. The container name of the entity manager, if not Doctrine\ORM\EntityManagerInterface
         // 'entity_manager' => 'doctrine.entity_manager.orm_default',
     ],

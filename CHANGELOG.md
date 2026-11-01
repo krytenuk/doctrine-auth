@@ -195,4 +195,6 @@ Added login throttling per account as well as per IP address, and PSR-14 events
 Added krytenuk/doctrine-crypt blind index lookup for encrypted identities
 Fixed the stored password hash being accepted as the password
 Fixed the session ID not changing at login
-Password reset and two factor authentication are not available yet
+Rewritten password reset with random single use tokens stored as hashes, and limits on the emails sent
+Fixed password reset revealing which accounts exist, and password changes leaving sessions logged in
+Two factor authentication is not available yet

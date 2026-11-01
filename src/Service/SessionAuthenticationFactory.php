@@ -6,6 +6,7 @@ namespace FwsDoctrineAuth\Service;
 
 use FwsDoctrineAuth\Mezzio\RolesProviderInterface;
 use FwsDoctrineAuth\Mezzio\SessionAuthentication;
+use FwsDoctrineAuth\Mezzio\SessionLogin;
 use FwsDoctrineAuth\User\UserProviderInterface;
 use Mezzio\Authentication\UserInterface;
 use Psr\Container\ContainerInterface;
@@ -17,6 +18,7 @@ final class SessionAuthenticationFactory
     {
         return new SessionAuthentication(
             $container->get(UserProviderInterface::class),
+            $container->get(SessionLogin::class),
             $container->get(RolesProviderInterface::class),
             $container->get(ResponseFactoryInterface::class),
             $container->get(UserInterface::class),
