@@ -148,6 +148,25 @@ final class ContainerWiringTest extends TestCase
         self::assertTrue($container->get(LoginService::class)->attempt('a@example.com', 'new', '203.0.113.5')->isSuccess());
     }
 
+    public function testTwoFactorMethodsFromTheConfigAreUsedAtLogin(): void
+    {
+        $container = $this->container(['doctrine-auth' => ['two_factor' => ['methods' => ['fake' => 'fake-method']]]]);
+        $container->setService('fake-method', new \FwsDoctrineAuthTest\Support\FakeTwoFactorMethod(['1']));
+        $entityManager = $this->createSchema($container);
+        $entityManager->persist(new User('a@example.com', password_hash('correct', PASSWORD_BCRYPT, ['cost' => 4])));
+        $entityManager->flush();
+
+        $result = $container->get(LoginService::class)->attempt('a@example.com', 'correct', '203.0.113.5');
+        self::assertTrue($result->requiresTwoFactor());
+        self::assertSame(0, $entityManager->getRepository(LoginLog::class)->count([]));
+
+        $twoFactor = $container->get(\FwsDoctrineAuth\Mezzio\TwoFactorLogin::class);
+        $session   = $twoFactor->begin(new \Mezzio\Session\Session([]), $result->user);
+
+        self::assertTrue($twoFactor->verify($session, 'fake', '123456', '203.0.113.5')->isSuccess());
+        self::assertSame(1, $entityManager->getRepository(LoginLog::class)->count([]));
+    }
+
     public function testMissingUserClassFailsClearly(): void
     {
         $config = (new ConfigProvider())();

@@ -197,4 +197,4 @@ Fixed the stored password hash being accepted as the password
 Fixed the session ID not changing at login
 Rewritten password reset with random single use tokens stored as hashes, and limits on the emails sent
 Fixed password reset revealing which accounts exist, and password changes leaving sessions logged in
-Two factor authentication is not available yet
+Added a framework for two factor authentication methods, which are separate packages, with wrong codes counted as failed logins

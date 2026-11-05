@@ -16,12 +16,15 @@ use FwsDoctrineAuth\Mezzio\NoRolesProvider;
 use FwsDoctrineAuth\Mezzio\RolesProviderInterface;
 use FwsDoctrineAuth\Mezzio\SessionAuthentication;
 use FwsDoctrineAuth\Mezzio\SessionLogin;
+use FwsDoctrineAuth\Mezzio\TwoFactorLogin;
 use FwsDoctrineAuth\Password\NativePasswordHasher;
 use FwsDoctrineAuth\Password\PasswordHasherInterface;
 use FwsDoctrineAuth\PasswordReset\PasswordResetService;
 use FwsDoctrineAuth\PasswordReset\PasswordResetStoreInterface;
 use FwsDoctrineAuth\Throttle\LoginThrottleInterface;
+use FwsDoctrineAuth\TwoFactor\EnabledMethodsPolicy;
 use FwsDoctrineAuth\TwoFactor\NoTwoFactorPolicy;
+use FwsDoctrineAuth\TwoFactor\TwoFactorMethods;
 use FwsDoctrineAuth\TwoFactor\TwoFactorPolicyInterface;
 use FwsDoctrineAuth\User\UserProviderInterface;
 use Mezzio\Authentication\AuthenticationInterface;
@@ -50,7 +53,7 @@ final class ConfigProvider
                 PasswordHasherInterface::class     => NativePasswordHasher::class,
                 PasswordResetStoreInterface::class => DoctrinePasswordResetStore::class,
                 RolesProviderInterface::class      => NoRolesProvider::class,
-                TwoFactorPolicyInterface::class    => NoTwoFactorPolicy::class,
+                TwoFactorPolicyInterface::class    => EnabledMethodsPolicy::class,
                 UserProviderInterface::class       => AttributeUserProvider::class,
             ],
             'invokables' => [
@@ -64,11 +67,14 @@ final class ConfigProvider
                 AuthEventDispatcher::class        => Service\AuthEventDispatcherFactory::class,
                 DoctrineLoginThrottle::class      => Service\DoctrineLoginThrottleFactory::class,
                 DoctrinePasswordResetStore::class => Service\DoctrinePasswordResetStoreFactory::class,
+                EnabledMethodsPolicy::class       => Service\EnabledMethodsPolicyFactory::class,
                 LoginLogListener::class           => Service\LoginLogListenerFactory::class,
                 LoginService::class               => Service\LoginServiceFactory::class,
                 PasswordResetService::class       => Service\PasswordResetServiceFactory::class,
                 SessionAuthentication::class      => Service\SessionAuthenticationFactory::class,
                 SessionLogin::class               => Service\SessionLoginFactory::class,
+                TwoFactorLogin::class             => Service\TwoFactorLoginFactory::class,
+                TwoFactorMethods::class           => Service\TwoFactorMethodsFactory::class,
             ],
         ];
     }
@@ -106,6 +112,10 @@ final class ConfigProvider
                 'window'   => 3600,
                 'account'  => ['max_requests' => 3],
                 'ip'       => ['max_requests' => 10],
+            ],
+            'two_factor' => [
+                'lifetime' => 300,
+                'methods'  => [],
             ],
             'listeners' => [
                 LoginSucceeded::class => [

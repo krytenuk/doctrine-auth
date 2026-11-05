@@ -63,7 +63,10 @@ final class SessionLogin
         return is_string($fingerprint) && hash_equals($this->credentialFingerprint($user), $fingerprint);
     }
 
-    private function credentialFingerprint(object $user): string
+    /**
+     * A fingerprint of the user's password hash, which changes when the password does.
+     */
+    public function credentialFingerprint(object $user): string
     {
         return hash('sha256', (string) $this->users->getPasswordHash($user));
     }

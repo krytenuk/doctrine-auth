@@ -18,6 +18,9 @@ return [
             // 'account' => ['max_requests' => 3],
             // 'ip' => ['max_requests' => 10],
         ],
+        'two_factor' => [
+            // 'lifetime' => 300, // <- Seconds a user has to enter their code after their password
+        ],
         // Optional. The container name of the entity manager, if not Doctrine\ORM\EntityManagerInterface
         // 'entity_manager' => 'doctrine.entity_manager.orm_default',
     ],

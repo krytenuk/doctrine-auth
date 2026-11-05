@@ -4,8 +4,11 @@ FwsDoctrineAuth
 Login for Doctrine ORM users in Mezzio applications. The module has no pages, forms, routes or email templates: it checks
 login details and reports the outcome, and your application decides what to show.
 
-**This is a work in progress.** Login, throttling, the login log and password reset are done. Two factor authentication is
-still to come.
+**This is a work in progress.** Login, throttling, the login log, password reset and the framework for two factor
+authentication are done. Each way of getting a second factor is a separate package:
+
+- [`krytenuk/doctrine-auth-app-2fa`](https://github.com/krytenuk/doctrine-auth-app-2fa): authenticator apps
+- Email and SMS codes: still to come
 
 Installation
 ------------
@@ -77,6 +80,50 @@ if ($result->isSuccess()) {
 
 `SessionLogin` changes the session ID, as this has to happen at login. Call `$sessionLogin->logout($session)` to log out.
 
+Two factor authentication
+-------------------------
+
+Install a two factor package, then users who set it up are asked for a code after their password. Without one, nobody is
+asked. Handle `requiresTwoFactor()` on your login page, and use `FwsDoctrineAuth\Mezzio\TwoFactorLogin` on your code page:
+
+```php
+// The login page
+$result = $loginService->attempt($email, $password, $clientIpAddress);
+if ($result->requiresTwoFactor()) {
+    $twoFactorLogin->begin($session, $result->user);
+    // Redirect to your code page
+}
+
+// The code page. If more than one method is set up, let the user choose
+$methods = $twoFactorLogin->availableMethods($session); // Such as ['app'], or [] to send them back to the login page
+$twoFactorLogin->start($session, $method); // When they choose. A method that sends a code sends it now
+
+// The code is submitted
+$result = $twoFactorLogin->verify($session, $method, $code, $clientIpAddress);
+match ($result->status) {
+    TwoFactorStatus::Success        => /* logged in, redirect the user */,
+    TwoFactorStatus::InvalidCode    => /* show the form again */,
+    TwoFactorStatus::Throttled      => /* too many attempts, see $result->retryAfter */,
+    TwoFactorStatus::NoPendingLogin => /* took too long or never logged in, back to the login page */,
+};
+```
+
+- **Nobody is logged in** until the code is right. The session only remembers who is waiting, for 5 minutes. Change this
+  with `doctrine-auth.two_factor.lifetime`.
+- **Wrong codes count as failed logins,** for the account and the address, so the limits below apply to them too.
+- **Changing the password or disabling the account** ends a login that is waiting for a code.
+- The `LoginSucceeded` event, and so the login log, happens when the code is right. Wrong codes dispatch `TwoFactorFailed`.
+
+To write your own method, implement `TwoFactor\TwoFactorMethodInterface` and add it to the config:
+
+```php
+'doctrine-auth' => [
+    'two_factor' => [
+        'methods' => ['my-method' => MyMethod::class], // A null service removes a method
+    ],
+],
+```
+
 **Work out the client's address yourself.** Only your application knows which proxies it can trust. Trusting a forwarded
 header that a client can set would let anyone get around the limits, or block someone else.
 
@@ -144,7 +191,7 @@ not atomic, so a few extra attempts can get through under many simultaneous requ
 Events
 ------
 
-The module dispatches `LoginSucceeded`, `LoginFailed`, `LoginThrottled`, `PasswordResetRequested`,
+The module dispatches `LoginSucceeded`, `LoginFailed`, `LoginThrottled`, `TwoFactorFailed`, `PasswordResetRequested`,
 `PasswordResetDeliveryFailed` and `PasswordChanged`. Add listeners to the config, as callable services:
 
 ```php
@@ -167,7 +214,7 @@ Each of these has an alias in the container that you can point at your own class
 | `Password\PasswordHasherInterface` | PHP's `password_hash()` |
 | `Throttle\LoginThrottleInterface` | The limits above, stored with Doctrine |
 | `PasswordReset\PasswordResetStoreInterface` | Reset tokens, stored with Doctrine |
-| `TwoFactor\TwoFactorPolicyInterface` | Never requires two factor authentication |
+| `TwoFactor\TwoFactorPolicyInterface` | Requires two factor authentication from users who have set a method up |
 | `Mezzio\RolesProviderInterface` | No roles |
 
 Upgrading from version 1

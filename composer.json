@@ -43,6 +43,9 @@
     "extra": {
         "laminas": {
             "config-provider": "FwsDoctrineAuth\\ConfigProvider"
+        },
+        "branch-alias": {
+            "dev-v2.x-dev": "2.0.x-dev"
         }
     },
     "funding": [
